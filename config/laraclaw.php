@@ -156,4 +156,35 @@ return [
         ],
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Queue Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Configure queue settings for asynchronous message processing.
+    |
+    */
+
+    'queues' => [
+        'queue_name' => env('LARACLAW_QUEUE_NAME', 'laraclaw'),
+        'processing_timeout' => env('LARACLAW_PROCESSING_TIMEOUT', 120),
+        'retry_after' => env('LARACLAW_RETRY_AFTER', 60),
+        'max_tries' => env('LARACLAW_MAX_TRIES', 3),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Monitoring Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Configure monitoring and observability settings.
+    |
+    */
+
+    'monitoring' => [
+        'metrics_enabled' => env('LARACLAW_METRICS_ENABLED', true),
+        'metrics_retention_days' => env('LARACLAW_METRICS_RETENTION_DAYS', 30),
+        'health_check_timeout' => env('LARACLAW_HEALTH_CHECK_TIMEOUT', 5),
+    ],
+
 ];
