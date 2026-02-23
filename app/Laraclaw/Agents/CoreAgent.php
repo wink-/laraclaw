@@ -56,6 +56,7 @@ class CoreAgent implements Agent, Conversational, HasTools
             'mistral' => Lab::Mistral,
             'deepseek' => Lab::DeepSeek,
             'xai' => Lab::xAI,
+            'openrouter' => Lab::OpenRouter,
             default => Lab::OpenAI,
         };
 
@@ -65,17 +66,17 @@ class CoreAgent implements Agent, Conversational, HasTools
     }
 
     /**
-     * Get the configured provider.
+     * Get the configured provider. (Used by Promptable trait)
      */
-    public function getProvider(): Lab
+    public function provider(): Lab
     {
         return $this->provider ?? Lab::OpenAI;
     }
 
     /**
-     * Get the configured model.
+     * Get the configured model. (Used by Promptable trait)
      */
-    public function getModel(): string
+    public function model(): string
     {
         return $this->model ?? 'gpt-4o-mini';
     }
