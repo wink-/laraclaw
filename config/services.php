@@ -35,4 +35,14 @@ return [
         ],
     ],
 
+    'telegram' => [
+        'bot_token' => env('TELEGRAM_BOT_TOKEN'),
+        'secret_token' => env('TELEGRAM_SECRET_TOKEN'),
+    ],
+
+    'discord' => [
+        'bot_token' => env('DISCORD_BOT_TOKEN'),
+        'application_id' => env('DISCORD_APPLICATION_ID'),
+    ],
+
 ];

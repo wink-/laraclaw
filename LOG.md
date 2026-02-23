@@ -14,6 +14,8 @@
 #### Progress
 - [x] Created LOG.md
 - [x] Phase 1: Foundation & Memory - COMPLETE
+- [x] Phase 2: Agent & Skills System - COMPLETE
+- [x] Phase 3: Gateways (Integrations) - COMPLETE
 
 #### Completed Tasks
 
@@ -55,7 +57,33 @@
   - **CalculatorSkill**: safe expression evaluation with sanitization
   - **WebSearchSkill**: DuckDuckGo API integration (no API key needed)
 
-**7. Tests**
+**7. Gateway System**
+- **GatewayInterface**: standardized interface for all messaging platforms
+- **BaseGateway**: abstract class with common functionality
+- **CliGateway**: interactive terminal-based chat with session management
+- **TelegramGateway**: full Telegram Bot API integration
+  - Webhook handling
+  - Message parsing (text, media, captions)
+  - Markdown response formatting
+  - Webhook management (set/delete)
+- **DiscordGateway**: Discord Bot integration
+  - Slash command support
+  - Interaction responses
+  - Regular message handling
+  - Command registration
+
+**8. Console Command**
+- `php artisan laraclaw:chat`: interactive CLI chat
+  - Session management
+  - History viewing
+  - New conversation support
+  - Resume by conversation ID
+
+**9. Routes & Controllers**
+- `POST /laraclaw/webhooks/telegram`: Telegram webhook endpoint
+- `POST /laraclaw/webhooks/discord`: Discord webhook endpoint
+
+**10. Tests**
 - 39 tests, 72 assertions, all passing
 - ConversationTest: model creation, relationships, toPromptMessages()
 - MessageTest: roles, relationships, type checking
@@ -69,6 +97,13 @@ app/Laraclaw/
     CoreAgent.php
   Facades/
     Laraclaw.php
+  Gateways/
+    Contracts/
+      GatewayInterface.php
+    BaseGateway.php
+    CliGateway.php
+    DiscordGateway.php
+    TelegramGateway.php
   Memory/
     MemoryManager.php
   Skills/
@@ -84,6 +119,8 @@ app/Laraclaw/
 - `app/Models/User.php`: added conversations() and memoryFragments() relationships
 - `app/Providers/LaraclawServiceProvider.php`: full service registration
 - `bootstrap/providers.php`: already had LaraclawServiceProvider registered
+- `config/services.php`: added telegram and discord configuration
+- `routes/web.php`: added webhook routes
 
 #### Technical Notes
 - Using PHP 8.4 for running tests (has SQLite support)
@@ -91,11 +128,8 @@ app/Laraclaw/
 - All code formatted with Laravel Pint
 - Following Laravel 12 conventions (casts() method, etc.)
 
-#### Next Steps (Phase 2 & 3)
-- [ ] Create Gateway interface
-- [ ] Implement TelegramGateway
-- [ ] Implement DiscordGateway
-- [ ] Create CLI/Tinker gateway for testing
-- [ ] Add vector embeddings support for semantic memory search
-- [ ] Create onboarding command `php artisan laraclaw:install`
+#### Next Steps (Phase 4)
+- [ ] Implement long-term memory using vector embeddings
+- [ ] Add advanced skills (e.g., local script execution, email management)
+- [ ] Create an onboarding console command (`php artisan laraclaw:install`)
 

@@ -30,30 +30,30 @@ Laraclaw will mirror the four core pillars of the OpenClaw architecture, adapted
 
 ## 4. Implementation Phases
 
-### Phase 1: Foundation & Memory
-*   [ ] Define the database schema for `users`, `conversations`, and `messages`.
-*   [ ] Create Eloquent models and relationships.
-*   [ ] Implement the `Memory` service to retrieve and format conversation history for the LLM.
-*   [ ] Set up the basic `Laraclaw` facade/service container bindings.
+### Phase 1: Foundation & Memory ✅ COMPLETE
+*   [x] Define the database schema for `users`, `conversations`, and `messages`.
+*   [x] Create Eloquent models and relationships.
+*   [x] Implement the `Memory` service to retrieve and format conversation history for the LLM.
+*   [x] Set up the basic `Laraclaw` facade/service container bindings.
 
-### Phase 2: Agent & Skills System
-*   [ ] Create the core `Agent` class that wraps `laravel/ai` calls.
-*   [ ] Define a `Skill` interface/base class.
-*   [ ] Implement a tool registry to dynamically load available skills.
-*   [ ] Build initial core skills:
+### Phase 2: Agent & Skills System ✅ COMPLETE
+*   [x] Create the core `Agent` class that wraps `laravel/ai` calls.
+*   [x] Define a `Skill` interface/base class.
+*   [x] Implement a tool registry to dynamically load available skills.
+*   [x] Build initial core skills:
     *   `WebSearchSkill`
     *   `TimeSkill` (current date/time)
     *   `CalculatorSkill`
-*   [ ] Implement the agent's execution loop (handling tool calls and returning results to the LLM).
+*   [x] Implement the agent's execution loop (handling tool calls and returning results to the LLM).
 
-### Phase 3: Gateways (Integrations)
-*   [ ] Create a `Gateway` interface.
-*   [ ] Implement `TelegramGateway`:
+### Phase 3: Gateways (Integrations) ✅ COMPLETE
+*   [x] Create a `Gateway` interface.
+*   [x] Implement `TelegramGateway`:
     *   Webhook controller.
     *   Message parsing.
     *   Sending responses back to Telegram.
-*   [ ] Implement `DiscordGateway`.
-*   [ ] Set up a local CLI/Tinker gateway for easy testing during development.
+*   [x] Implement `DiscordGateway`.
+*   [x] Set up a local CLI/Tinker gateway for easy testing during development.
 
 ### Phase 4: Advanced Features & Polish
 *   [ ] Implement long-term memory using vector embeddings.

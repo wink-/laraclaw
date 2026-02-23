@@ -3,6 +3,9 @@
 namespace App\Providers;
 
 use App\Laraclaw\Agents\CoreAgent;
+use App\Laraclaw\Gateways\CliGateway;
+use App\Laraclaw\Gateways\DiscordGateway;
+use App\Laraclaw\Gateways\TelegramGateway;
 use App\Laraclaw\Laraclaw;
 use App\Laraclaw\Memory\MemoryManager;
 use App\Laraclaw\Skills\CalculatorSkill;
@@ -38,6 +41,18 @@ class LaraclawServiceProvider extends ServiceProvider
 
             return new CoreAgent($skills);
         });
+
+        // Register Gateways
+        $this->app->singleton(CliGateway::class);
+        $this->app->singleton(TelegramGateway::class);
+        $this->app->singleton(DiscordGateway::class);
+
+        // Tag gateways
+        $this->app->tag([
+            CliGateway::class,
+            TelegramGateway::class,
+            DiscordGateway::class,
+        ], 'laraclaw.gateways');
 
         // Register main Laraclaw service
         $this->app->singleton('laraclaw', function ($app) {
