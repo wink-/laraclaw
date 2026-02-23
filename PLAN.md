@@ -60,7 +60,7 @@ Laraclaw will mirror the four core pillars of the OpenClaw architecture, adapted
 *   [x] Create an onboarding console command (`php artisan laraclaw:install`).
 *   [x] Add `laraclaw:doctor` command for diagnostics.
 *   [x] Add `laraclaw:status` command for system health check.
-*   [ ] Add advanced skills (e.g., local script execution, email management).
+*   [x] Add advanced skills (FileSystemSkill, ExecuteSkill).
 
 ### Phase 5: Security & Identity (from Zeroclaw) ✅ COMPLETE
 *   [x] Implement gateway pairing/verification for secure webhook handling.

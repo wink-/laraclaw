@@ -286,3 +286,49 @@ app/Laraclaw/
 - Filesystem scoping uses `realpath()` to prevent traversal attacks
 - All 39 tests still passing
 
+### Iteration 3
+
+**Goal:** Complete Phase 4 - Advanced Skills
+
+#### Progress
+
+**1. FileSystemSkill**
+- Safe file operations within scoped directory
+- Actions: read, list, write, delete, mkdir, exists, info
+- Security features:
+  - Path validation to prevent directory traversal
+  - Respects autonomy level (read-only mode for readonly)
+  - File size limit (1MB) for reads
+  - Cannot delete directories
+- Uses `resolvePath()` to ensure paths stay within `filesystem_scope`
+
+**2. ExecuteSkill**
+- Shell command execution with safety restrictions
+- Respects autonomy level (requires "full" to execute)
+- Blocked patterns (rm -rf, sudo, chmod, eval, etc.)
+- Shell injection prevention (blocks ; & | ` $)
+- Optional command whitelist via `allowed_commands` config
+- Configurable timeout (default 30 seconds)
+- Output truncation (5KB limit)
+
+**3. Configuration Updates**
+- Added `allowed_commands` for command whitelist
+- Added `command_timeout` for execution timeout
+- Skills registered: 6 total (Time, Calculator, WebSearch, Memory, FileSystem, Execute)
+
+#### Files Created
+- `app/Laraclaw/Skills/FileSystemSkill.php`
+- `app/Laraclaw/Skills/ExecuteSkill.php`
+
+#### Files Modified
+- `app/Providers/LaraclawServiceProvider.php` - Registered new skills
+- `config/laraclaw.php` - Added allowed_commands and command_timeout
+- `tests/Feature/LaraclawTest.php` - Updated skill count to 6
+- `PLAN.md` - Marked Phase 4 as complete
+
+#### Technical Notes
+- FileSystemSkill uses `realpath()` and `str_starts_with()` for path validation
+- ExecuteSkill uses Laravel's `Process` facade for command execution
+- Both skills integrate with SecurityManager for autonomy level checks
+- All 39 tests passing
+

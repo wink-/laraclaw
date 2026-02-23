@@ -11,6 +11,8 @@ use App\Laraclaw\Laraclaw;
 use App\Laraclaw\Memory\MemoryManager;
 use App\Laraclaw\Security\SecurityManager;
 use App\Laraclaw\Skills\CalculatorSkill;
+use App\Laraclaw\Skills\ExecuteSkill;
+use App\Laraclaw\Skills\FileSystemSkill;
 use App\Laraclaw\Skills\MemorySkill;
 use App\Laraclaw\Skills\TimeSkill;
 use App\Laraclaw\Skills\WebSearchSkill;
@@ -37,6 +39,8 @@ class LaraclawServiceProvider extends ServiceProvider
         $this->app->singleton(CalculatorSkill::class);
         $this->app->singleton(WebSearchSkill::class);
         $this->app->singleton(MemorySkill::class);
+        $this->app->singleton(FileSystemSkill::class);
+        $this->app->singleton(ExecuteSkill::class);
 
         // Tag skills
         $this->app->tag([
@@ -44,6 +48,8 @@ class LaraclawServiceProvider extends ServiceProvider
             CalculatorSkill::class,
             WebSearchSkill::class,
             MemorySkill::class,
+            FileSystemSkill::class,
+            ExecuteSkill::class,
         ], 'laraclaw.skills');
 
         // Register CoreAgent with skills

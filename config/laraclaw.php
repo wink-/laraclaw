@@ -52,6 +52,14 @@ return [
 
         // Filesystem scope for file operations
         'filesystem_scope' => env('LARACLAW_FILESYSTEM_SCOPE', storage_path('laraclaw')),
+
+        // Allowed commands for execute skill (empty = all safe commands allowed)
+        'allowed_commands' => array_filter(
+            explode(',', env('LARACLAW_ALLOWED_COMMANDS', ''))
+        ),
+
+        // Command execution timeout in seconds
+        'command_timeout' => env('LARACLAW_COMMAND_TIMEOUT', 30),
     ],
 
     /*
