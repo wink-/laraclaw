@@ -121,4 +121,39 @@ return [
         ],
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Tunnel Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Configure local development tunnels for exposing your local server
+    | to the internet. Supports ngrok, Cloudflare Tunnel, and Tailscale.
+    |
+    */
+
+    'tunnels' => [
+        // Default provider to use (ngrok, cloudflare, tailscale)
+        'default_provider' => env('LARACLAW_TUNNEL_PROVIDER', 'cloudflare'),
+
+        // Default local port to tunnel
+        'default_port' => env('LARACLAW_TUNNEL_PORT', 8000),
+
+        // Provider-specific configuration
+        'providers' => [
+            'ngrok' => [
+                'path' => env('NGROK_PATH', 'ngrok'),
+                'auth_token' => env('NGROK_AUTH_TOKEN'),
+                'region' => env('NGROK_REGION', 'us'),
+            ],
+
+            'cloudflare' => [
+                'path' => env('CLOUDFLARED_PATH', 'cloudflared'),
+            ],
+
+            'tailscale' => [
+                'path' => env('TAILSCALE_PATH', 'tailscale'),
+            ],
+        ],
+    ],
+
 ];

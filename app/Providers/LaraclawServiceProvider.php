@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Laraclaw\Agents\CoreAgent;
+use App\Laraclaw\Channels\ChannelBindingManager;
 use App\Laraclaw\Gateways\CliGateway;
 use App\Laraclaw\Gateways\DiscordGateway;
 use App\Laraclaw\Gateways\TelegramGateway;
@@ -16,6 +17,7 @@ use App\Laraclaw\Skills\FileSystemSkill;
 use App\Laraclaw\Skills\MemorySkill;
 use App\Laraclaw\Skills\TimeSkill;
 use App\Laraclaw\Skills\WebSearchSkill;
+use App\Laraclaw\Tunnels\TunnelManager;
 use Illuminate\Support\ServiceProvider;
 
 class LaraclawServiceProvider extends ServiceProvider
@@ -33,6 +35,14 @@ class LaraclawServiceProvider extends ServiceProvider
 
         // Register IdentityManager as singleton
         $this->app->singleton(IdentityManager::class);
+
+        // Register ChannelBindingManager as singleton
+        $this->app->singleton(ChannelBindingManager::class);
+
+        // Register TunnelManager as singleton
+        $this->app->singleton(TunnelManager::class, function ($app) {
+            return new TunnelManager(config('laraclaw.tunnels', []));
+        });
 
         // Register skills as singletons
         $this->app->singleton(TimeSkill::class);
