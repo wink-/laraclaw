@@ -55,19 +55,19 @@ Laraclaw will mirror the four core pillars of the OpenClaw architecture, adapted
 *   [x] Implement `DiscordGateway`.
 *   [x] Set up a local CLI/Tinker gateway for easy testing during development.
 
-### Phase 4: Advanced Features & Polish
-*   [ ] Implement long-term memory using SQLite with FTS5 + vector embeddings (hybrid search).
+### Phase 4: Advanced Features & Polish ✅ COMPLETE
+*   [x] Implement long-term memory using SQLite with FTS5 + vector embeddings (hybrid search).
+*   [x] Create an onboarding console command (`php artisan laraclaw:install`).
+*   [x] Add `laraclaw:doctor` command for diagnostics.
+*   [x] Add `laraclaw:status` command for system health check.
 *   [ ] Add advanced skills (e.g., local script execution, email management).
-*   [ ] Create an onboarding console command (`php artisan laraclaw:install`).
-*   [ ] Add `laraclaw:doctor` command for diagnostics.
-*   [ ] Add `laraclaw:status` command for system health check.
 
-### Phase 5: Security & Identity (from Zeroclaw)
-*   [ ] Implement gateway pairing/verification for secure webhook handling.
-*   [ ] Add user allowlists for controlling who can interact with the assistant.
-*   [ ] Implement filesystem scoping for safe file operations.
-*   [ ] Add autonomy levels: readonly, supervised, full.
-*   [ ] Create identity system with IDENTITY.md and SOUL.md support.
+### Phase 5: Security & Identity (from Zeroclaw) ✅ COMPLETE
+*   [x] Implement gateway pairing/verification for secure webhook handling.
+*   [x] Add user allowlists for controlling who can interact with the assistant.
+*   [x] Implement filesystem scoping for safe file operations.
+*   [x] Add autonomy levels: readonly, supervised, full.
+*   [x] Create identity system with IDENTITY.md and SOUL.md support.
 *   [ ] Implement AIEOS (AI Operating System) protocol support.
 
 ### Phase 6: Production Features (from Zeroclaw)

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Laraclaw\Facades\Laraclaw;
 use App\Laraclaw\Gateways\DiscordGateway;
+use App\Laraclaw\Security\SecurityManager;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -11,6 +12,7 @@ class DiscordWebhookController extends Controller
 {
     public function __construct(
         protected DiscordGateway $gateway,
+        protected SecurityManager $security,
     ) {}
 
     /**
@@ -19,10 +21,17 @@ class DiscordWebhookController extends Controller
     public function __invoke(Request $request): JsonResponse
     {
         $payload = $request->all();
+        $body = $request->getContent();
 
-        // Verify the webhook
-        if (! $this->gateway->verifyWebhook($payload)) {
-            return response()->json(['error' => 'Invalid webhook'], 403);
+        // Verify Discord signature (Ed25519)
+        $signature = $request->header('X-Signature-Ed25519');
+        $timestamp = $request->header('X-Signature-Timestamp');
+        $publicKey = config('services.discord.public_key');
+
+        if ($signature && $timestamp && $publicKey) {
+            if (! $this->security->verifyDiscordWebhook($publicKey, $body, $signature, $timestamp)) {
+                return response()->json(['error' => 'Invalid signature'], 401);
+            }
         }
 
         // Handle Discord ping (verification)
@@ -32,6 +41,32 @@ class DiscordWebhookController extends Controller
 
         // Parse the incoming message
         $parsedMessage = $this->gateway->parseIncomingMessage($payload);
+
+        // Check user authorization
+        $userId = (string) ($parsedMessage['user_id'] ?? $parsedMessage['sender_id'] ?? '');
+        if (! $this->security->isUserAllowed($userId, 'discord')) {
+            logger()->warning('Unauthorized Discord user attempted access', [
+                'user_id' => $userId,
+            ]);
+
+            return response()->json([
+                'type' => 4,
+                'data' => ['content' => 'You are not authorized to use this bot.'],
+            ]);
+        }
+
+        // Check channel authorization
+        $channelId = (string) ($parsedMessage['channel_id'] ?? '');
+        if (! $this->security->isChannelAllowed($channelId, 'discord')) {
+            logger()->warning('Unauthorized Discord channel', [
+                'channel_id' => $channelId,
+            ]);
+
+            return response()->json([
+                'type' => 4,
+                'data' => ['content' => 'This channel is not authorized.'],
+            ]);
+        }
 
         // Skip empty messages
         if (empty($parsedMessage['content'])) {

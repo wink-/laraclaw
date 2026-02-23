@@ -6,8 +6,10 @@ use App\Laraclaw\Agents\CoreAgent;
 use App\Laraclaw\Gateways\CliGateway;
 use App\Laraclaw\Gateways\DiscordGateway;
 use App\Laraclaw\Gateways\TelegramGateway;
+use App\Laraclaw\Identity\IdentityManager;
 use App\Laraclaw\Laraclaw;
 use App\Laraclaw\Memory\MemoryManager;
+use App\Laraclaw\Security\SecurityManager;
 use App\Laraclaw\Skills\CalculatorSkill;
 use App\Laraclaw\Skills\MemorySkill;
 use App\Laraclaw\Skills\TimeSkill;
@@ -23,6 +25,12 @@ class LaraclawServiceProvider extends ServiceProvider
     {
         // Register MemoryManager as singleton
         $this->app->singleton(MemoryManager::class);
+
+        // Register SecurityManager as singleton
+        $this->app->singleton(SecurityManager::class);
+
+        // Register IdentityManager as singleton
+        $this->app->singleton(IdentityManager::class);
 
         // Register skills as singletons
         $this->app->singleton(TimeSkill::class);

@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Laraclaw\Security\SecurityManager;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
@@ -37,6 +38,7 @@ class LaraclawDoctorCommand extends Command
         $this->checkDatabaseConnection();
         $this->checkDatabaseTables();
         $this->checkAiProvider();
+        $this->checkSecurityConfiguration();
         $this->checkIdentityFiles();
         $this->checkStoragePermissions();
 
@@ -56,6 +58,7 @@ class LaraclawDoctorCommand extends Command
             'json' => 'JSON handling',
             'mbstring' => 'Multibyte string handling',
             'openssl' => 'Encryption',
+            'sodium' => 'Ed25519 signature verification',
         ];
 
         foreach ($extensions as $ext => $description) {
@@ -145,6 +148,39 @@ class LaraclawDoctorCommand extends Command
         } catch (\Exception $e) {
             return false;
         }
+    }
+
+    protected function checkSecurityConfiguration(): void
+    {
+        info('Security Configuration:');
+
+        $security = app(SecurityManager::class);
+
+        // Check autonomy level
+        $autonomy = $security->getAutonomyLevel();
+        info("  Autonomy Level: {$autonomy->value}");
+        $this->passed++;
+
+        // Check allowlist status
+        $status = $security->getStatus();
+        if ($status['allowlist_enabled']) {
+            info("  ✓ Allowlist enabled ({$status['allowed_users_count']} users)");
+        } else {
+            info('  ○ Allowlist disabled (all users allowed)');
+        }
+        $this->passed++;
+
+        // Check filesystem scope
+        $scope = $security->getFilesystemScope();
+        if (File::isDirectory($scope)) {
+            info("  ✓ Filesystem scope: {$scope}");
+            $this->passed++;
+        } else {
+            warning("  ⚠ Filesystem scope not found: {$scope}");
+            $this->warnings++;
+        }
+
+        $this->newLine();
     }
 
     protected function checkIdentityFiles(): void

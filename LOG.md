@@ -216,3 +216,73 @@ app/Laraclaw/
 - BM25 algorithm provides relevance ranking
 - Triggers keep FTS index in sync with base table
 
+### Iteration 2
+
+**Goal:** Implement Phase 5 - Security & Identity
+
+#### Progress
+
+**1. SecurityManager Service**
+- Central service for all security features
+- **AutonomyLevel enum**: readonly, supervised, full
+  - `canWrite()`: only supervised and full can write
+  - `requiresApproval()`: supervised needs approval
+  - `canExecute()`: only full can execute commands
+- **User allowlists**: `isUserAllowed()` checks blocklist first, then allowlist
+- **Channel allowlists**: `isChannelAllowed()` for channel-based restrictions
+- **Webhook verification**:
+  - Telegram: `verifyTelegramWebhook()` with secret token (hash_equals)
+  - Discord: `verifyDiscordWebhook()` with Ed25519 signatures (sodium)
+- **Filesystem scoping**: `isPathAllowed()` prevents directory traversal
+
+**2. IdentityManager Service**
+- Loads and manages IDENTITY.md and SOUL.md files
+- `getIdentity()` / `getSoul()`: retrieve file contents
+- `setIdentity()` / `setSoul()`: update files
+- `buildSystemPrompt()`: combines base prompt with identity and soul
+- `reload()`: force reload from disk
+
+**3. Configuration File**
+- Created `config/laraclaw.php` with all settings
+- AI provider configuration (provider, model, max_tokens, temperature)
+- Security configuration (autonomy, allowlists, blocked users, filesystem scope)
+- Identity configuration (path, files)
+- Memory configuration (limits, FTS enabled)
+- Gateway configuration (enabled flags, tokens, secrets)
+
+**4. Webhook Controllers Updated**
+- **TelegramWebhookController**:
+  - Verifies secret token via SecurityManager
+  - Checks user authorization via `isUserAllowed()`
+  - Checks channel authorization via `isChannelAllowed()`
+  - Returns 403 for unauthorized access
+- **DiscordWebhookController**:
+  - Verifies Ed25519 signatures
+  - Checks user and channel authorization
+  - Returns appropriate error messages for unauthorized users
+
+**5. Doctor Command Updated**
+- Added `sodium` extension check for Discord signatures
+- Added security configuration section:
+  - Displays autonomy level
+  - Shows allowlist status
+  - Checks filesystem scope directory exists
+
+#### Files Created
+- `app/Laraclaw/Security/SecurityManager.php` - Security service with AutonomyLevel enum
+- `app/Laraclaw/Identity/IdentityManager.php` - Identity file management
+- `config/laraclaw.php` - Central configuration file
+
+#### Files Modified
+- `app/Http/Controllers/TelegramWebhookController.php` - Added security checks
+- `app/Http/Controllers/DiscordWebhookController.php` - Added security checks
+- `app/Console/Commands/LaraclawDoctorCommand.php` - Added security diagnostics
+- `app/Providers/LaraclawServiceProvider.php` - Registered SecurityManager and IdentityManager
+- `PLAN.md` - Marked Phase 4 and Phase 5 items complete
+
+#### Technical Notes
+- Ed25519 signatures use `sodium_crypto_sign_verify_detached()`
+- Allowlist supports gateway-specific users (e.g., "telegram:123456")
+- Filesystem scoping uses `realpath()` to prevent traversal attacks
+- All 39 tests still passing
+

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Laraclaw\Facades\Laraclaw;
 use App\Laraclaw\Gateways\TelegramGateway;
+use App\Laraclaw\Security\SecurityManager;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -11,6 +12,7 @@ class TelegramWebhookController extends Controller
 {
     public function __construct(
         protected TelegramGateway $gateway,
+        protected SecurityManager $security,
     ) {}
 
     /**
@@ -20,14 +22,36 @@ class TelegramWebhookController extends Controller
     {
         $payload = $request->all();
 
-        // Verify the webhook
+        // Verify the webhook secret token
         $secretToken = $request->header('X-Telegram-Bot-Api-Secret-Token');
-        if (! $this->gateway->verifyWebhook($payload, $secretToken)) {
+        $configuredSecret = config('services.telegram.secret_token');
+
+        if (! $this->security->verifyTelegramWebhook($configuredSecret, $secretToken)) {
             return response()->json(['error' => 'Invalid webhook'], 403);
         }
 
         // Parse the incoming message
         $parsedMessage = $this->gateway->parseIncomingMessage($payload);
+
+        // Check user authorization
+        $userId = (string) ($parsedMessage['user_id'] ?? $parsedMessage['sender_id'] ?? '');
+        if (! $this->security->isUserAllowed($userId, 'telegram')) {
+            logger()->warning('Unauthorized Telegram user attempted access', [
+                'user_id' => $userId,
+            ]);
+
+            return response()->json(['status' => 'unauthorized'], 403);
+        }
+
+        // Check channel authorization
+        $chatId = (string) ($parsedMessage['chat_id'] ?? '');
+        if (! $this->security->isChannelAllowed($chatId, 'telegram')) {
+            logger()->warning('Unauthorized Telegram channel', [
+                'chat_id' => $chatId,
+            ]);
+
+            return response()->json(['status' => 'unauthorized'], 403);
+        }
 
         // Skip empty messages
         if (empty($parsedMessage['content'])) {
