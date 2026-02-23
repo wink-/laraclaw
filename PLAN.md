@@ -71,8 +71,8 @@ Laraclaw will mirror the four core pillars of the OpenClaw architecture, adapted
 *   [ ] Implement AIEOS (AI Operating System) protocol support.
 
 ### Phase 6: Production Features (from Zeroclaw)
-*   [ ] Add tunnel support for local development (Cloudflare, Tailscale, ngrok).
-*   [ ] Implement channel binding commands (`laraclaw:channel:bind-telegram`).
+*   [x] Add tunnel support for local development (Cloudflare, Tailscale, ngrok).
+*   [x] Implement channel binding commands (`laraclaw:channel:bind-telegram`).
 *   [ ] Add queue-based message processing for scalability.
 *   [ ] Create monitoring and observability features.
 
