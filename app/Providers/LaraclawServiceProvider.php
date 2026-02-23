@@ -9,6 +9,7 @@ use App\Laraclaw\Gateways\TelegramGateway;
 use App\Laraclaw\Laraclaw;
 use App\Laraclaw\Memory\MemoryManager;
 use App\Laraclaw\Skills\CalculatorSkill;
+use App\Laraclaw\Skills\MemorySkill;
 use App\Laraclaw\Skills\TimeSkill;
 use App\Laraclaw\Skills\WebSearchSkill;
 use Illuminate\Support\ServiceProvider;
@@ -27,12 +28,14 @@ class LaraclawServiceProvider extends ServiceProvider
         $this->app->singleton(TimeSkill::class);
         $this->app->singleton(CalculatorSkill::class);
         $this->app->singleton(WebSearchSkill::class);
+        $this->app->singleton(MemorySkill::class);
 
         // Tag skills
         $this->app->tag([
             TimeSkill::class,
             CalculatorSkill::class,
             WebSearchSkill::class,
+            MemorySkill::class,
         ], 'laraclaw.skills');
 
         // Register CoreAgent with skills

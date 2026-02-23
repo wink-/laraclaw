@@ -56,9 +56,25 @@ Laraclaw will mirror the four core pillars of the OpenClaw architecture, adapted
 *   [x] Set up a local CLI/Tinker gateway for easy testing during development.
 
 ### Phase 4: Advanced Features & Polish
-*   [ ] Implement long-term memory using vector embeddings.
+*   [ ] Implement long-term memory using SQLite with FTS5 + vector embeddings (hybrid search).
 *   [ ] Add advanced skills (e.g., local script execution, email management).
-*   [ ] Create an onboarding console command (`php artisan laraclaw:install` / `laraclaw:onboard`).
+*   [ ] Create an onboarding console command (`php artisan laraclaw:install`).
+*   [ ] Add `laraclaw:doctor` command for diagnostics.
+*   [ ] Add `laraclaw:status` command for system health check.
+
+### Phase 5: Security & Identity (from Zeroclaw)
+*   [ ] Implement gateway pairing/verification for secure webhook handling.
+*   [ ] Add user allowlists for controlling who can interact with the assistant.
+*   [ ] Implement filesystem scoping for safe file operations.
+*   [ ] Add autonomy levels: readonly, supervised, full.
+*   [ ] Create identity system with IDENTITY.md and SOUL.md support.
+*   [ ] Implement AIEOS (AI Operating System) protocol support.
+
+### Phase 6: Production Features (from Zeroclaw)
+*   [ ] Add tunnel support for local development (Cloudflare, Tailscale, ngrok).
+*   [ ] Implement channel binding commands (`laraclaw:channel:bind-telegram`).
+*   [ ] Add queue-based message processing for scalability.
+*   [ ] Create monitoring and observability features.
 
 ## 5. Proposed Directory Structure
 ```text

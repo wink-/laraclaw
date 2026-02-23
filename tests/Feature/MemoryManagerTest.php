@@ -38,10 +38,10 @@ it('can limit conversation history', function () {
 
 it('can get relevant memories', function () {
     $user = User::factory()->create();
-    MemoryFragment::factory()->forUser($user)->count(3)->create();
+    MemoryFragment::factory()->forUser($user)->count(3)->create(['content' => 'test query content']);
     MemoryFragment::factory()->count(2)->create(); // Other user's memories
 
-    $memories = $this->memoryManager->getRelevantMemories('test query', $user->id);
+    $memories = $this->memoryManager->getRelevantMemories('test', $user->id);
 
     expect($memories)->toHaveCount(3);
 });

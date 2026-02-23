@@ -5,6 +5,7 @@ namespace App\Laraclaw\Memory;
 use App\Models\Conversation;
 use App\Models\MemoryFragment;
 use App\Models\Message;
+use Illuminate\Support\Facades\DB;
 
 class MemoryManager
 {
@@ -29,13 +30,68 @@ class MemoryManager
     }
 
     /**
-     * Get relevant memories for a given query.
+     * Get relevant memories for a given query using FTS5 full-text search.
      *
      * @return array<int, MemoryFragment>
      */
     public function getRelevantMemories(string $query, ?int $userId = null, int $limit = 10): array
     {
+        $driver = DB::connection()->getDriverName();
+
+        // Use FTS5 for SQLite, fallback to LIKE for other databases
+        if ($driver === 'sqlite' && $this->ftsTableExists()) {
+            return $this->searchWithFts($query, $userId, $limit);
+        }
+
+        return $this->searchWithLike($query, $userId, $limit);
+    }
+
+    /**
+     * Search memories using FTS5 full-text search.
+     *
+     * @return array<int, MemoryFragment>
+     */
+    protected function searchWithFts(string $query, ?int $userId, int $limit): array
+    {
+        // Prepare query for FTS5 - escape special characters and add prefix matching
+        $ftsQuery = $this->prepareFtsQuery($query);
+
+        $sql = '
+            SELECT mf.*, bm25(memory_fragments_fts) as relevance
+            FROM memory_fragments_fts
+            JOIN memory_fragments mf ON mf.id = memory_fragments_fts.rowid
+            WHERE memory_fragments_fts MATCH ?
+        ';
+
+        $bindings = [$ftsQuery];
+
+        if ($userId) {
+            $sql .= ' AND mf.user_id = ?';
+            $bindings[] = $userId;
+        }
+
+        $sql .= ' ORDER BY relevance ASC LIMIT ?';
+        $bindings[] = $limit;
+
+        $results = DB::select($sql, $bindings);
+
+        return collect($results)->map(function ($row) {
+            $fragment = MemoryFragment::find($row->id);
+            $fragment->relevance = $row->relevance;
+
+            return $fragment;
+        })->filter()->all();
+    }
+
+    /**
+     * Search memories using LIKE for non-SQLite databases.
+     *
+     * @return array<int, MemoryFragment>
+     */
+    protected function searchWithLike(string $query, ?int $userId, int $limit): array
+    {
         $queryBuilder = MemoryFragment::query()
+            ->where('content', 'LIKE', '%'.$query.'%')
             ->orderBy('created_at', 'desc')
             ->limit($limit);
 
@@ -43,9 +99,37 @@ class MemoryManager
             $queryBuilder->where('user_id', $userId);
         }
 
-        // For now, use simple keyword matching
-        // Future: use vector similarity search
         return $queryBuilder->get()->all();
+    }
+
+    /**
+     * Prepare a query string for FTS5.
+     */
+    protected function prepareFtsQuery(string $query): string
+    {
+        // Remove FTS5 special characters
+        $query = preg_replace('/[*^()"\'-]/', '', $query);
+
+        // Split into words and add prefix matching
+        $words = preg_split('/\s+/', trim($query));
+
+        $ftsTerms = array_map(fn ($word) => $word.'*', array_filter($words));
+
+        return implode(' ', $ftsTerms);
+    }
+
+    /**
+     * Check if FTS table exists.
+     */
+    protected function ftsTableExists(): bool
+    {
+        try {
+            DB::select("SELECT name FROM sqlite_master WHERE type='table' AND name='memory_fragments_fts'");
+
+            return true;
+        } catch (\Exception $e) {
+            return false;
+        }
     }
 
     /**
