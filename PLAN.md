@@ -103,6 +103,14 @@ Laraclaw will mirror the four core pillars of the OpenClaw architecture, adapted
 *   [x] Add conversation search functionality.
 *   [x] Create keyboard shortcuts for power users.
 
+### Phase 10: OpenClaw Parity & Advanced Automation (Proposed)
+*   [ ] **WhatsApp Gateway**: Implement `WhatsAppGateway` (via Twilio or Meta Cloud API) to match OpenClaw's messaging platform support.
+*   [ ] **Agentic Scheduling (Cron)**: Create a `SchedulerSkill` allowing the LLM to dynamically register Laravel Scheduled Tasks (e.g., "Check my email every morning at 8 AM").
+*   [ ] **Voice Note Integration**: Connect the existing STT/TTS skills directly to Telegram/WhatsApp gateways so users can send voice notes and receive voice replies.
+*   [ ] **Document Ingestion UI**: Add a drag-and-drop interface in the dashboard to upload PDFs/Docs into the Vector Store for RAG (Retrieval-Augmented Generation).
+*   [ ] **Multi-Agent Collaboration**: Allow the `CoreAgent` to delegate complex tasks to specialized sub-agents (e.g., `CoderAgent`, `ResearcherAgent`).
+*   [ ] **Skill Marketplace/Plugin System**: Create a standard way to install community skills via Composer or a UI dashboard.
+
 ## 5. Proposed Directory Structure
 ```text
 app/
