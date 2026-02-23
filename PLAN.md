@@ -93,15 +93,15 @@ Laraclaw will mirror the four core pillars of the OpenClaw architecture, adapted
 *   [x] Add file storage with AI providers for document analysis.
 *   [x] Create vector store integration for knowledge base.
 
-### Phase 9: Enhanced Dashboard & UX
-*   [ ] Add real-time chat with Livewire/Volt.
+### Phase 9: Enhanced Dashboard & UX (In Progress)
+*   [x] Add real-time chat with Livewire/Volt.
 *   [ ] Create conversation export (PDF, Markdown).
 *   [ ] Add user authentication for web dashboard.
 *   [ ] Create conversation sharing feature.
-*   [ ] Add dark/light theme toggle.
-*   [ ] Create mobile-responsive chat UI.
-*   [ ] Add conversation search functionality.
-*   [ ] Create keyboard shortcuts for power users.
+*   [x] Add dark/light theme toggle.
+*   [x] Create mobile-responsive chat UI.
+*   [x] Add conversation search functionality.
+*   [x] Create keyboard shortcuts for power users.
 
 ## 5. Proposed Directory Structure
 ```text

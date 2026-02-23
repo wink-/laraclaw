@@ -15,7 +15,7 @@ Route::prefix('laraclaw/webhooks')->group(function () {
     Route::post('discord', DiscordWebhookController::class)->name('laraclaw.webhooks.discord');
 });
 
-// Laraclaw Dashboard Routes
+// Laraclaw Dashboard Routes (Legacy Blade)
 Route::prefix('laraclaw')->name('laraclaw.')->group(function () {
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/conversations', [DashboardController::class, 'conversations'])->name('conversations');
@@ -27,4 +27,12 @@ Route::prefix('laraclaw')->name('laraclaw.')->group(function () {
     Route::post('/chat/stream', [DashboardController::class, 'streamMessage'])->name('chat.stream');
     Route::post('/chat/stream-vercel', [DashboardController::class, 'streamVercel'])->name('chat.stream.vercel');
     Route::get('/chat/new', [DashboardController::class, 'newChat'])->name('chat.new');
+});
+
+// Laraclaw Livewire Dashboard Routes
+Route::prefix('laraclaw/live')->name('laraclaw.')->group(function () {
+    Route::get('/', \App\Livewire\Laraclaw\Dashboard::class)->name('dashboard.live');
+    Route::get('/chat', \App\Livewire\Laraclaw\Chat::class)->name('chat.live');
+    Route::get('/conversations', \App\Livewire\Laraclaw\Conversations::class)->name('conversations.live');
+    Route::get('/memories', \App\Livewire\Laraclaw\Memories::class)->name('memories.live');
 });
