@@ -124,12 +124,6 @@ class DashboardController extends Controller
 
         $conversation = Conversation::findOrFail($request->conversation_id);
 
-        // Store user message
-        $conversation->messages()->create([
-            'role' => 'user',
-            'content' => $request->message,
-        ]);
-
         // Get response from Laraclaw
         try {
             $response = \App\Laraclaw\Facades\Laraclaw::chat($conversation, $request->message);
@@ -312,12 +306,9 @@ class DashboardController extends Controller
 
         // AI Provider check
         $provider = config('laraclaw.ai.provider', 'openai');
-        $hasKey = match ($provider) {
-            'openai' => ! empty(env('OPENAI_API_KEY')),
-            'anthropic' => ! empty(env('ANTHROPIC_API_KEY')),
-            'ollama' => true,
-            default => false,
-        };
+        $providerKey = config("ai.providers.{$provider}.key");
+        $hasKey = $provider === 'ollama' || filled($providerKey);
+
         $checks['ai_provider'] = [
             'status' => $hasKey ? 'healthy' : 'degraded',
             'message' => $hasKey ? "Provider: {$provider}" : "Provider: {$provider} (not configured)",
@@ -328,8 +319,19 @@ class DashboardController extends Controller
             ? 'healthy'
             : (collect($checks)->contains('status', 'unhealthy') ? 'unhealthy' : 'degraded');
 
+        $issues = collect($checks)
+            ->filter(fn (array $check) => $check['status'] !== 'healthy')
+            ->map(fn (array $check, string $name) => ucfirst(str_replace('_', ' ', $name)).': '.$check['message'])
+            ->values()
+            ->all();
+
+        $details = empty($issues)
+            ? 'All checks passed.'
+            : implode(' | ', $issues);
+
         return [
             'status' => $overallStatus,
+            'details' => $details,
             'checks' => $checks,
         ];
     }

@@ -56,6 +56,10 @@ class MemoryManager
         // Prepare query for FTS5 - escape special characters and add prefix matching
         $ftsQuery = $this->prepareFtsQuery($query);
 
+        if ($ftsQuery === '') {
+            return [];
+        }
+
         $sql = '
             SELECT mf.*, bm25(memory_fragments_fts) as relevance
             FROM memory_fragments_fts
@@ -107,13 +111,13 @@ class MemoryManager
      */
     protected function prepareFtsQuery(string $query): string
     {
-        // Remove FTS5 special characters
-        $query = preg_replace('/[*^()"\'-]/', '', $query);
+        $words = preg_split('/\s+/u', trim($query)) ?: [];
 
-        // Split into words and add prefix matching
-        $words = preg_split('/\s+/', trim($query));
+        $sanitizedWords = array_values(array_filter(array_map(function (string $word): string {
+            return preg_replace('/[^\p{L}\p{N}_]+/u', '', $word) ?? '';
+        }, $words)));
 
-        $ftsTerms = array_map(fn ($word) => $word.'*', array_filter($words));
+        $ftsTerms = array_map(fn (string $word): string => $word.'*', $sanitizedWords);
 
         return implode(' ', $ftsTerms);
     }

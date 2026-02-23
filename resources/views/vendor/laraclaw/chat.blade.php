@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Chat - Laraclaw</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -174,7 +175,7 @@
             <h1>Chat with Laraclaw</h1>
             <div class="options">
                 <label class="stream-toggle">
-                    <input type="checkbox" id="streamToggle" checked>
+                    <input type="checkbox" id="streamToggle">
                     <span>Streaming</span>
                 </label>
                 <nav>
@@ -315,29 +316,57 @@
 
             const reader = response.body.getReader();
             const decoder = new TextDecoder();
+            let buffer = '';
             let fullContent = '';
             const contentEl = assistantMsg.querySelector('.content');
 
             while (true) {
                 const { done, value } = await reader.read();
-                if (done) break;
+                if (done) {
+                    break;
+                }
 
-                const chunk = decoder.decode(value, { stream: true });
-                const lines = chunk.split('\n');
+                buffer += decoder.decode(value, { stream: true });
+                const lines = buffer.split('\n');
+                buffer = lines.pop() ?? '';
 
                 for (const line of lines) {
-                    if (line.startsWith('0:"')) {
-                        // Vercel AI SDK format: 0:"text"
+                    const trimmedLine = line.trim();
+                    if (trimmedLine.startsWith('0:')) {
                         try {
-                            const text = JSON.parse(line.substring(2));
-                            fullContent += text;
+                            const payload = JSON.parse(trimmedLine.substring(2));
+                            const text = typeof payload === 'string' ? payload : (payload?.text ?? '');
+
+                            if (text) {
+                                fullContent += text;
+                            }
+
                             contentEl.textContent = fullContent;
                             messagesContainer.scrollTop = messagesContainer.scrollHeight;
                         } catch (e) {
-                            // Skip invalid JSON
+                            // Ignore non-token lines
                         }
                     }
                 }
+            }
+
+            const finalLine = buffer.trim();
+            if (finalLine.startsWith('0:')) {
+                try {
+                    const payload = JSON.parse(finalLine.substring(2));
+                    const text = typeof payload === 'string' ? payload : (payload?.text ?? '');
+
+                    if (text) {
+                        fullContent += text;
+                        contentEl.textContent = fullContent;
+                    }
+                } catch (e) {
+                    // Ignore malformed trailing payload
+                }
+            }
+
+            if (!fullContent.trim()) {
+                throw new Error('No content returned from streaming response. Try sending with Streaming off.');
             }
 
             assistantMsg.classList.remove('streaming');

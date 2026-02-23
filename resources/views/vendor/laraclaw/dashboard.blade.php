@@ -50,6 +50,12 @@
         .status-healthy { background: #10b981; color: white; }
         .status-degraded { background: #f59e0b; color: white; }
         .status-unhealthy { background: #ef4444; color: white; }
+        .health-details {
+            margin-bottom: 12px;
+            color: #cbd5e1;
+            font-size: 0.85rem;
+            line-height: 1.4;
+        }
         .health-checks { list-style: none; }
         .health-checks li { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #333; }
         .health-checks li:last-child { border-bottom: none; }
@@ -104,6 +110,7 @@
                         {{ ucfirst($health['status']) }}
                     </span>
                 </div>
+                <div class="health-details">{{ $health['details'] }}</div>
                 <ul class="health-checks">
                     @foreach ($health['checks'] as $name => $check)
                         <li>
