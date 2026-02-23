@@ -77,6 +77,17 @@
             opacity: 0.5;
             margin-top: 6px;
         }
+        .message.streaming .content {
+            position: relative;
+        }
+        .message.streaming .content::after {
+            content: '▋';
+            animation: blink 1s infinite;
+        }
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
         .input-area {
             padding: 20px;
             background: #0f3460;
@@ -101,6 +112,9 @@
         .input-area textarea:focus {
             outline: 2px solid #6c63ff;
         }
+        .input-area textarea:disabled {
+            opacity: 0.5;
+        }
         .input-area button {
             padding: 12px 24px;
             background: #6c63ff;
@@ -111,8 +125,12 @@
             cursor: pointer;
             transition: background 0.2s;
         }
-        .input-area button:hover {
+        .input-area button:hover:not(:disabled) {
             background: #5b54e0;
+        }
+        .input-area button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
         }
         .empty-state {
             text-align: center;
@@ -125,18 +143,28 @@
         }
         a { color: #6c63ff; text-decoration: none; }
         a:hover { text-decoration: underline; }
-        .new-chat-btn {
-            background: transparent;
-            border: 1px solid #6c63ff;
-            color: #6c63ff;
-            padding: 6px 12px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 0.9rem;
+        .options {
+            display: flex;
+            align-items: center;
+            gap: 15px;
         }
-        .new-chat-btn:hover {
-            background: #6c63ff;
+        .stream-toggle {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
+            color: #888;
+        }
+        .stream-toggle input {
+            accent-color: #6c63ff;
+        }
+        .error-message {
+            background: #ef4444;
             color: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin: 10px 20px;
+            font-size: 0.9rem;
         }
     </style>
 </head>
@@ -144,17 +172,23 @@
     <div class="container">
         <header>
             <h1>Chat with Laraclaw</h1>
-            <nav>
-                <a href="{{ route('laraclaw.dashboard') }}">Dashboard</a>
-                <a href="{{ route('laraclaw.conversations') }}">Conversations</a>
-                <a href="{{ route('laraclaw.chat') }}" class="active">Chat</a>
-            </nav>
+            <div class="options">
+                <label class="stream-toggle">
+                    <input type="checkbox" id="streamToggle" checked>
+                    <span>Streaming</span>
+                </label>
+                <nav>
+                    <a href="{{ route('laraclaw.dashboard') }}">Dashboard</a>
+                    <a href="{{ route('laraclaw.conversations') }}">Conversations</a>
+                    <a href="{{ route('laraclaw.chat') }}" class="active">Chat</a>
+                </nav>
+            </div>
         </header>
 
         <div class="chat-container">
             <div class="messages" id="messages">
                 @forelse ($messages as $message)
-                    <div class="message {{ $message->role }}">
+                    <div class="message {{ $message->role }}" data-id="{{ $message->id }}">
                         <div class="role">{{ $message->role }}</div>
                         <div class="content">{{ $message->content }}</div>
                         <div class="time">{{ $message->created_at->format('M j, g:i A') }}</div>
@@ -167,36 +201,184 @@
                 @endforelse
             </div>
 
+            <div id="errorArea"></div>
+
             <div class="input-area">
-                <form method="POST" action="{{ route('laraclaw.chat.send') }}">
+                <form id="chatForm">
                     @csrf
                     <input type="hidden" name="conversation_id" value="{{ $conversation->id }}">
-                    <textarea name="message" placeholder="Type your message..." rows="1" required autofocus></textarea>
-                    <button type="submit">Send</button>
+                    <textarea name="message" id="messageInput" placeholder="Type your message..." rows="1" required autofocus></textarea>
+                    <button type="submit" id="sendButton">Send</button>
                 </form>
             </div>
         </div>
     </div>
 
     <script>
-        // Auto-scroll to bottom
         const messagesContainer = document.getElementById('messages');
+        const chatForm = document.getElementById('chatForm');
+        const messageInput = document.getElementById('messageInput');
+        const sendButton = document.getElementById('sendButton');
+        const streamToggle = document.getElementById('streamToggle');
+        const errorArea = document.getElementById('errorArea');
+        const conversationId = "{{ $conversation->id }}";
+
+        // Auto-scroll to bottom
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
 
         // Auto-resize textarea
-        const textarea = document.querySelector('textarea');
-        textarea.addEventListener('input', function() {
+        messageInput.addEventListener('input', function() {
             this.style.height = 'auto';
             this.style.height = Math.min(this.scrollHeight, 150) + 'px';
         });
 
+        // Handle form submission
+        chatForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const message = messageInput.value.trim();
+            if (!message) return;
+
+            // Clear input and disable while processing
+            messageInput.value = '';
+            messageInput.style.height = 'auto';
+            messageInput.disabled = true;
+            sendButton.disabled = true;
+            errorArea.innerHTML = '';
+
+            // Add user message to UI
+            addMessage('user', message);
+
+            // Create placeholder for assistant response
+            const assistantMsg = addMessage('assistant', '', true);
+
+            try {
+                if (streamToggle.checked) {
+                    await streamMessage(message, assistantMsg);
+                } else {
+                    await sendMessageStandard(message, assistantMsg);
+                }
+            } catch (error) {
+                showError(error.message);
+                assistantMsg.querySelector('.content').textContent = 'Sorry, an error occurred.';
+                assistantMsg.classList.remove('streaming');
+            }
+
+            // Re-enable input
+            messageInput.disabled = false;
+            sendButton.disabled = false;
+            messageInput.focus();
+        });
+
         // Handle Enter key
-        textarea.addEventListener('keydown', function(e) {
+        messageInput.addEventListener('keydown', function(e) {
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
-                this.form.submit();
+                chatForm.dispatchEvent(new Event('submit'));
             }
         });
+
+        function addMessage(role, content, isStreaming = false) {
+            // Remove empty state if exists
+            const emptyState = messagesContainer.querySelector('.empty-state');
+            if (emptyState) emptyState.remove();
+
+            const div = document.createElement('div');
+            div.className = `message ${role}${isStreaming ? ' streaming' : ''}`;
+            div.innerHTML = `
+                <div class="role">${role}</div>
+                <div class="content">${escapeHtml(content)}</div>
+                <div class="time">${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
+            `;
+            messagesContainer.appendChild(div);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            return div;
+        }
+
+        async function streamMessage(message, assistantMsg) {
+            const response = await fetch('{{ route("laraclaw.chat.stream.vercel") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    'Accept': 'text/plain',
+                },
+                body: JSON.stringify({
+                    conversation_id: conversationId,
+                    message: message,
+                }),
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let fullContent = '';
+            const contentEl = assistantMsg.querySelector('.content');
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+
+                const chunk = decoder.decode(value, { stream: true });
+                const lines = chunk.split('\n');
+
+                for (const line of lines) {
+                    if (line.startsWith('0:"')) {
+                        // Vercel AI SDK format: 0:"text"
+                        try {
+                            const text = JSON.parse(line.substring(2));
+                            fullContent += text;
+                            contentEl.textContent = fullContent;
+                            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                        } catch (e) {
+                            // Skip invalid JSON
+                        }
+                    }
+                }
+            }
+
+            assistantMsg.classList.remove('streaming');
+        }
+
+        async function sendMessageStandard(message, assistantMsg) {
+            const response = await fetch('{{ route("laraclaw.chat.send") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                },
+                body: new URLSearchParams({
+                    conversation_id: conversationId,
+                    message: message,
+                    _token: document.querySelector('meta[name="csrf-token"]').content,
+                }),
+            });
+
+            if (response.redirected) {
+                // Standard form submission redirects, reload page
+                window.location.href = response.url;
+                return;
+            }
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+
+            assistantMsg.classList.remove('streaming');
+        }
+
+        function showError(message) {
+            errorArea.innerHTML = `<div class="error-message">${escapeHtml(message)}</div>`;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
     </script>
 </body>
 </html>

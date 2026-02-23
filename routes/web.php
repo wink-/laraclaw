@@ -24,5 +24,7 @@ Route::prefix('laraclaw')->name('laraclaw.')->group(function () {
     Route::get('/metrics', [DashboardController::class, 'metrics'])->name('metrics');
     Route::get('/chat', [DashboardController::class, 'chat'])->name('chat');
     Route::post('/chat', [DashboardController::class, 'sendMessage'])->name('chat.send');
+    Route::post('/chat/stream', [DashboardController::class, 'streamMessage'])->name('chat.stream');
+    Route::post('/chat/stream-vercel', [DashboardController::class, 'streamVercel'])->name('chat.stream.vercel');
     Route::get('/chat/new', [DashboardController::class, 'newChat'])->name('chat.new');
 });

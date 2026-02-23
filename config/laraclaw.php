@@ -201,4 +201,21 @@ return [
         'health_check_timeout' => env('LARACLAW_HEALTH_CHECK_TIMEOUT', 5),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Voice Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Configure voice/speech settings for TTS and STT.
+    |
+    */
+
+    'voice' => [
+        'enabled' => env('LARACLAW_VOICE_ENABLED', true),
+        'path' => env('LARACLAW_VOICE_PATH', storage_path('laraclaw/voice')),
+        'tts_provider' => env('LARACLAW_TTS_PROVIDER', 'openai'),
+        'stt_provider' => env('LARACLAW_STT_PROVIDER', 'openai'),
+        'default_voice' => env('LARACLAW_DEFAULT_VOICE', 'nova'),
+    ],
+
 ];

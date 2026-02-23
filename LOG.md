@@ -601,3 +601,52 @@ All Phase 7 items implemented:
 **Total Skills: 8**
 **Total Tests: 51 passing**
 
+
+---
+
+## Phase 8: Advanced AI Features (In Progress)
+
+### Progress
+
+**1. Streaming Support**
+- Added streaming endpoints to DashboardController:
+  - `POST /laraclaw/chat/stream` - SSE streaming endpoint
+  - `POST /laraclaw/chat/stream-vercel` - Vercel AI SDK format
+- Updated chat view with real-time streaming support
+- Uses `EventSource` API for SSE consumption
+- Uses `fetch` with `POST` for Vercel AI SDK protocol
+- Auto-scrolls to bottom as content streams in
+
+**2. Voice/Audio Support (TTS/STT)**
+- Created `VoiceService` for text-to-speech and speech-to-text
+- TTS via `Laravel\\Ai\\Audio` facade
+- STT via `Laravel\\Ai\\Transcription` facade
+- Supports multiple providers: OpenAI, ElevenLabs, Mistral
+- Voice files stored in `storage/laraclaw/voice/`
+- Methods:
+  - `speak($text, $options)` - Convert text to speech
+  - `transcribe($audioPath, $options)` - Transcribe audio to text
+  - `getAvailableVoices($provider)` - Get voice options
+
+**Files Created:**
+- `app/Laraclaw/Voice/VoiceService.php`
+
+**Files Modified:**
+- `app/Http/Controllers/Laraclaw/DashboardController.php`
+- `routes/web.php`
+- `resources/views/vendor/laraclaw/chat.blade.php`
+- `config/laraclaw.php`
+
+**Configuration:**
+- `LARACLAW_VOICE_ENABLED` - Enable/disable voice support
+- `LARACLAW_VOICE_PATH` - Storage path for voice files
+- `LARACLAW_TTS_PROVIDER` - Text-to-speech provider (openai, elevenlabs, mistral)
+- `LARACLAW_STT_PROVIDER` - Speech-to-text provider (openai, elevenlabs, mistral)
+- `LARACLAW_DEFAULT_VOICE` - Default voice ID for TTS
+
+**Remaining Phase 8 Items:**
+- [ ] Add structured output for skill results
+- [ ] Add file storage with AI providers
+- [ ] Create vector store integration
+
+**All 51 tests passing**

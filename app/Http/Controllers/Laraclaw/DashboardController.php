@@ -149,6 +149,95 @@ class DashboardController extends Controller
     }
 
     /**
+     * Stream a chat response (SSE endpoint).
+     */
+    public function streamMessage(Request $request)
+    {
+        $request->validate([
+            'conversation_id' => 'required|exists:conversations,id',
+            'message' => 'required|string|max:4000',
+        ]);
+
+        $conversation = Conversation::findOrFail($request->conversation_id);
+
+        // Store user message
+        $conversation->messages()->create([
+            'role' => 'user',
+            'content' => $request->message,
+        ]);
+
+        // Get streaming response from agent
+        $agent = \App\Laraclaw\Facades\Laraclaw::agent();
+
+        // Set up conversation history
+        $history = $conversation->messages()
+            ->orderBy('created_at', 'asc')
+            ->get()
+            ->map(fn ($m) => new \Laravel\Ai\Messages\Message($m->role, $m->content))
+            ->all();
+
+        $agent->setConversationHistory($history);
+
+        // Record metrics
+        $this->metrics->increment('messages_received');
+
+        // Return streaming response
+        return $agent->stream($request->message)
+            ->then(function ($response) use ($conversation) {
+                // Store the complete response
+                $conversation->messages()->create([
+                    'role' => 'assistant',
+                    'content' => (string) $response,
+                ]);
+            });
+    }
+
+    /**
+     * Stream chat using Vercel AI SDK protocol.
+     */
+    public function streamVercel(Request $request)
+    {
+        $request->validate([
+            'conversation_id' => 'required|exists:conversations,id',
+            'message' => 'required|string|max:4000',
+        ]);
+
+        $conversation = Conversation::findOrFail($request->conversation_id);
+
+        // Store user message
+        $conversation->messages()->create([
+            'role' => 'user',
+            'content' => $request->message,
+        ]);
+
+        // Get streaming response from agent
+        $agent = \App\Laraclaw\Facades\Laraclaw::agent();
+
+        // Set up conversation history
+        $history = $conversation->messages()
+            ->orderBy('created_at', 'asc')
+            ->get()
+            ->map(fn ($m) => new \Laravel\Ai\Messages\Message($m->role, $m->content))
+            ->all();
+
+        $agent->setConversationHistory($history);
+
+        // Record metrics
+        $this->metrics->increment('messages_received');
+
+        // Return Vercel AI SDK compatible stream
+        return $agent->stream($request->message)
+            ->usingVercelDataProtocol()
+            ->then(function ($response) use ($conversation) {
+                // Store the complete response
+                $conversation->messages()->create([
+                    'role' => 'assistant',
+                    'content' => (string) $response,
+                ]);
+            });
+    }
+
+    /**
      * Start a new chat.
      */
     public function newChat()

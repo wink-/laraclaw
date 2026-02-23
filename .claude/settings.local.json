@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git checkout:*)",
+      "mcp__laravel-boost__application-info",
+      "mcp__laravel-boost__database-schema"
+    ]
+  }
+}
