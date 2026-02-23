@@ -1,59 +1,486 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
-
 <p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
+    <img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo">
 </p>
 
-## About Laravel
+<p align="center">
+    <strong>Laraclaw</strong> — OpenClaw AI Assistant for Laravel
+</p>
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+<p align="center">
+    <a href="#installation">Installation</a> •
+    <a href="#quick-start">Quick Start</a> •
+    <a href="#skills">Skills</a> •
+    <a href="#gateways">Gateways</a> •
+    <a href="#dashboard">Dashboard</a> •
+    <a href="#configuration">Configuration</a>
+</p>
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+---
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## What is Laraclaw?
 
-## Learning Laravel
+**Laraclaw** is a Laravel-based implementation of OpenClaw, the open-source personal AI assistant platform. It brings powerful, local-first, and highly extensible AI assistant capabilities to the Laravel ecosystem.
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+### Features
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+- 🧠 **Intelligent Memory** — SQLite FTS5 full-text search for long-term memory storage
+- 🔧 **8 Built-in Skills** — Time, Calculator, Web Search, Memory, File System, Execute, Email, Calendar
+- 💬 **Multi-Platform Gateways** — CLI, Telegram, and Discord support
+- 🌐 **Web Dashboard** — Monitor conversations, metrics, and chat directly from your browser
+- 🔐 **Security First** — User allowlists, autonomy levels, filesystem scoping, webhook verification
+- 🤖 **Multi-Provider AI** — OpenAI, Anthropic, Gemini, Ollama, Groq, Mistral, DeepSeek, xAI
+- 📋 **AIEOS Support** — AI Entity Object Specification v1.1 for portable AI identities
+- 🚇 **Tunnel Support** — ngrok, Cloudflare Tunnel, and Tailscale for local development
 
-## Laravel Sponsors
+---
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+## Requirements
 
-### Premium Partners
+- PHP 8.4+
+- Laravel 12.x
+- SQLite (default) / MySQL / PostgreSQL
+- Composer
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+---
+
+## Installation
+
+### 1. Install via Composer
+
+```bash
+composer require laraclaw/laraclaw
+```
+
+### 2. Run the Installer
+
+```bash
+php artisan laraclaw:install
+```
+
+This interactive command will:
+- Check system requirements
+- Configure your AI provider (OpenAI, Anthropic, Ollama, etc.)
+- Set up Telegram/Discord bots (optional)
+- Run database migrations
+- Create identity files (IDENTITY.md, SOUL.md)
+
+### 3. Configure Environment
+
+Add your AI provider credentials to `.env`:
+
+```env
+# AI Provider (openai, anthropic, gemini, ollama, groq, mistral, deepseek, xai)
+AI_PROVIDER=openai
+AI_MODEL=gpt-4o-mini
+
+# API Keys
+OPENAI_API_KEY=sk-...
+# ANTHROPIC_API_KEY=sk-ant-...
+# GEMINI_API_KEY=...
+
+# Telegram (optional)
+TELEGRAM_BOT_TOKEN=123456:ABC-DEF...
+TELEGRAM_SECRET_TOKEN=your-webhook-secret
+
+# Discord (optional)
+DISCORD_BOT_TOKEN=Bot ...
+DISCORD_PUBLIC_KEY=...
+DISCORD_APPLICATION_ID=...
+```
+
+---
+
+## Quick Start
+
+### CLI Chat
+
+Start chatting immediately from the command line:
+
+```bash
+php artisan laraclaw:chat
+```
+
+### Web Dashboard
+
+Visit `/laraclaw` in your browser for:
+- 📊 **Dashboard** — System overview and health status
+- 💬 **Conversations** — Browse all conversations
+- 🧠 **Memories** — View stored memory fragments
+- 📈 **Metrics** — Performance statistics
+- 💭 **Chat** — Interactive web chat interface
+
+### Programmatic Usage
+
+```php
+use App\Laraclaw\Facades\Laraclaw;
+
+// Start a conversation
+$conversation = Laraclaw::startConversation(userId: 1);
+
+// Send a message and get a response
+$response = Laraclaw::chat($conversation, "What time is it?");
+
+// Quick one-off question
+$response = Laraclaw::ask("Calculate 15% of 850");
+```
+
+---
+
+## Skills
+
+Laraclaw comes with 8 built-in skills that the AI can use automatically:
+
+| Skill | Description |
+|-------|-------------|
+| **TimeSkill** | Get current date/time with timezone support |
+| **CalculatorSkill** | Safe mathematical expression evaluation |
+| **WebSearchSkill** | Search the web via DuckDuckGo API |
+| **MemorySkill** | Store, recall, and manage long-term memories |
+| **FileSystemSkill** | Read, write, and manage files (scoped) |
+| **ExecuteSkill** | Execute shell commands (full autonomy only) |
+| **EmailSkill** | Read (IMAP) and send emails |
+| **CalendarSkill** | Manage events with ICS export |
+
+### Creating Custom Skills
+
+```php
+<?php
+
+namespace App\Laraclaw\Skills;
+
+use App\Laraclaw\Skills\Contracts\SkillInterface;
+use Laravel\Ai\Contracts\Tool;
+use Laravel\Ai\Tools\Request;
+
+class MyCustomSkill implements SkillInterface, Tool
+{
+    public function name(): string
+    {
+        return 'my_custom_skill';
+    }
+
+    public function description(): string
+    {
+        return 'Description of what this skill does';
+    }
+
+    public function execute(array $parameters): string
+    {
+        // Your skill logic here
+        return "Result: ...";
+    }
+
+    public function schema(JsonSchema $schema): array
+    {
+        return [
+            'param' => $schema->string()->description('Parameter description'),
+        ];
+    }
+
+    public function toTool(): Tool
+    {
+        return $this;
+    }
+
+    public function handle(Request $request): string
+    {
+        return $this->execute($request->all());
+    }
+}
+```
+
+Register in `LaraclawServiceProvider`:
+
+```php
+$this->app->singleton(MyCustomSkill::class);
+$this->app->tag([MyCustomSkill::class], 'laraclaw.skills');
+```
+
+---
+
+## Gateways
+
+### CLI Gateway
+
+The built-in CLI gateway for terminal interaction:
+
+```bash
+php artisan laraclaw:chat
+```
+
+Options:
+- `--session=ID` — Resume a specific conversation
+- `--new` — Start a new conversation
+
+### Telegram Gateway
+
+1. Create a bot via [@BotFather](https://t.me/botfather)
+2. Set your webhook:
+
+```bash
+php artisan laraclaw:webhook:telegram
+```
+
+The webhook endpoint is: `POST /laraclaw/webhooks/telegram`
+
+### Discord Gateway
+
+1. Create a Discord application at [Discord Developer Portal](https://discord.com/developers/applications)
+2. Register slash commands:
+
+```bash
+php artisan laraclaw:discord:register-commands
+```
+
+The webhook endpoint is: `POST /laraclaw/webhooks/discord`
+
+---
+
+## Dashboard
+
+Access the dashboard at `/laraclaw`:
+
+| Route | Description |
+|-------|-------------|
+| `/laraclaw` | Main dashboard with stats and health |
+| `/laraclaw/conversations` | List all conversations |
+| `/laraclaw/conversations/{id}` | View single conversation |
+| `/laraclaw/memories` | Browse memory fragments |
+| `/laraclaw/metrics` | Performance metrics |
+| `/laraclaw/chat` | Interactive web chat |
+
+---
+
+## Tunnels (Local Development)
+
+Expose your local server for Telegram/Discord webhooks:
+
+```bash
+# Cloudflare Tunnel (recommended)
+php artisan laraclaw:tunnel start --provider=cloudflare
+
+# ngrok
+php artisan laraclaw:tunnel start --provider=ngrok
+
+# Tailscale
+php artisan laraclaw:tunnel start --provider=tailscale
+```
+
+Check tunnel status:
+
+```bash
+php artisan laraclaw:tunnel status
+```
+
+---
+
+## Security
+
+### Autonomy Levels
+
+Configure in `.env`:
+
+```env
+LARACLAW_AUTONOMY=supervised
+```
+
+| Level | Description |
+|-------|-------------|
+| `readonly` | Can only read information |
+| `supervised` | Can write with approval (default) |
+| `full` | Full autonomy including command execution |
+
+### User Allowlists
+
+Restrict who can interact with Laraclaw:
+
+```env
+LARACLAW_ALLOWLIST_ENABLED=true
+LARACLAW_ALLOWED_USERS=telegram:123456,discord:789012
+```
+
+### Filesystem Scoping
+
+Limit file operations to a specific directory:
+
+```env
+LARACLAW_FILESYSTEM_SCOPE=/var/www/storage/laraclaw
+```
+
+---
+
+## Configuration
+
+Full configuration in `config/laraclaw.php`:
+
+```php
+return [
+    // AI Provider
+    'ai' => [
+        'provider' => env('AI_PROVIDER', 'openai'),
+        'model' => env('AI_MODEL', 'gpt-4o-mini'),
+        'max_tokens' => env('AI_MAX_TOKENS', 4096),
+        'temperature' => env('AI_TEMPERATURE', 0.7),
+    ],
+
+    // Security
+    'security' => [
+        'autonomy' => env('LARACLAW_AUTONOMY', 'supervised'),
+        'allowlist_enabled' => env('LARACLAW_ALLOWLIST_ENABLED', false),
+        'filesystem_scope' => env('LARACLAW_FILESYSTEM_SCOPE', storage_path('laraclaw')),
+    ],
+
+    // Identity
+    'identity' => [
+        'path' => env('LARACLAW_IDENTITY_PATH', storage_path('laraclaw')),
+        'identity_file' => env('LARACLAW_IDENTITY_FILE', 'IDENTITY.md'),
+        'soul_file' => env('LARACLAW_SOUL_FILE', 'SOUL.md'),
+        'aieos_file' => env('LARACLAW_AIEOS_FILE', 'aieos.json'),
+        'aieos_enabled' => env('LARACLAW_AIEOS_ENABLED', true),
+    ],
+
+    // Memory
+    'memory' => [
+        'conversation_limit' => env('LARACLAW_MEMORY_LIMIT', 50),
+        'search_limit' => env('LARACLAW_SEARCH_LIMIT', 10),
+        'fts_enabled' => env('LARACLAW_FTS_ENABLED', true),
+    ],
+];
+```
+
+---
+
+## AIEOS Support
+
+Laraclaw supports the [AIEOS v1.1](https://github.com/entitai/aieos) specification for portable AI identities.
+
+Create `storage/laraclaw/aieos.json`:
+
+```json
+{
+  "standard": {
+    "protocol": "AIEOS",
+    "version": "1.1.0"
+  },
+  "identity": {
+    "names": {
+      "first_name": "Laraclaw",
+      "nickname": "Claw"
+    }
+  },
+  "psychology": {
+    "neural_matrix": {
+      "creativity": 0.7,
+      "empathy": 0.8,
+      "logic": 0.9
+    },
+    "moral_compass": {
+      "core_values": ["helpfulness", "honesty", "privacy"]
+    }
+  },
+  "linguistics": {
+    "text_style": {
+      "formality_level": 0.4,
+      "verbosity_level": 0.5
+    }
+  }
+}
+```
+
+---
+
+## Artisan Commands
+
+| Command | Description |
+|---------|-------------|
+| `laraclaw:install` | Interactive installation wizard |
+| `laraclaw:doctor` | System diagnostics |
+| `laraclaw:status` | System status and statistics |
+| `laraclaw:health` | Health check (JSON output available) |
+| `laraclaw:metrics` | Display performance metrics |
+| `laraclaw:chat` | Start CLI chat session |
+| `laraclaw:tunnel {action}` | Manage development tunnels |
+| `laraclaw:channel:bind-telegram` | Bind Telegram channel |
+| `laraclaw:channel:bind-discord` | Bind Discord channel |
+| `laraclaw:channel:list` | List channel bindings |
+| `laraclaw:channel:unbind` | Remove channel binding |
+
+---
+
+## Testing
+
+```bash
+# Run all tests
+php artisan test --compact
+
+# Run with filter
+php artisan test --filter=Laraclaw
+```
+
+---
+
+## Architecture
+
+```
+app/Laraclaw/
+├── Agents/
+│   └── CoreAgent.php          # LLM orchestration
+├── Channels/
+│   └── ChannelBindingManager.php
+├── Events/
+│   ├── MessageProcessed.php
+│   └── MessageProcessingFailed.php
+├── Gateways/
+│   ├── CliGateway.php
+│   ├── TelegramGateway.php
+│   └── DiscordGateway.php
+├── Identity/
+│   ├── IdentityManager.php
+│   └── Aieos/
+│       ├── AieosEntity.php
+│       ├── AieosParser.php
+│       └── AieosPromptCompiler.php
+├── Jobs/
+│   ├── ProcessMessageJob.php
+│   └── SendMessageJob.php
+├── Memory/
+│   └── MemoryManager.php
+├── Monitoring/
+│   └── MetricsCollector.php
+├── Security/
+│   └── SecurityManager.php
+├── Skills/
+│   ├── CalculatorSkill.php
+│   ├── CalendarSkill.php
+│   ├── EmailSkill.php
+│   ├── ExecuteSkill.php
+│   ├── FileSystemSkill.php
+│   ├── MemorySkill.php
+│   ├── TimeSkill.php
+│   └── WebSearchSkill.php
+└── Tunnels/
+    ├── TunnelManager.php
+    ├── NgrokService.php
+    ├── CloudflareTunnelService.php
+    └── TailscaleService.php
+```
+
+---
 
 ## Contributing
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+Contributions are welcome! Please read our contributing guidelines before submitting PRs.
 
-## Code of Conduct
-
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
-
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+---
 
 ## License
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Laraclaw is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+
+---
+
+## Credits
+
+- Inspired by [OpenClaw](https://github.com/openclaw) and [NullClaw](https://nullclaw.org)
+- Built with [Laravel](https://laravel.com) and [Laravel AI SDK](https://laravel.com/docs/ai-sdk)
+- AIEOS specification by [EntitAI](https://github.com/entitai/aieos)
