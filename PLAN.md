@@ -83,6 +83,26 @@ Laraclaw will mirror the four core pillars of the OpenClaw architecture, adapted
 *   [x] Add support for more AI providers (Anthropic Claude, Ollama local).
 *   [x] Implement web UI for chat interface.
 
+### Phase 8: AI SDK Advanced Features
+*   [ ] Implement streaming responses for real-time chat.
+*   [ ] Add vector embeddings for semantic memory search.
+*   [ ] Create reranking service for improved search relevance.
+*   [ ] Add Text-to-Speech (TTS) skill for voice responses.
+*   [ ] Add Speech-to-Text (STT) skill for voice input.
+*   [ ] Implement structured output for skill results.
+*   [ ] Add file storage with AI providers for document analysis.
+*   [ ] Create vector store integration for knowledge base.
+
+### Phase 9: Enhanced Dashboard & UX
+*   [ ] Add real-time chat with Livewire/Volt.
+*   [ ] Create conversation export (PDF, Markdown).
+*   [ ] Add user authentication for web dashboard.
+*   [ ] Create conversation sharing feature.
+*   [ ] Add dark/light theme toggle.
+*   [ ] Create mobile-responsive chat UI.
+*   [ ] Add conversation search functionality.
+*   [ ] Create keyboard shortcuts for power users.
+
 ## 5. Proposed Directory Structure
 ```text
 app/
