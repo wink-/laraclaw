@@ -8,6 +8,18 @@ return [
     |--------------------------------------------------------------------------
     |
     | Configure the default AI provider and model for Laraclaw.
+    | Supported providers: openai, anthropic, gemini, ollama, groq, mistral,
+    | deepseek, xai
+    |
+    | Each provider requires its API key to be set in the environment:
+    | - OpenAI: OPENAI_API_KEY
+    | - Anthropic: ANTHROPIC_API_KEY
+    | - Gemini: GEMINI_API_KEY
+    | - Ollama: No API key required (local)
+    | - Groq: GROQ_API_KEY
+    | - Mistral: MISTRAL_API_KEY
+    | - DeepSeek: DEEPSEEK_API_KEY
+    | - xAI: XAI_API_KEY
     |
     */
 
@@ -75,6 +87,8 @@ return [
         'path' => env('LARACLAW_IDENTITY_PATH', storage_path('laraclaw')),
         'identity_file' => env('LARACLAW_IDENTITY_FILE', 'IDENTITY.md'),
         'soul_file' => env('LARACLAW_SOUL_FILE', 'SOUL.md'),
+        'aieos_file' => env('LARACLAW_AIEOS_FILE', 'aieos.json'),
+        'aieos_enabled' => env('LARACLAW_AIEOS_ENABLED', true),
     ],
 
     /*

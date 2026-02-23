@@ -4,16 +4,27 @@ namespace App\Laraclaw\Agents;
 
 use App\Laraclaw\Skills\Contracts\SkillInterface;
 use Illuminate\Support\Collection;
+use Laravel\Ai\Attributes\MaxTokens;
+use Laravel\Ai\Attributes\Model;
+use Laravel\Ai\Attributes\Provider;
+use Laravel\Ai\Attributes\Temperature;
 use Laravel\Ai\Contracts\Agent;
 use Laravel\Ai\Contracts\Conversational;
 use Laravel\Ai\Contracts\HasTools;
 use Laravel\Ai\Contracts\Tool;
+use Laravel\Ai\Enums\Lab;
 use Laravel\Ai\Promptable;
 use Stringable;
 
+#[MaxTokens(4096)]
+#[Temperature(0.7)]
 class CoreAgent implements Agent, Conversational, HasTools
 {
     use Promptable;
+
+    protected Lab $provider;
+
+    protected string $model;
 
     /**
      * @param  Collection<int, SkillInterface>  $skills
@@ -22,7 +33,52 @@ class CoreAgent implements Agent, Conversational, HasTools
         protected Collection $skills = new Collection,
         protected array $conversationHistory = [],
         protected ?string $memoryContext = null,
-    ) {}
+    ) {
+        // Set provider and model from config
+        $this->configureProvider();
+    }
+
+    /**
+     * Configure the AI provider from config.
+     */
+    protected function configureProvider(): void
+    {
+        $provider = config('laraclaw.ai.provider', 'openai');
+        $model = config('laraclaw.ai.model', 'gpt-4o-mini');
+
+        // Map config provider to Lab enum
+        $labProvider = match ($provider) {
+            'openai' => Lab::OpenAI,
+            'anthropic' => Lab::Anthropic,
+            'gemini' => Lab::Gemini,
+            'ollama' => Lab::Ollama,
+            'groq' => Lab::Groq,
+            'mistral' => Lab::Mistral,
+            'deepseek' => Lab::DeepSeek,
+            'xai' => Lab::xAI,
+            default => Lab::OpenAI,
+        };
+
+        // Set via attributes using reflection or just store for prompt usage
+        $this->provider = $labProvider;
+        $this->model = $model;
+    }
+
+    /**
+     * Get the configured provider.
+     */
+    public function getProvider(): Lab
+    {
+        return $this->provider ?? Lab::OpenAI;
+    }
+
+    /**
+     * Get the configured model.
+     */
+    public function getModel(): string
+    {
+        return $this->model ?? 'gpt-4o-mini';
+    }
 
     /**
      * Get the instructions that the agent should follow.

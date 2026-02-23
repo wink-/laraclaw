@@ -2,6 +2,9 @@
 
 namespace App\Laraclaw\Identity;
 
+use App\Laraclaw\Identity\Aieos\AieosEntity;
+use App\Laraclaw\Identity\Aieos\AieosParser;
+use App\Laraclaw\Identity\Aieos\AieosPromptCompiler;
 use Illuminate\Support\Facades\File;
 
 class IdentityManager
@@ -12,11 +15,19 @@ class IdentityManager
 
     protected ?string $soul = null;
 
+    protected ?AieosEntity $aieosEntity = null;
+
     protected bool $loaded = false;
+
+    protected AieosParser $aieosParser;
+
+    protected AieosPromptCompiler $aieosCompiler;
 
     public function __construct()
     {
         $this->identityPath = config('laraclaw.identity.path', storage_path('laraclaw'));
+        $this->aieosParser = new AieosParser;
+        $this->aieosCompiler = new AieosPromptCompiler;
     }
 
     /**
@@ -28,6 +39,17 @@ class IdentityManager
             return;
         }
 
+        // Try AIEOS first
+        $aieosFile = $this->identityPath.'/'.config('laraclaw.identity.aieos_file', 'aieos.json');
+        if (File::exists($aieosFile) && config('laraclaw.identity.aieos_enabled', true)) {
+            try {
+                $this->aieosEntity = $this->aieosParser->fromFile($aieosFile);
+            } catch (\Exception $e) {
+                \Log::warning('Failed to load AIEOS file', ['error' => $e->getMessage()]);
+            }
+        }
+
+        // Fall back to legacy markdown files
         $identityFile = $this->identityPath.'/'.config('laraclaw.identity.identity_file', 'IDENTITY.md');
         $soulFile = $this->identityPath.'/'.config('laraclaw.identity.soul_file', 'SOUL.md');
 
@@ -63,13 +85,23 @@ class IdentityManager
     }
 
     /**
+     * Get the AIEOS entity.
+     */
+    public function getAieosEntity(): ?AieosEntity
+    {
+        $this->load();
+
+        return $this->aieosEntity;
+    }
+
+    /**
      * Check if identity file exists.
      */
     public function hasIdentity(): bool
     {
         $this->load();
 
-        return ! empty($this->identity);
+        return ! empty($this->identity) || $this->aieosEntity !== null;
     }
 
     /**
@@ -79,7 +111,17 @@ class IdentityManager
     {
         $this->load();
 
-        return ! empty($this->soul);
+        return ! empty($this->soul) || $this->aieosEntity !== null;
+    }
+
+    /**
+     * Check if AIEOS is loaded.
+     */
+    public function hasAieos(): bool
+    {
+        $this->load();
+
+        return $this->aieosEntity !== null;
     }
 
     /**
@@ -96,14 +138,21 @@ class IdentityManager
             $parts[] = $basePrompt;
         }
 
-        // Add identity
-        if ($this->identity) {
-            $parts[] = "## Identity\n\n".$this->identity;
-        }
+        // Use AIEOS if available
+        if ($this->aieosEntity) {
+            $aieosPrompt = $this->aieosCompiler->compile($this->aieosEntity);
+            if ($aieosPrompt) {
+                $parts[] = $aieosPrompt;
+            }
+        } else {
+            // Fall back to legacy markdown files
+            if ($this->identity) {
+                $parts[] = "## Identity\n\n".$this->identity;
+            }
 
-        // Add soul (personality)
-        if ($this->soul) {
-            $parts[] = "## Personality\n\n".$this->soul;
+            if ($this->soul) {
+                $parts[] = "## Personality\n\n".$this->soul;
+            }
         }
 
         return implode("\n\n", $parts);
@@ -146,6 +195,24 @@ class IdentityManager
     }
 
     /**
+     * Set AIEOS entity.
+     */
+    public function setAieosEntity(AieosEntity $entity): bool
+    {
+        $this->ensureDirectoryExists();
+
+        $aieosFile = $this->identityPath.'/'.config('laraclaw.identity.aieos_file', 'aieos.json');
+
+        $saved = File::put($aieosFile, json_encode($entity->toArray(), JSON_PRETTY_PRINT)) !== false;
+
+        if ($saved) {
+            $this->aieosEntity = $entity;
+        }
+
+        return $saved;
+    }
+
+    /**
      * Get the identity file path.
      */
     public function getIdentityPath(): string
@@ -162,8 +229,9 @@ class IdentityManager
 
         return [
             'path' => $this->identityPath,
-            'identity_exists' => $this->hasIdentity(),
-            'soul_exists' => $this->hasSoul(),
+            'identity_exists' => ! empty($this->identity),
+            'soul_exists' => ! empty($this->soul),
+            'aieos_exists' => $this->aieosEntity !== null,
             'identity_size' => $this->identity ? strlen($this->identity) : 0,
             'soul_size' => $this->soul ? strlen($this->soul) : 0,
         ];
@@ -177,6 +245,7 @@ class IdentityManager
         $this->loaded = false;
         $this->identity = null;
         $this->soul = null;
+        $this->aieosEntity = null;
 
         return $this;
     }
