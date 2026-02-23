@@ -62,15 +62,34 @@
                             {{ $conversation->created_at->diffForHumans() }}
                         </td>
                         <td class="px-4 py-3 text-right">
-                            <button
-                                wire:click="delete({{ $conversation->id }})"
-                                wire:confirm="Are you sure you want to delete this conversation?"
-                                class="text-gray-400 hover:text-red-400 transition"
-                            >
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                                </svg>
-                            </button>
+                            <div class="flex justify-end gap-2">
+                                <!-- Export Dropdown -->
+                                <div class="relative" x-data="{ open: false }">
+                                    <button @click="open = !open" class="text-gray-400 hover:text-indigo-400 transition">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                                        </svg>
+                                    </button>
+                                    <div x-show="open" @click.away="open = false" x-cloak class="absolute right-0 mt-2 w-40 bg-gray-700 rounded-lg shadow-lg border border-gray-600 py-1 z-10">
+                                        <button wire:click="exportMarkdown({{ $conversation->id }})" class="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-600 transition">
+                                            Export as Markdown
+                                        </button>
+                                        <button wire:click="exportJson({{ $conversation->id }})" class="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-600 transition">
+                                            Export as JSON
+                                        </button>
+                                    </div>
+                                </div>
+                                <!-- Delete -->
+                                <button
+                                    wire:click="delete({{ $conversation->id }})"
+                                    wire:confirm="Are you sure you want to delete this conversation?"
+                                    class="text-gray-400 hover:text-red-400 transition"
+                                >
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                    </svg>
+                                </button>
+                            </div>
                         </td>
                     </tr>
                 @empty

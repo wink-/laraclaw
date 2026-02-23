@@ -771,9 +771,15 @@ All Phase 7 items implemented:
 - `GET /laraclaw/live/memories` - Memory fragments
 
 **Remaining Phase 9 Items:**
-- [ ] Add conversation export (PDF, Markdown)
+- [x] Add conversation export (Markdown, JSON)
 - [ ] Add user authentication for web dashboard
 - [ ] Create conversation sharing feature
 - [ ] Create mobile-responsive chat UI improvements
+
+**7. Conversation Export**
+- Added `exportMarkdown()` and `exportJson()` methods to Conversations component
+- Markdown export includes title, gateway, timestamps, and formatted messages
+- JSON export includes full conversation data with messages
+- Uses Laravel's `streamDownload()` for efficient file downloads
 
 **All 51 tests passing**
