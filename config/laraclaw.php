@@ -218,4 +218,36 @@ return [
         'default_voice' => env('LARACLAW_DEFAULT_VOICE', 'nova'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | File Storage Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Configure file storage for document and image analysis.
+    |
+    */
+
+    'files' => [
+        'enabled' => env('LARACLAW_FILES_ENABLED', true),
+        'path' => env('LARACLAW_FILES_PATH', storage_path('laraclaw/files')),
+        'provider' => env('LARACLAW_FILES_PROVIDER', 'openai'),
+        'max_file_size' => env('LARACLAW_MAX_FILE_SIZE', 10485760), // 10MB
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Vector Store Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Configure vector stores for semantic search and RAG.
+    |
+    */
+
+    'vectors' => [
+        'enabled' => env('LARACLAW_VECTORS_ENABLED', true),
+        'dimensions' => env('LARACLAW_VECTOR_DIMENSIONS', 1536),
+        'min_similarity' => env('LARACLAW_MIN_SIMILARITY', 0.7),
+        'search_limit' => env('LARACLAW_VECTOR_SEARCH_LIMIT', 10),
+    ],
+
 ];

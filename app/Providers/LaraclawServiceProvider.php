@@ -19,7 +19,10 @@ use App\Laraclaw\Skills\FileSystemSkill;
 use App\Laraclaw\Skills\MemorySkill;
 use App\Laraclaw\Skills\TimeSkill;
 use App\Laraclaw\Skills\WebSearchSkill;
+use App\Laraclaw\Storage\FileStorageService;
+use App\Laraclaw\Storage\VectorStoreService;
 use App\Laraclaw\Tunnels\TunnelManager;
+use App\Laraclaw\Voice\VoiceService;
 use Illuminate\Support\ServiceProvider;
 
 class LaraclawServiceProvider extends ServiceProvider
@@ -45,6 +48,15 @@ class LaraclawServiceProvider extends ServiceProvider
         $this->app->singleton(TunnelManager::class, function ($app) {
             return new TunnelManager(config('laraclaw.tunnels', []));
         });
+
+        // Register VoiceService as singleton
+        $this->app->singleton(VoiceService::class);
+
+        // Register FileStorageService as singleton
+        $this->app->singleton(FileStorageService::class);
+
+        // Register VectorStoreService as singleton
+        $this->app->singleton(VectorStoreService::class);
 
         // Register skills as singletons
         $this->app->singleton(TimeSkill::class);
