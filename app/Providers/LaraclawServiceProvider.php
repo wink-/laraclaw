@@ -1,0 +1,58 @@
+<?php
+
+namespace App\Providers;
+
+use App\Laraclaw\Agents\CoreAgent;
+use App\Laraclaw\Laraclaw;
+use App\Laraclaw\Memory\MemoryManager;
+use App\Laraclaw\Skills\CalculatorSkill;
+use App\Laraclaw\Skills\TimeSkill;
+use App\Laraclaw\Skills\WebSearchSkill;
+use Illuminate\Support\ServiceProvider;
+
+class LaraclawServiceProvider extends ServiceProvider
+{
+    /**
+     * Register services.
+     */
+    public function register(): void
+    {
+        // Register MemoryManager as singleton
+        $this->app->singleton(MemoryManager::class);
+
+        // Register skills as singletons
+        $this->app->singleton(TimeSkill::class);
+        $this->app->singleton(CalculatorSkill::class);
+        $this->app->singleton(WebSearchSkill::class);
+
+        // Tag skills
+        $this->app->tag([
+            TimeSkill::class,
+            CalculatorSkill::class,
+            WebSearchSkill::class,
+        ], 'laraclaw.skills');
+
+        // Register CoreAgent with skills
+        $this->app->singleton(CoreAgent::class, function ($app) {
+            $skills = collect($app->tagged('laraclaw.skills'));
+
+            return new CoreAgent($skills);
+        });
+
+        // Register main Laraclaw service
+        $this->app->singleton('laraclaw', function ($app) {
+            return new Laraclaw(
+                $app->make(MemoryManager::class),
+                $app->make(CoreAgent::class)
+            );
+        });
+    }
+
+    /**
+     * Bootstrap services.
+     */
+    public function boot(): void
+    {
+        //
+    }
+}
