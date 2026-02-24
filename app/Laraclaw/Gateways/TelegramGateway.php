@@ -155,6 +155,45 @@ class TelegramGateway extends BaseGateway
         }
     }
 
+    public function sendVoiceMessage(Conversation $conversation, string $audioPath, ?string $caption = null): bool
+    {
+        $chatId = $this->getConversationIdentifier($conversation);
+
+        if (! $chatId || ! file_exists($audioPath)) {
+            Log::error('TelegramGateway: Invalid voice message payload', [
+                'conversation_id' => $conversation->id,
+                'audio_path' => $audioPath,
+            ]);
+
+            return false;
+        }
+
+        try {
+            $response = Http::attach('voice', fopen($audioPath, 'r'), basename($audioPath))
+                ->post("{$this->apiBaseUrl}/sendVoice", [
+                    'chat_id' => $chatId,
+                    'caption' => $caption,
+                ]);
+
+            if (! $response->successful()) {
+                Log::error('TelegramGateway: Failed to send voice message', [
+                    'status' => $response->status(),
+                    'body' => $response->body(),
+                ]);
+
+                return false;
+            }
+
+            return true;
+        } catch (\Throwable $e) {
+            Log::error('TelegramGateway: Exception sending voice message', [
+                'error' => $e->getMessage(),
+            ]);
+
+            return false;
+        }
+    }
+
     /**
      * Verify Telegram webhook using secret token.
      */

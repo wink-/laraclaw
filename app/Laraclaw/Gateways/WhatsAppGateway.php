@@ -145,6 +145,55 @@ class WhatsAppGateway extends BaseGateway
         }
     }
 
+    public function sendAudioMessage(Conversation $conversation, string $audioPath): bool
+    {
+        $chatId = $this->getConversationIdentifier($conversation);
+
+        if (! $chatId || ! file_exists($audioPath)) {
+            Log::error('WhatsAppGateway: Invalid audio message payload', [
+                'conversation_id' => $conversation->id,
+                'audio_path' => $audioPath,
+            ]);
+
+            return false;
+        }
+
+        $mediaId = $this->uploadAudioMedia($audioPath);
+        if (! $mediaId) {
+            return false;
+        }
+
+        try {
+            $response = Http::withToken($this->token)
+                ->post("{$this->apiBaseUrl}/messages", [
+                    'messaging_product' => 'whatsapp',
+                    'recipient_type' => 'individual',
+                    'to' => $chatId,
+                    'type' => 'audio',
+                    'audio' => [
+                        'id' => $mediaId,
+                    ],
+                ]);
+
+            if (! $response->successful()) {
+                Log::error('WhatsAppGateway: Failed to send audio message', [
+                    'status' => $response->status(),
+                    'body' => $response->body(),
+                ]);
+
+                return false;
+            }
+
+            return true;
+        } catch (\Throwable $e) {
+            Log::error('WhatsAppGateway: Exception sending audio message', [
+                'error' => $e->getMessage(),
+            ]);
+
+            return false;
+        }
+    }
+
     public function verifyWebhook(array $payload, ?string $signature = null): bool
     {
         // WhatsApp uses a verify_token for the initial setup (GET request)
@@ -203,6 +252,35 @@ class WhatsAppGateway extends BaseGateway
         } catch (\Throwable $e) {
             Log::error('WhatsAppGateway: Failed to download media', [
                 'media_id' => $mediaId,
+                'error' => $e->getMessage(),
+            ]);
+
+            return null;
+        }
+    }
+
+    protected function uploadAudioMedia(string $audioPath): ?string
+    {
+        try {
+            $response = Http::withToken($this->token)
+                ->attach('file', fopen($audioPath, 'r'), basename($audioPath))
+                ->post("{$this->apiBaseUrl}/media", [
+                    'messaging_product' => 'whatsapp',
+                    'type' => 'audio/mpeg',
+                ]);
+
+            if (! $response->successful()) {
+                Log::error('WhatsAppGateway: Failed to upload audio media', [
+                    'status' => $response->status(),
+                    'body' => $response->body(),
+                ]);
+
+                return null;
+            }
+
+            return $response->json('id');
+        } catch (\Throwable $e) {
+            Log::error('WhatsAppGateway: Exception uploading audio media', [
                 'error' => $e->getMessage(),
             ]);
 

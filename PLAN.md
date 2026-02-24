@@ -103,13 +103,20 @@ Laraclaw will mirror the four core pillars of the OpenClaw architecture, adapted
 *   [x] Add conversation search functionality.
 *   [x] Create keyboard shortcuts for power users.
 
-### Phase 10: OpenClaw Parity & Advanced Automation ✅ PARTIALLY COMPLETE
+### Phase 10: OpenClaw Parity & Advanced Automation ✅ COMPLETE
 *   [x] **WhatsApp Gateway**: Implemented `WhatsAppGateway` and webhook controller with verification + signature handling.
 *   [x] **Agentic Scheduling (Cron)**: Implemented `SchedulerSkill`, scheduled tasks table, and `laraclaw:run-scheduled-tasks` command wired into Laravel scheduler.
-*   [~] **Voice Note Integration**: Implemented inbound voice-note transcription for Telegram/WhatsApp via STT; outbound voice replies are still pending.
+*   [x] **Voice Note Integration**: Implemented inbound voice-note transcription and outbound TTS voice replies for Telegram/WhatsApp.
 *   [x] **Document Ingestion UI**: Added dashboard upload/index flow and document tracking model/table for vector-store ingestion.
 *   [x] **Multi-Agent Collaboration**: Implemented planner/executor/reviewer orchestration and collaboration persistence with per-message chat toggle.
 *   [x] **Skill Marketplace/Plugin System**: Implemented DB-backed plugin manager with dashboard enable/disable controls.
+
+### Phase 11: Voice Reply Parity & Operations Hardening (Current)
+*   [x] **Outbound Voice Replies**: Send TTS audio replies back to Telegram/WhatsApp when users send voice notes.
+*   [ ] **Scheduler Operations UI**: Add dashboard controls to list/pause/remove scheduled tasks.
+*   [ ] **Marketplace Safety Rails**: Prevent disabling required core skills that break base flows.
+*   [ ] **Phase 10 Regression Tests**: Add focused tests for scheduler, marketplace toggles, webhooks, and multi-agent persistence.
+*   [ ] **Ops Dashboard Signals**: Show failed scheduled jobs/webhook failures/collaboration stats in one health panel.
 
 ## 5. Proposed Directory Structure
 ```text

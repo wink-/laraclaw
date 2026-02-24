@@ -23,6 +23,7 @@ class TelegramWebhookController extends Controller
     public function __invoke(Request $request): JsonResponse
     {
         $payload = $request->all();
+        $replyWithVoice = (bool) config('laraclaw.voice.reply_with_voice_for_voice_notes', true);
 
         // Verify the webhook secret token
         $secretToken = $request->header('X-Telegram-Bot-Api-Secret-Token');
@@ -36,6 +37,7 @@ class TelegramWebhookController extends Controller
         $parsedMessage = $this->gateway->parseIncomingMessage($payload);
 
         $voiceFileId = $parsedMessage['voice_file_id'] ?? $parsedMessage['audio_file_id'] ?? null;
+        $incomingVoice = filled($voiceFileId);
         if ($voiceFileId) {
             $localPath = $this->gateway->downloadFile($voiceFileId);
             if ($localPath) {
@@ -84,8 +86,30 @@ class TelegramWebhookController extends Controller
         try {
             $response = Laraclaw::chat($conversation, $parsedMessage['content']);
 
-            // Send response back to Telegram
-            $this->gateway->sendMessage($conversation, $response);
+            if ($replyWithVoice && $incomingVoice) {
+                $audioPath = null;
+
+                try {
+                    $audioPath = $this->voice->speak($response);
+                    $voiceSent = $this->gateway->sendVoiceMessage($conversation, $audioPath, $response);
+
+                    if (! $voiceSent) {
+                        $this->gateway->sendMessage($conversation, $response);
+                    }
+                } catch (\Throwable $e) {
+                    logger()->warning('Telegram voice reply failed, falling back to text', [
+                        'error' => $e->getMessage(),
+                    ]);
+
+                    $this->gateway->sendMessage($conversation, $response);
+                } finally {
+                    if ($audioPath && file_exists($audioPath)) {
+                        @unlink($audioPath);
+                    }
+                }
+            } else {
+                $this->gateway->sendMessage($conversation, $response);
+            }
         } catch (\Throwable $e) {
             // Send error message to user
             $this->gateway->sendMessage(

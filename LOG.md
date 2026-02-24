@@ -2,6 +2,39 @@
 
 ## Session: 2026-02-23
 
+### Iteration: Phase 11 Voice Reply Parity Completion
+
+**Goal:** Complete outbound voice-reply parity for Telegram and WhatsApp when users send voice notes.
+
+#### Completed
+
+**1. Telegram Outbound Voice Replies**
+- Added `sendVoiceMessage()` in `TelegramGateway` using Telegram `sendVoice` multipart upload.
+- Added webhook controller flow to:
+  - detect inbound voice notes,
+  - transcribe with `VoiceService`,
+  - generate TTS reply,
+  - send voice reply with text fallback on failure.
+
+**2. WhatsApp Outbound Voice Replies**
+- Added `sendAudioMessage()` in `WhatsAppGateway`.
+- Added media upload helper (`uploadAudioMedia()`) and used Graph API media endpoint under configured API base URL.
+- Added webhook controller flow mirroring Telegram behavior with voice-first reply and text fallback.
+
+**3. Voice Reply Toggle**
+- Added config flag `voice.reply_with_voice_for_voice_notes` in `config/laraclaw.php`.
+- Backed by env var `LARACLAW_REPLY_WITH_VOICE_FOR_VOICE_NOTES` (default `true`).
+
+#### Validation
+- Formatting applied successfully via `vendor/bin/pint --dirty --format agent`.
+- Full tests passed (`28 passed, 0 failed`).
+- No compile errors reported in modified files.
+
+#### Outcome
+- Phase 10 voice-note integration is now fully complete (inbound STT + outbound TTS parity on Telegram/WhatsApp).
+
+## Session: 2026-02-23
+
 ### Iteration: Phase 10 Implementation + UX Stabilization
 
 **Goal:** Implement advanced parity features (Phase 10), refine chat/dashboard UX, and document outcomes.

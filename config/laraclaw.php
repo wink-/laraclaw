@@ -225,6 +225,7 @@ return [
         'tts_provider' => env('LARACLAW_TTS_PROVIDER', 'openai'),
         'stt_provider' => env('LARACLAW_STT_PROVIDER', 'openai'),
         'default_voice' => env('LARACLAW_DEFAULT_VOICE', 'nova'),
+        'reply_with_voice_for_voice_notes' => env('LARACLAW_REPLY_WITH_VOICE_FOR_VOICE_NOTES', true),
     ],
 
     /*

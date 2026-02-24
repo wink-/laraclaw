@@ -41,6 +41,7 @@ class WhatsAppWebhookController extends Controller
     public function handle(Request $request): JsonResponse
     {
         $payload = $request->all();
+        $replyWithVoice = (bool) config('laraclaw.voice.reply_with_voice_for_voice_notes', true);
 
         // Verify the webhook signature
         $signature = $request->header('X-Hub-Signature-256');
@@ -52,6 +53,7 @@ class WhatsAppWebhookController extends Controller
         $parsedMessage = $this->gateway->parseIncomingMessage($payload);
 
         $mediaId = $parsedMessage['voice_media_id'] ?? $parsedMessage['audio_media_id'] ?? null;
+        $incomingVoice = filled($mediaId);
         if ($mediaId) {
             $localPath = $this->gateway->downloadMedia($mediaId);
             if ($localPath) {
@@ -90,8 +92,30 @@ class WhatsAppWebhookController extends Controller
         try {
             $response = Laraclaw::chat($conversation, $parsedMessage['content']);
 
-            // Send response back to WhatsApp
-            $this->gateway->sendMessage($conversation, $response);
+            if ($replyWithVoice && $incomingVoice) {
+                $audioPath = null;
+
+                try {
+                    $audioPath = $this->voice->speak($response);
+                    $voiceSent = $this->gateway->sendAudioMessage($conversation, $audioPath);
+
+                    if (! $voiceSent) {
+                        $this->gateway->sendMessage($conversation, $response);
+                    }
+                } catch (\Throwable $e) {
+                    logger()->warning('WhatsApp voice reply failed, falling back to text', [
+                        'error' => $e->getMessage(),
+                    ]);
+
+                    $this->gateway->sendMessage($conversation, $response);
+                } finally {
+                    if ($audioPath && file_exists($audioPath)) {
+                        @unlink($audioPath);
+                    }
+                }
+            } else {
+                $this->gateway->sendMessage($conversation, $response);
+            }
         } catch (\Throwable $e) {
             // Send error message to user
             $this->gateway->sendMessage(
