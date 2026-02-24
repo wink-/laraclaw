@@ -266,6 +266,12 @@ return [
 
     'marketplace' => [
         'enabled' => env('LARACLAW_MARKETPLACE_ENABLED', true),
+        'required_skills' => [
+            App\Laraclaw\Skills\TimeSkill::class,
+            App\Laraclaw\Skills\CalculatorSkill::class,
+            App\Laraclaw\Skills\WebSearchSkill::class,
+            App\Laraclaw\Skills\MemorySkill::class,
+        ],
     ],
 
 ];

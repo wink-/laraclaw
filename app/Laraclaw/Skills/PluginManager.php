@@ -28,6 +28,25 @@ class PluginManager
     }
 
     /**
+     * @return array<int, string>
+     */
+    protected function requiredSkillClasses(): array
+    {
+        $configured = config('laraclaw.marketplace.required_skills', []);
+
+        if (is_array($configured) && ! empty($configured)) {
+            return array_values(array_filter($configured, fn ($className) => is_string($className) && $className !== ''));
+        }
+
+        return [
+            TimeSkill::class,
+            CalculatorSkill::class,
+            WebSearchSkill::class,
+            MemorySkill::class,
+        ];
+    }
+
+    /**
      * @param  array<int, string>|null  $skillClasses
      * @return array<int, string>
      */
@@ -57,6 +76,7 @@ class PluginManager
     public function listSkills(?array $skillClasses = null): array
     {
         $classes = $skillClasses ?? $this->defaultSkillClasses;
+        $requiredClasses = $this->requiredSkillClasses();
 
         if (! Schema::hasTable('skill_plugins')) {
             return collect($classes)->map(fn (string $class) => [
@@ -64,6 +84,7 @@ class PluginManager
                 'class_name' => $class,
                 'description' => null,
                 'enabled' => true,
+                'is_required' => in_array($class, $requiredClasses, true),
             ])->all();
         }
 
@@ -73,6 +94,13 @@ class PluginManager
             ->whereIn('class_name', $classes)
             ->orderBy('name')
             ->get(['name', 'class_name', 'description', 'enabled'])
+            ->map(fn (SkillPlugin $plugin) => [
+                'name' => $plugin->name,
+                'class_name' => $plugin->class_name,
+                'description' => $plugin->description,
+                'enabled' => (bool) $plugin->enabled,
+                'is_required' => in_array($plugin->class_name, $requiredClasses, true),
+            ])
             ->toArray();
     }
 
@@ -80,6 +108,10 @@ class PluginManager
     {
         if (! Schema::hasTable('skill_plugins')) {
             return;
+        }
+
+        if (! $enabled && in_array($className, $this->requiredSkillClasses(), true)) {
+            throw new \RuntimeException('This skill is required and cannot be disabled.');
         }
 
         SkillPlugin::query()

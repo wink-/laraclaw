@@ -81,6 +81,20 @@
                 </div>
             </div>
         </div>
+
+        <div class="bg-gray-800 rounded-xl p-6 border border-gray-700">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-400 text-sm">Scheduled Tasks</p>
+                    <p class="text-3xl font-bold text-gray-100">{{ $stats['scheduled_tasks'] }}</p>
+                </div>
+                <div class="w-12 h-12 bg-emerald-600/20 rounded-lg flex items-center justify-center">
+                    <svg class="w-6 h-6 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10m-11 9h12a2 2 0 002-2V7a2 2 0 00-2-2H6a2 2 0 00-2 2v11a2 2 0 002 2z"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- System Health & Recent Conversations -->
@@ -183,12 +197,67 @@
                             <p class="text-gray-200 text-sm">{{ $skill['name'] }}</p>
                             <p class="text-xs text-gray-500">{{ $skill['class_name'] }}</p>
                         </div>
-                        <button
-                            wire:click='setSkillEnabled(@js($skill["class_name"]), {{ $skill["enabled"] ? "false" : "true" }})'
-                            class="px-3 py-1.5 text-xs rounded-lg {{ $skill['enabled'] ? 'bg-red-600/20 text-red-300 hover:bg-red-600/30' : 'bg-green-600/20 text-green-300 hover:bg-green-600/30' }}"
-                        >
-                            {{ $skill['enabled'] ? 'Disable' : 'Enable' }}
-                        </button>
+                        @if(($skill['is_required'] ?? false) && $skill['enabled'])
+                            <span class="px-3 py-1.5 text-xs rounded-lg bg-gray-700 text-gray-300">
+                                Required
+                            </span>
+                        @else
+                            <button
+                                wire:click='setSkillEnabled(@js($skill["class_name"]), {{ $skill["enabled"] ? "false" : "true" }})'
+                                class="px-3 py-1.5 text-xs rounded-lg {{ $skill['enabled'] ? 'bg-red-600/20 text-red-300 hover:bg-red-600/30' : 'bg-green-600/20 text-green-300 hover:bg-green-600/30' }}"
+                            >
+                                {{ $skill['enabled'] ? 'Disable' : 'Enable' }}
+                            </button>
+                        @endif
+                    </div>
+                @endforeach
+            </div>
+        @endif
+    </div>
+
+    <div class="bg-gray-800 rounded-xl border border-gray-700 p-6">
+        <h2 class="text-lg font-semibold text-gray-100 mb-4">Scheduled Tasks</h2>
+
+        @if($schedulerStatus)
+            <p class="text-sm text-gray-300 mb-4">{{ $schedulerStatus }}</p>
+        @endif
+
+        @if(empty($scheduledTasks))
+            <p class="text-sm text-gray-500">No scheduled tasks yet.</p>
+        @else
+            <div class="space-y-2">
+                @foreach($scheduledTasks as $task)
+                    <div class="py-3 px-3 rounded-lg bg-gray-700/40 space-y-2">
+                        <div class="flex items-center justify-between gap-4">
+                            <div class="min-w-0">
+                                <p class="text-gray-200 text-sm truncate">{{ $task['action'] }}</p>
+                                <p class="text-xs text-gray-500">{{ $task['cron_expression'] }}</p>
+                            </div>
+                            <span class="px-2 py-1 text-xs rounded-full {{ $task['is_active'] ? 'bg-green-600/20 text-green-400' : 'bg-gray-700 text-gray-300' }}">
+                                {{ $task['is_active'] ? 'Active' : 'Paused' }}
+                            </span>
+                        </div>
+
+                        <div class="flex items-center justify-between gap-3">
+                            <p class="text-xs text-gray-500">
+                                Last run: {{ $task['last_run_at'] ? \Illuminate\Support\Carbon::parse($task['last_run_at'])->diffForHumans() : 'Never' }}
+                            </p>
+
+                            <div class="flex items-center gap-2">
+                                <button
+                                    wire:click="toggleScheduledTask({{ $task['id'] }})"
+                                    class="px-3 py-1.5 text-xs rounded-lg {{ $task['is_active'] ? 'bg-yellow-600/20 text-yellow-300 hover:bg-yellow-600/30' : 'bg-green-600/20 text-green-300 hover:bg-green-600/30' }}"
+                                >
+                                    {{ $task['is_active'] ? 'Pause' : 'Resume' }}
+                                </button>
+                                <button
+                                    wire:click="removeScheduledTask({{ $task['id'] }})"
+                                    class="px-3 py-1.5 text-xs rounded-lg bg-red-600/20 text-red-300 hover:bg-red-600/30"
+                                >
+                                    Remove
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 @endforeach
             </div>

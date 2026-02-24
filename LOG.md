@@ -1,5 +1,32 @@
 # Laraclaw Implementation Log
 
+## Session: 2026-02-24
+
+### Iteration: Phase 11 Scheduler Ops + Marketplace Safety Rails
+
+**Goal:** Start Phase 11 hardening by adding scheduler task controls and preventing disabling required core skills.
+
+#### Completed
+
+**1. Scheduler Operations UI**
+- Added scheduled task stats and a dashboard task panel.
+- Added actions to pause/resume and remove tasks directly from Livewire dashboard.
+- Added scheduler status messaging for action outcomes and missing-table edge cases.
+
+**2. Marketplace Safety Rails**
+- Added required-skill guardrails in `PluginManager` to block disabling critical core skills.
+- Added configurable required skills list under `laraclaw.marketplace.required_skills`.
+- Updated skill listing payload with `is_required` to drive UI behavior.
+- Updated dashboard marketplace UI to render required skills as non-disableable.
+- Added runtime exception handling in dashboard action to show clear safety messages.
+
+#### Validation
+- Formatting applied successfully via `vendor/bin/pint --dirty --format agent`.
+- Test suite passed (`28 passed, 0 failed`).
+
+#### Outcome
+- Phase 11 is actively in progress with two hardening items now delivered: scheduler operations controls and marketplace safety rails.
+
 ## Session: 2026-02-23
 
 ### Iteration: Phase 11 Voice Reply Parity Completion

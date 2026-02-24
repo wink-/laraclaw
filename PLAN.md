@@ -114,7 +114,7 @@ Laraclaw will mirror the four core pillars of the OpenClaw architecture, adapted
 ### Phase 11: Voice Reply Parity & Operations Hardening (Current)
 *   [x] **Outbound Voice Replies**: Send TTS audio replies back to Telegram/WhatsApp when users send voice notes.
 *   [ ] **Scheduler Operations UI**: Add dashboard controls to list/pause/remove scheduled tasks.
-*   [ ] **Marketplace Safety Rails**: Prevent disabling required core skills that break base flows.
+*   [x] **Marketplace Safety Rails**: Prevent disabling required core skills that break base flows.
 *   [ ] **Phase 10 Regression Tests**: Add focused tests for scheduler, marketplace toggles, webhooks, and multi-agent persistence.
 *   [ ] **Ops Dashboard Signals**: Show failed scheduled jobs/webhook failures/collaboration stats in one health panel.
 

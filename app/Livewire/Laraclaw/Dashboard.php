@@ -10,6 +10,8 @@ use App\Models\Conversation;
 use App\Models\LaraclawDocument;
 use App\Models\MemoryFragment;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
@@ -27,16 +29,24 @@ class Dashboard extends Component
 
     public ?string $marketplaceStatus = null;
 
+    public ?string $schedulerStatus = null;
+
     /**
      * @var array<int, array<string, mixed>>
      */
     public array $skills = [];
+
+    /**
+     * @var array<int, array<string, mixed>>
+     */
+    public array $scheduledTasks = [];
 
     public function mount(): void
     {
         $this->loadStats();
         $this->loadHealth();
         $this->loadSkills();
+        $this->loadScheduledTasks();
     }
 
     protected function loadStats(): void
@@ -47,6 +57,9 @@ class Dashboard extends Component
             'memories' => MemoryFragment::count(),
             'today_conversations' => Conversation::whereDate('created_at', today())->count(),
             'agent_collaborations' => AgentCollaboration::count(),
+            'scheduled_tasks' => Schema::hasTable('laraclaw_scheduled_tasks')
+                ? DB::table('laraclaw_scheduled_tasks')->count()
+                : 0,
         ];
     }
 
@@ -124,7 +137,14 @@ class Dashboard extends Component
 
     public function setSkillEnabled(string $className, bool $enabled): void
     {
-        Laraclaw::setSkillEnabled($className, $enabled);
+        try {
+            Laraclaw::setSkillEnabled($className, $enabled);
+        } catch (\RuntimeException $e) {
+            $this->marketplaceStatus = $e->getMessage();
+
+            return;
+        }
+
         $this->loadSkills();
         $this->marketplaceStatus = $enabled
             ? 'Skill enabled successfully.'
@@ -142,6 +162,75 @@ class Dashboard extends Component
         $this->skills = Laraclaw::listSkills();
     }
 
+    protected function loadScheduledTasks(): void
+    {
+        if (! Schema::hasTable('laraclaw_scheduled_tasks')) {
+            $this->scheduledTasks = [];
+
+            return;
+        }
+
+        $this->scheduledTasks = DB::table('laraclaw_scheduled_tasks')
+            ->select(['id', 'action', 'cron_expression', 'is_active', 'last_run_at', 'created_at'])
+            ->latest('created_at')
+            ->limit(10)
+            ->get()
+            ->map(fn ($task) => [
+                'id' => $task->id,
+                'action' => $task->action,
+                'cron_expression' => $task->cron_expression,
+                'is_active' => (bool) $task->is_active,
+                'last_run_at' => $task->last_run_at,
+                'created_at' => $task->created_at,
+            ])
+            ->all();
+    }
+
+    public function toggleScheduledTask(int $taskId): void
+    {
+        if (! Schema::hasTable('laraclaw_scheduled_tasks')) {
+            $this->schedulerStatus = 'Scheduled tasks table not found.';
+
+            return;
+        }
+
+        $task = DB::table('laraclaw_scheduled_tasks')->where('id', $taskId)->first();
+        if (! $task) {
+            $this->schedulerStatus = 'Scheduled task not found.';
+
+            return;
+        }
+
+        DB::table('laraclaw_scheduled_tasks')
+            ->where('id', $taskId)
+            ->update([
+                'is_active' => ! $task->is_active,
+                'updated_at' => now(),
+            ]);
+
+        $this->schedulerStatus = $task->is_active
+            ? 'Scheduled task paused.'
+            : 'Scheduled task resumed.';
+
+        $this->loadScheduledTasks();
+        $this->loadStats();
+    }
+
+    public function removeScheduledTask(int $taskId): void
+    {
+        if (! Schema::hasTable('laraclaw_scheduled_tasks')) {
+            $this->schedulerStatus = 'Scheduled tasks table not found.';
+
+            return;
+        }
+
+        DB::table('laraclaw_scheduled_tasks')->where('id', $taskId)->delete();
+        $this->schedulerStatus = 'Scheduled task removed.';
+
+        $this->loadScheduledTasks();
+        $this->loadStats();
+    }
+
     public function render()
     {
         return view('livewire.laraclaw.dashboard', [
@@ -150,6 +239,7 @@ class Dashboard extends Component
             'recentConversations' => $this->recentConversations(),
             'recentDocuments' => $this->recentDocuments(),
             'skills' => $this->skills,
+            'scheduledTasks' => $this->scheduledTasks,
         ])->layout('components.laraclaw.layout');
     }
 }
