@@ -111,12 +111,20 @@ Laraclaw will mirror the four core pillars of the OpenClaw architecture, adapted
 *   [x] **Multi-Agent Collaboration**: Implemented planner/executor/reviewer orchestration and collaboration persistence with per-message chat toggle.
 *   [x] **Skill Marketplace/Plugin System**: Implemented DB-backed plugin manager with dashboard enable/disable controls.
 
-### Phase 11: Voice Reply Parity & Operations Hardening (Current)
+### Phase 11: Voice Reply Parity & Operations Hardening ✅ COMPLETE
 *   [x] **Outbound Voice Replies**: Send TTS audio replies back to Telegram/WhatsApp when users send voice notes.
 *   [x] **Scheduler Operations UI**: Add dashboard controls to list/pause/remove scheduled tasks.
 *   [x] **Marketplace Safety Rails**: Prevent disabling required core skills that break base flows.
 *   [x] **Phase 10 Regression Tests**: Added focused tests for scheduler dashboard controls and marketplace safety toggles.
 *   [x] **Ops Dashboard Signals**: Added dashboard panel showing failed scheduled jobs, webhook failures, and collaboration activity stats.
+
+### Phase 12: API Layer, Observability & Platform Intelligence (Current)
+*   [ ] **REST API with Token Auth**: Create a versioned JSON API (`/api/v1/`) using Laravel Sanctum for token authentication. Expose endpoints for conversations, messages, skills, and memories. Include request/response resource classes and OpenAPI-compatible route documentation. Enables third-party apps, mobile clients, and automation pipelines to interact with Laraclaw programmatically.
+*   [ ] **Rate Limiting & Abuse Prevention**: Apply Laravel's built-in `RateLimiter` to API endpoints, webhook routes, and chat actions. Implement per-user and per-IP throttling with configurable limits in `config/laraclaw.php`. Return proper `429 Too Many Requests` responses with `Retry-After` headers. Add a rate-limit dashboard indicator.
+*   [ ] **Token Usage Tracking & Cost Analytics**: Intercept LLM responses to capture token counts (prompt + completion tokens). Persist per-message token usage in a `token_usage` table. Add a dashboard analytics panel showing daily/weekly token burn, estimated cost by provider, and per-conversation breakdowns. Provides visibility into AI spend.
+*   [ ] **Proactive Notification Engine**: Allow the assistant to initiate outbound messages to users via gateways (Telegram, Discord, WhatsApp) on scheduled triggers or event-driven conditions. Supports daily briefings, task-completion alerts, and scheduled reminder delivery. Extends the existing `SchedulerSkill` infrastructure with a notification dispatch layer.
+*   [ ] **Smart Context Window Management**: Replace the flat `LIMIT 50` history retrieval with token-budget-aware context assembly. Implement automatic conversation summarisation—compress older messages into a summary block when approaching the model's context limit. Configurable via `context_budget` and `summarisation_model` in config. Fold in semantic reranking (Phase 8 debt) to prioritise the most relevant memory fragments.
+*   [ ] **Configuration Export / Import**: Add `laraclaw:config:export` and `laraclaw:config:import` Artisan commands that serialise/deserialise the full assistant configuration (identity files, AIEOS spec, skill toggles, scheduled tasks, gateway bindings, and settings) as a portable JSON bundle. Enables backup, migration between environments, and sharing of assistant setups.
 
 ## 5. Proposed Directory Structure
 ```text

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Laraclaw;
 
 use App\Http\Controllers\Controller;
 use App\Laraclaw\Monitoring\MetricsCollector;
+use App\Laraclaw\Monitoring\TokenUsageTracker;
 use App\Models\Conversation;
 use App\Models\MemoryFragment;
 use App\Models\Message;
@@ -14,7 +15,8 @@ use Illuminate\Support\Facades\DB;
 class DashboardController extends Controller
 {
     public function __construct(
-        protected MetricsCollector $metrics
+        protected MetricsCollector $metrics,
+        protected TokenUsageTracker $tokenUsageTracker,
     ) {}
 
     /**
@@ -177,12 +179,20 @@ class DashboardController extends Controller
 
         // Return streaming response
         return $agent->stream($request->message)
-            ->then(function ($response) use ($conversation) {
+            ->then(function ($response) use ($conversation, $request) {
                 // Store the complete response
-                $conversation->messages()->create([
+                $assistantMessage = $conversation->messages()->create([
                     'role' => 'assistant',
                     'content' => (string) $response,
                 ]);
+
+                $this->tokenUsageTracker->record(
+                    $conversation,
+                    $assistantMessage,
+                    $request->string('message')->toString(),
+                    (string) $response,
+                    ['response_mode' => 'single_stream'],
+                );
             });
     }
 
@@ -222,15 +232,23 @@ class DashboardController extends Controller
         // Return Vercel AI SDK compatible stream
         return $agent->stream($request->message)
             ->usingVercelDataProtocol()
-            ->then(function ($response) use ($conversation) {
+            ->then(function ($response) use ($conversation, $request) {
                 // Store the complete response
-                $conversation->messages()->create([
+                $assistantMessage = $conversation->messages()->create([
                     'role' => 'assistant',
                     'content' => (string) $response,
                     'metadata' => [
                         'response_mode' => 'single',
                     ],
                 ]);
+
+                $this->tokenUsageTracker->record(
+                    $conversation,
+                    $assistantMessage,
+                    $request->string('message')->toString(),
+                    (string) $response,
+                    ['response_mode' => 'single_stream_vercel'],
+                );
             });
     }
 

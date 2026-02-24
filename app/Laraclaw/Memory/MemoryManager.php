@@ -30,6 +30,54 @@ class MemoryManager
     }
 
     /**
+     * Build conversation context using a token budget and summary fallback.
+     *
+     * @return array<int, array{role: string, content: string}>
+     */
+    public function getConversationContextWithBudget(Conversation $conversation): array
+    {
+        $historyLimit = (int) config('laraclaw.context.history_limit', 50);
+        $budget = (int) config('laraclaw.context.budget_tokens', 3000);
+        $summaryEnabled = (bool) config('laraclaw.context.summary_enabled', true);
+
+        $messages = $this->getConversationHistory($conversation, $historyLimit);
+        $totalTokens = 0;
+        $selected = [];
+
+        for ($index = count($messages) - 1; $index >= 0; $index--) {
+            $message = $messages[$index];
+            $messageTokens = (int) max(1, ceil(mb_strlen($message['content']) / 4));
+
+            if (($totalTokens + $messageTokens) > $budget) {
+                break;
+            }
+
+            $selected[] = $message;
+            $totalTokens += $messageTokens;
+        }
+
+        $selected = array_reverse($selected);
+
+        if (! $summaryEnabled || count($selected) === count($messages)) {
+            return $selected;
+        }
+
+        $olderMessages = array_slice($messages, 0, max(0, count($messages) - count($selected)));
+        if (empty($olderMessages)) {
+            return $selected;
+        }
+
+        $summary = $this->summarizeMessages($olderMessages);
+
+        return array_merge([
+            [
+                'role' => 'system',
+                'content' => $summary,
+            ],
+        ], $selected);
+    }
+
+    /**
      * Get relevant memories for a given query using FTS5 full-text search.
      *
      * @return array<int, MemoryFragment>
@@ -40,10 +88,68 @@ class MemoryManager
 
         // Use FTS5 for SQLite, fallback to LIKE for other databases
         if ($driver === 'sqlite' && $this->ftsTableExists()) {
-            return $this->searchWithFts($query, $userId, $limit);
+            $results = $this->searchWithFts($query, $userId, $limit * 2);
+
+            return $this->rerankMemories($results, $query, $limit);
         }
 
-        return $this->searchWithLike($query, $userId, $limit);
+        $results = $this->searchWithLike($query, $userId, $limit * 2);
+
+        return $this->rerankMemories($results, $query, $limit);
+    }
+
+    /**
+     * @param  array<int, MemoryFragment>  $memories
+     * @return array<int, MemoryFragment>
+     */
+    protected function rerankMemories(array $memories, string $query, int $limit): array
+    {
+        if (! config('laraclaw.context.rerank_enabled', true)) {
+            return array_slice($memories, 0, $limit);
+        }
+
+        $terms = collect(preg_split('/\s+/u', mb_strtolower(trim($query))) ?: [])
+            ->filter(fn (string $term) => $term !== '')
+            ->values();
+
+        if ($terms->isEmpty()) {
+            return array_slice($memories, 0, $limit);
+        }
+
+        $scored = collect($memories)->map(function (MemoryFragment $memory) use ($terms) {
+            $content = mb_strtolower($memory->content);
+            $score = $terms->sum(fn (string $term) => str_contains($content, $term) ? 1 : 0);
+
+            return [
+                'memory' => $memory,
+                'score' => $score,
+                'created_at' => $memory->created_at,
+            ];
+        })->sortByDesc(fn (array $row) => [$row['score'], $row['created_at']]);
+
+        return $scored
+            ->take($limit)
+            ->pluck('memory')
+            ->values()
+            ->all();
+    }
+
+    /**
+     * @param  array<int, array{role: string, content: string}>  $messages
+     */
+    protected function summarizeMessages(array $messages): string
+    {
+        $lines = collect($messages)
+            ->take(12)
+            ->map(function (array $message): string {
+                $content = trim($message['content']);
+                $content = mb_strlen($content) > 120 ? mb_substr($content, 0, 117).'...' : $content;
+
+                return strtoupper($message['role']).": {$content}";
+            })
+            ->implode("\n- ");
+
+        return "Summary of earlier context:\n- {$lines}";
     }
 
     /**

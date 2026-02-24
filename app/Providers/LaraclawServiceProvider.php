@@ -12,6 +12,7 @@ use App\Laraclaw\Gateways\WhatsAppGateway;
 use App\Laraclaw\Identity\IdentityManager;
 use App\Laraclaw\Laraclaw;
 use App\Laraclaw\Memory\MemoryManager;
+use App\Laraclaw\Monitoring\TokenUsageTracker;
 use App\Laraclaw\Security\SecurityManager;
 use App\Laraclaw\Skills\CalculatorSkill;
 use App\Laraclaw\Skills\CalendarSkill;
@@ -64,6 +65,9 @@ class LaraclawServiceProvider extends ServiceProvider
 
         // Register plugin manager as singleton
         $this->app->singleton(PluginManager::class);
+
+        // Register token usage tracker as singleton
+        $this->app->singleton(TokenUsageTracker::class);
 
         // Register skills as singletons
         $this->app->singleton(TimeSkill::class);
@@ -124,6 +128,7 @@ class LaraclawServiceProvider extends ServiceProvider
                 $app->make(CoreAgent::class),
                 $app->make(MultiAgentOrchestrator::class),
                 $app->make(PluginManager::class),
+                $app->make(TokenUsageTracker::class),
             );
         });
     }

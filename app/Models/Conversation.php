@@ -41,6 +41,11 @@ class Conversation extends Model
         return $this->hasMany(MemoryFragment::class);
     }
 
+    public function tokenUsages(): HasMany
+    {
+        return $this->hasMany(TokenUsage::class);
+    }
+
     /**
      * Get the formatted conversation history for the LLM.
      *

@@ -9,3 +9,4 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 Schedule::command('laraclaw:run-scheduled-tasks')->everyMinute();
+Schedule::command('laraclaw:dispatch-notifications')->everyMinute();

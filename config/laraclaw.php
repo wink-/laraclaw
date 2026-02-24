@@ -274,4 +274,41 @@ return [
         ],
     ],
 
+    'api' => [
+        'enabled' => env('LARACLAW_API_ENABLED', true),
+    ],
+
+    'rate_limits' => [
+        'api_per_minute' => env('LARACLAW_API_RATE_LIMIT', 60),
+        'webhooks_per_minute' => env('LARACLAW_WEBHOOK_RATE_LIMIT', 120),
+    ],
+
+    'context' => [
+        'history_limit' => env('LARACLAW_CONTEXT_HISTORY_LIMIT', 50),
+        'budget_tokens' => env('LARACLAW_CONTEXT_BUDGET_TOKENS', 3000),
+        'summary_enabled' => env('LARACLAW_CONTEXT_SUMMARY_ENABLED', true),
+        'rerank_enabled' => env('LARACLAW_CONTEXT_RERANK_ENABLED', true),
+    ],
+
+    'token_usage' => [
+        'pricing' => [
+            'openai' => [
+                'input_per_million' => (float) env('LARACLAW_OPENAI_INPUT_PER_MILLION', 0.15),
+                'output_per_million' => (float) env('LARACLAW_OPENAI_OUTPUT_PER_MILLION', 0.60),
+            ],
+            'anthropic' => [
+                'input_per_million' => (float) env('LARACLAW_ANTHROPIC_INPUT_PER_MILLION', 3.00),
+                'output_per_million' => (float) env('LARACLAW_ANTHROPIC_OUTPUT_PER_MILLION', 15.00),
+            ],
+            'gemini' => [
+                'input_per_million' => (float) env('LARACLAW_GEMINI_INPUT_PER_MILLION', 0.35),
+                'output_per_million' => (float) env('LARACLAW_GEMINI_OUTPUT_PER_MILLION', 1.05),
+            ],
+        ],
+    ],
+
+    'notifications' => [
+        'enabled' => env('LARACLAW_NOTIFICATIONS_ENABLED', true),
+    ],
+
 ];

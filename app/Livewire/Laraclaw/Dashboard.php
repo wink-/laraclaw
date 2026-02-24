@@ -8,7 +8,9 @@ use App\Laraclaw\Storage\VectorStoreService;
 use App\Models\AgentCollaboration;
 use App\Models\Conversation;
 use App\Models\LaraclawDocument;
+use App\Models\LaraclawNotification;
 use App\Models\MemoryFragment;
+use App\Models\TokenUsage;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -64,6 +66,11 @@ class Dashboard extends Component
             'memories' => MemoryFragment::count(),
             'today_conversations' => Conversation::whereDate('created_at', today())->count(),
             'agent_collaborations' => AgentCollaboration::count(),
+            'tokens_7d' => TokenUsage::query()->where('created_at', '>=', now()->subDays(7))->sum('total_tokens'),
+            'cost_7d' => (float) TokenUsage::query()->where('created_at', '>=', now()->subDays(7))->sum('cost_usd'),
+            'pending_notifications' => Schema::hasTable('laraclaw_notifications')
+                ? LaraclawNotification::query()->where('status', 'pending')->count()
+                : 0,
             'scheduled_tasks' => Schema::hasTable('laraclaw_scheduled_tasks')
                 ? DB::table('laraclaw_scheduled_tasks')->count()
                 : 0,
@@ -263,6 +270,15 @@ class Dashboard extends Component
                 'Invalid webhook',
                 'Invalid signature',
             ]),
+            'api_rate_limited' => $this->countLogMatches([
+                'Too Many Requests',
+            ]),
+            'notifications_failed_24h' => Schema::hasTable('laraclaw_notifications')
+                ? LaraclawNotification::query()
+                    ->where('status', 'failed')
+                    ->where('updated_at', '>=', now()->subDay())
+                    ->count()
+                : 0,
             'collaborations_total' => AgentCollaboration::count(),
             'collaborations_last_24h' => AgentCollaboration::query()
                 ->where('created_at', '>=', now()->subDay())

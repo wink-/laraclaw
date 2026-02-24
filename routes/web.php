@@ -12,7 +12,7 @@ Route::get('/', function () {
 });
 
 // Laraclaw Webhook Routes (no auth required - verified by signatures)
-Route::prefix('laraclaw/webhooks')->group(function () {
+Route::middleware('throttle:laraclaw-webhooks')->prefix('laraclaw/webhooks')->group(function () {
     Route::post('telegram', TelegramWebhookController::class)->name('laraclaw.webhooks.telegram');
     Route::post('discord', DiscordWebhookController::class)->name('laraclaw.webhooks.discord');
     Route::get('whatsapp', [WhatsAppWebhookController::class, 'verify'])->name('laraclaw.webhooks.whatsapp.verify');
@@ -20,7 +20,9 @@ Route::prefix('laraclaw/webhooks')->group(function () {
 });
 
 // Laraclaw Streaming endpoint (called from Livewire)
-Route::post('laraclaw/chat/stream-vercel', [DashboardController::class, 'streamVercel'])->name('laraclaw.chat.stream.vercel');
+Route::post('laraclaw/chat/stream-vercel', [DashboardController::class, 'streamVercel'])
+    ->middleware('throttle:laraclaw-api')
+    ->name('laraclaw.chat.stream.vercel');
 
 // Authenticated Routes
 Route::middleware('auth')->group(function () {
@@ -40,8 +42,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/memories', [DashboardController::class, 'memories'])->name('memories');
         Route::get('/metrics', [DashboardController::class, 'metrics'])->name('metrics');
         Route::get('/chat', [DashboardController::class, 'chat'])->name('chat');
-        Route::post('/chat', [DashboardController::class, 'sendMessage'])->name('chat.send');
-        Route::post('/chat/stream', [DashboardController::class, 'streamMessage'])->name('chat.stream');
+        Route::post('/chat', [DashboardController::class, 'sendMessage'])->middleware('throttle:laraclaw-api')->name('chat.send');
+        Route::post('/chat/stream', [DashboardController::class, 'streamMessage'])->middleware('throttle:laraclaw-api')->name('chat.stream');
         Route::get('/chat/new', [DashboardController::class, 'newChat'])->name('chat.new');
     });
 
