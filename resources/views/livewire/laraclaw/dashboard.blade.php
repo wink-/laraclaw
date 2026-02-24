@@ -134,6 +134,35 @@
     </div>
 
     <div class="bg-gray-800 rounded-xl border border-gray-700 p-6">
+        <h2 class="text-lg font-semibold text-gray-100 mb-4">Ops Signals (24h)</h2>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+            <div class="py-3 px-3 rounded-lg bg-gray-700/40">
+                <p class="text-xs text-gray-500">Failed Scheduled Jobs</p>
+                <p class="text-xl font-semibold {{ ($opsSignals['failed_scheduled_jobs'] ?? 0) > 0 ? 'text-red-300' : 'text-gray-100' }}">
+                    {{ $opsSignals['failed_scheduled_jobs'] ?? 0 }}
+                </p>
+            </div>
+            <div class="py-3 px-3 rounded-lg bg-gray-700/40">
+                <p class="text-xs text-gray-500">Webhook Failures</p>
+                <p class="text-xl font-semibold {{ ($opsSignals['webhook_failures'] ?? 0) > 0 ? 'text-red-300' : 'text-gray-100' }}">
+                    {{ $opsSignals['webhook_failures'] ?? 0 }}
+                </p>
+            </div>
+            <div class="py-3 px-3 rounded-lg bg-gray-700/40">
+                <p class="text-xs text-gray-500">Collaborations (24h)</p>
+                <p class="text-xl font-semibold text-gray-100">{{ $opsSignals['collaborations_last_24h'] ?? 0 }}</p>
+            </div>
+            <div class="py-3 px-3 rounded-lg bg-gray-700/40">
+                <p class="text-xs text-gray-500">Errors Metric</p>
+                <p class="text-xl font-semibold {{ ($opsSignals['errors_metric'] ?? 0) > 0 ? 'text-yellow-300' : 'text-gray-100' }}">
+                    {{ $opsSignals['errors_metric'] ?? 0 }}
+                </p>
+            </div>
+        </div>
+        <p class="mt-3 text-xs text-gray-500">Total collaborations recorded: {{ $opsSignals['collaborations_total'] ?? 0 }}</p>
+    </div>
+
+    <div class="bg-gray-800 rounded-xl border border-gray-700 p-6">
         <h2 class="text-lg font-semibold text-gray-100 mb-4">Document Ingestion</h2>
 
         <form wire:submit="ingestDocument" class="space-y-3">

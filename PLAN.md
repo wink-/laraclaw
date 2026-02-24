@@ -116,7 +116,7 @@ Laraclaw will mirror the four core pillars of the OpenClaw architecture, adapted
 *   [x] **Scheduler Operations UI**: Add dashboard controls to list/pause/remove scheduled tasks.
 *   [x] **Marketplace Safety Rails**: Prevent disabling required core skills that break base flows.
 *   [x] **Phase 10 Regression Tests**: Added focused tests for scheduler dashboard controls and marketplace safety toggles.
-*   [ ] **Ops Dashboard Signals**: Show failed scheduled jobs/webhook failures/collaboration stats in one health panel.
+*   [x] **Ops Dashboard Signals**: Added dashboard panel showing failed scheduled jobs, webhook failures, and collaboration activity stats.
 
 ## 5. Proposed Directory Structure
 ```text

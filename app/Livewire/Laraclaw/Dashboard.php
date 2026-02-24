@@ -9,6 +9,7 @@ use App\Models\AgentCollaboration;
 use App\Models\Conversation;
 use App\Models\LaraclawDocument;
 use App\Models\MemoryFragment;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -32,6 +33,11 @@ class Dashboard extends Component
     public ?string $schedulerStatus = null;
 
     /**
+     * @var array<string, mixed>
+     */
+    public array $opsSignals = [];
+
+    /**
      * @var array<int, array<string, mixed>>
      */
     public array $skills = [];
@@ -47,6 +53,7 @@ class Dashboard extends Component
         $this->loadHealth();
         $this->loadSkills();
         $this->loadScheduledTasks();
+        $this->loadOpsSignals();
     }
 
     protected function loadStats(): void
@@ -240,6 +247,80 @@ class Dashboard extends Component
             'recentDocuments' => $this->recentDocuments(),
             'skills' => $this->skills,
             'scheduledTasks' => $this->scheduledTasks,
+            'opsSignals' => $this->opsSignals,
         ])->layout('components.laraclaw.layout');
+    }
+
+    protected function loadOpsSignals(): void
+    {
+        $this->opsSignals = [
+            'failed_scheduled_jobs' => $this->countLogMatches([
+                'Failed to run scheduled task',
+            ]),
+            'webhook_failures' => $this->countLogMatches([
+                'Telegram webhook error',
+                'WhatsApp webhook error',
+                'Invalid webhook',
+                'Invalid signature',
+            ]),
+            'collaborations_total' => AgentCollaboration::count(),
+            'collaborations_last_24h' => AgentCollaboration::query()
+                ->where('created_at', '>=', now()->subDay())
+                ->count(),
+            'errors_metric' => (int) app(\App\Laraclaw\Monitoring\MetricsCollector::class)
+                ->getMetrics()['errors'],
+        ];
+    }
+
+    /**
+     * @param  array<int, string>  $patterns
+     */
+    protected function countLogMatches(array $patterns): int
+    {
+        $logPath = storage_path('logs/laravel.log');
+
+        if (! is_file($logPath)) {
+            return 0;
+        }
+
+        $lines = @file($logPath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+
+        if (! is_array($lines) || empty($lines)) {
+            return 0;
+        }
+
+        $lines = array_slice($lines, -2000);
+        $threshold = now()->subDay();
+        $count = 0;
+
+        foreach ($lines as $line) {
+            $timestamp = $this->extractTimestamp($line);
+            if ($timestamp && $timestamp->lt($threshold)) {
+                continue;
+            }
+
+            foreach ($patterns as $pattern) {
+                if (str_contains($line, $pattern)) {
+                    $count++;
+
+                    break;
+                }
+            }
+        }
+
+        return $count;
+    }
+
+    protected function extractTimestamp(string $line): ?Carbon
+    {
+        if (! preg_match('/\[(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})\]/', $line, $matches)) {
+            return null;
+        }
+
+        try {
+            return Carbon::createFromFormat('Y-m-d H:i:s', $matches[1]);
+        } catch (\Throwable) {
+            return null;
+        }
     }
 }

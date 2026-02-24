@@ -2,6 +2,35 @@
 
 ## Session: 2026-02-24
 
+### Iteration: Phase 11 Ops Dashboard Signals
+
+**Goal:** Complete the final Phase 11 hardening item by surfacing operations signals in one dashboard panel.
+
+#### Completed
+
+**1. Ops Signals Aggregation**
+- Extended Livewire dashboard state with `opsSignals`.
+- Added 24-hour signal aggregation for:
+  - failed scheduled jobs,
+  - webhook failures,
+  - collaboration totals and last-24h activity,
+  - error metric count from `MetricsCollector`.
+
+**2. Log-Derived Failure Counts**
+- Added bounded log parsing over recent Laravel log lines.
+- Added timestamp-aware filtering for last-24h counts.
+- Mapped known failure signatures for scheduler and webhooks.
+
+**3. Dashboard Panel UI**
+- Added an “Ops Signals (24h)” panel to the Livewire dashboard.
+- Included severity coloring for failure/error counters.
+- Included collaboration summary context in the same panel.
+
+#### Outcome
+- Phase 11 is now fully complete across voice parity, scheduler controls, marketplace safety rails, regression hardening, and operations signals.
+
+## Session: 2026-02-24
+
 ### Iteration: Phase 11 Regression Test Coverage
 
 **Goal:** Add focused regression tests for scheduler operations and marketplace safety rails.
