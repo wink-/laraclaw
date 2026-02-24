@@ -53,9 +53,11 @@ class SchedulerSkill implements SkillInterface, Tool
 
     public function toTool(): Tool
     {
-        return Request::make($this->name())
-            ->description($this->description())
-            ->schema($this->schema(...))
-            ->handle($this->execute(...));
+        return $this;
+    }
+
+    public function handle(Request $request): Stringable|string
+    {
+        return $this->execute($request->all());
     }
 }

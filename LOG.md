@@ -2,6 +2,35 @@
 
 ## Session: 2026-02-24
 
+### Iteration: Phase 11 Regression Test Coverage
+
+**Goal:** Add focused regression tests for scheduler operations and marketplace safety rails.
+
+#### Completed
+
+**1. Dashboard Hardening Regression Tests**
+- Added `tests/Feature/DashboardHardeningTest.php` with coverage for:
+  - pausing/resuming scheduled tasks from dashboard actions,
+  - removing scheduled tasks,
+  - blocking disable actions for required skills,
+  - allowing disable actions for non-required skills.
+
+**2. Tool Contract Compatibility Fix**
+- Updated `SchedulerSkill` to implement Laravel AI `Tool::handle()`.
+- This removed a fatal error that was blocking `php artisan test` discovery when `SchedulerSkill` is loaded.
+
+**3. Existing Test Alignment**
+- Updated `tests/Feature/LaraclawTest.php` expected tool count from 8 to 9 to reflect current registered skills.
+
+#### Validation
+- `php artisan test --compact --filter=dashboard` passed (`4 passed`).
+- Full test suite run passed after updates.
+
+#### Outcome
+- Phase 11 regression-test hardening item is now delivered for scheduler controls and marketplace safety toggles.
+
+## Session: 2026-02-24
+
 ### Iteration: Phase 11 Scheduler Ops + Marketplace Safety Rails
 
 **Goal:** Start Phase 11 hardening by adding scheduler task controls and preventing disabling required core skills.
