@@ -134,6 +134,10 @@
                         <span>Discord</span>
                     </div>
                     <div class="gateway">
+                        <span class="gateway-dot {{ $stats['gateways']['whatsapp'] ? 'active' : 'inactive' }}"></span>
+                        <span>WhatsApp</span>
+                    </div>
+                    <div class="gateway">
                         <span class="gateway-dot active"></span>
                         <span>CLI</span>
                     </div>
@@ -163,15 +167,19 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach ($recentConversations as $conversation)
+                    @forelse ($recentConversations as $conversation)
                         <tr>
-                            <td><a href="{{ route('laraclaw.conversation', $conversation['id']) }}" style="color: #6c63ff;">#{{ $conversation['id'] }}</a></td>
+                            <td><a href="{{ route('laraclaw.conversation', ['conversation' => $conversation['id']]) }}" style="color: #6c63ff;">#{{ $conversation['id'] }}</a></td>
                             <td>{{ $conversation['title'] }}</td>
                             <td>{{ ucfirst($conversation['gateway']) }}</td>
                             <td>{{ $conversation['user'] }}</td>
                             <td>{{ $conversation['updated'] }}</td>
                         </tr>
-                    @endforeach
+                    @empty
+                        <tr>
+                            <td colspan="5" style="text-align: center; color: #888; padding: 20px;">No conversations yet.</td>
+                        </tr>
+                    @endforelse
                 </tbody>
             </table>
         </div>

@@ -24,9 +24,12 @@
 ### Features
 
 - 🧠 **Intelligent Memory** — SQLite FTS5 full-text search for long-term memory storage
-- 🔧 **8 Built-in Skills** — Time, Calculator, Web Search, Memory, File System, Execute, Email, Calendar
-- 💬 **Multi-Platform Gateways** — CLI, Telegram, and Discord support
+- 🔧 **9 Built-in Skills** — Time, Calculator, Web Search, Memory, File System, Execute, Email, Calendar, Scheduler
+- 💬 **Multi-Platform Gateways** — CLI, Telegram, Discord, and WhatsApp support
 - 🌐 **Web Dashboard** — Monitor conversations, metrics, and chat directly from your browser
+- 🤝 **Multi-Agent Mode** — Per-message planner/executor/reviewer orchestration for complex tasks
+- 🧩 **Skill Marketplace** — Enable/disable registered skills from the dashboard
+- 📄 **Document Ingestion** — Upload and index documents into vector storage for retrieval
 - 🔐 **Security First** — User allowlists, autonomy levels, filesystem scoping, webhook verification
 - 🤖 **Multi-Provider AI** — OpenAI, Anthropic, Gemini, Ollama, Groq, Mistral, DeepSeek, xAI
 - 📋 **AIEOS Support** — AI Entity Object Specification v1.1 for portable AI identities
@@ -86,6 +89,17 @@ TELEGRAM_SECRET_TOKEN=your-webhook-secret
 DISCORD_BOT_TOKEN=Bot ...
 DISCORD_PUBLIC_KEY=...
 DISCORD_APPLICATION_ID=...
+
+# WhatsApp (optional)
+WHATSAPP_ENABLED=true
+WHATSAPP_TOKEN=...
+WHATSAPP_PHONE_NUMBER_ID=...
+WHATSAPP_VERIFY_TOKEN=...
+WHATSAPP_APP_SECRET=...
+
+# Multi-Agent & Marketplace
+LARACLAW_MULTI_AGENT_ENABLED=false
+LARACLAW_MARKETPLACE_ENABLED=true
 ```
 
 ---
@@ -120,6 +134,9 @@ $conversation = Laraclaw::startConversation(userId: 1);
 // Send a message and get a response
 $response = Laraclaw::chat($conversation, "What time is it?");
 
+// Optional per-message override for multi-agent mode
+$response = Laraclaw::chat($conversation, "Research and summarize this topic", true);
+
 // Quick one-off question
 $response = Laraclaw::ask("Calculate 15% of 850");
 ```
@@ -128,7 +145,7 @@ $response = Laraclaw::ask("Calculate 15% of 850");
 
 ## Skills
 
-Laraclaw comes with 8 built-in skills that the AI can use automatically:
+Laraclaw comes with 9 built-in skills that the AI can use automatically:
 
 | Skill | Description |
 |-------|-------------|
@@ -140,6 +157,7 @@ Laraclaw comes with 8 built-in skills that the AI can use automatically:
 | **ExecuteSkill** | Execute shell commands (full autonomy only) |
 | **EmailSkill** | Read (IMAP) and send emails |
 | **CalendarSkill** | Manage events with ICS export |
+| **SchedulerSkill** | Register recurring/delayed actions with cron expressions |
 
 ### Creating Custom Skills
 
@@ -233,6 +251,15 @@ php artisan laraclaw:discord:register-commands
 ```
 
 The webhook endpoint is: `POST /laraclaw/webhooks/discord`
+
+### WhatsApp Gateway
+
+Meta Cloud API webhook endpoints:
+
+- Verification: `GET /laraclaw/webhooks/whatsapp`
+- Incoming messages: `POST /laraclaw/webhooks/whatsapp`
+
+Voice notes are transcribed via STT and processed as normal chat messages.
 
 ---
 

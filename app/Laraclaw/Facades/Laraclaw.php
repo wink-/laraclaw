@@ -8,8 +8,10 @@ use Illuminate\Support\Facades\Facade;
  * @method static \App\Laraclaw\Memory\MemoryManager memory()
  * @method static \App\Laraclaw\Agents\CoreAgent agent()
  * @method static \App\Models\Conversation startConversation(?int $userId = null, string $gateway = 'cli', ?string $title = null)
- * @method static string chat(\App\Models\Conversation $conversation, string $message)
+ * @method static string chat(\App\Models\Conversation $conversation, string $message, ?bool $useMultiAgent = null)
  * @method static string ask(string $message, ?int $userId = null)
+ * @method static array listSkills()
+ * @method static void setSkillEnabled(string $className, bool $enabled)
  *
  * @see \App\Laraclaw\Laraclaw
  */

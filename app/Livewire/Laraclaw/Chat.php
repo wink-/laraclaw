@@ -25,6 +25,8 @@ class Chat extends Component
 
     public bool $streaming = true;
 
+    public bool $useMultiAgent = false;
+
     public function mount(): void
     {
         if (! $this->conversationId) {
@@ -55,14 +57,9 @@ class Chat extends Component
             $conversation = $this->conversation;
         }
 
-        // Store user message
-        $conversation->messages()->create([
-            'role' => 'user',
-            'content' => $this->message,
-        ]);
+        $isFirstMessage = $conversation->messages()->count() === 0;
 
-        // Update conversation title if first message
-        if ($conversation->messages()->count() === 1) {
+        if ($isFirstMessage) {
             $conversation->update([
                 'title' => mb_substr($this->message, 0, 50).(mb_strlen($this->message) > 50 ? '...' : ''),
             ]);
@@ -73,7 +70,12 @@ class Chat extends Component
         $this->isStreaming = true;
         $this->streamingContent = '';
 
-        // Get AI response
+        if ($this->streaming && ! $this->useMultiAgent) {
+            $this->dispatch('start-streaming', conversationId: $this->conversationId, message: $userMessage);
+
+            return;
+        }
+
         $this->getAIResponse($userMessage);
     }
 
@@ -82,21 +84,9 @@ class Chat extends Component
         try {
             $conversation = $this->conversation;
 
-            if ($this->streaming) {
-                // For streaming, dispatch event that JS will handle
-                $this->dispatch('start-streaming', conversationId: $this->conversationId, message: $userMessage);
-            } else {
-                // Non-streaming response
-                $agent = Laraclaw::agent();
-                $response = $agent($userMessage);
+            Laraclaw::chat($conversation, $userMessage, $this->useMultiAgent);
 
-                $conversation->messages()->create([
-                    'role' => 'assistant',
-                    'content' => (string) $response,
-                ]);
-
-                $this->isStreaming = false;
-            }
+            $this->isStreaming = false;
         } catch (\Exception $e) {
             $this->conversation->messages()->create([
                 'role' => 'assistant',
@@ -107,13 +97,8 @@ class Chat extends Component
     }
 
     #[On('streaming-complete')]
-    public function handleStreamingComplete(string $content): void
+    public function handleStreamingComplete(): void
     {
-        $this->conversation->messages()->create([
-            'role' => 'assistant',
-            'content' => $content,
-        ]);
-
         $this->isStreaming = false;
         $this->streamingContent = '';
     }

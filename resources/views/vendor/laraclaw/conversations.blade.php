@@ -96,9 +96,9 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach ($conversations as $conversation)
+                    @forelse ($conversations as $conversation)
                         <tr>
-                            <td><a href="{{ route('laraclaw.conversation', $conversation->id) }}">#{{ $conversation->id }}</a></td>
+                            <td><a href="{{ route('laraclaw.conversation', ['conversation' => $conversation->id]) }}">#{{ $conversation->id }}</a></td>
                             <td>{{ $conversation->title ?? 'Untitled' }}</td>
                             <td>{{ ucfirst($conversation->gateway) }}</td>
                             <td>{{ $conversation->user?->name ?? 'Anonymous' }}</td>
@@ -106,7 +106,11 @@
                             <td>{{ $conversation->created_at->diffForHumans() }}</td>
                             <td>{{ $conversation->updated_at->diffForHumans() }}</td>
                         </tr>
-                    @endforeach
+                    @empty
+                        <tr>
+                            <td colspan="7" style="text-align: center; color: #888; padding: 20px;">No conversations found.</td>
+                        </tr>
+                    @endforelse
                 </tbody>
             </table>
 

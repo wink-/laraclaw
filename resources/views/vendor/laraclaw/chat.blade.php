@@ -190,7 +190,14 @@
             <div class="messages" id="messages">
                 @forelse ($messages as $message)
                     <div class="message {{ $message->role }}" data-id="{{ $message->id }}">
-                        <div class="role">{{ $message->role }}</div>
+                        <div class="role">
+                            {{ $message->role }}
+                            @if($message->role === 'assistant' && filled($message->metadata['response_mode'] ?? null))
+                                <span style="margin-left: 8px; padding: 2px 6px; border-radius: 10px; background: #334155; color: #e2e8f0; font-size: 10px; text-transform: none;">
+                                    {{ ($message->metadata['response_mode'] ?? 'single') === 'multi' ? 'Multi-Agent' : 'Single-Agent' }}
+                                </span>
+                            @endif
+                        </div>
                         <div class="content">{{ $message->content }}</div>
                         <div class="time">{{ $message->created_at->format('M j, g:i A') }}</div>
                     </div>

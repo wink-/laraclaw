@@ -1,5 +1,83 @@
 # Laraclaw Implementation Log
 
+## Session: 2026-02-23
+
+### Iteration: Phase 10 Implementation + UX Stabilization
+
+**Goal:** Implement advanced parity features (Phase 10), refine chat/dashboard UX, and document outcomes.
+
+#### Completed
+
+**1. WhatsApp Gateway + Webhooks**
+- Added `WhatsAppGateway` with Meta Cloud API send/receive support.
+- Added `WhatsAppWebhookController` with:
+  - verification endpoint (`hub.mode`, `hub.verify_token`, `hub.challenge`)
+  - POST signature verification via `X-Hub-Signature-256`
+  - secure processing through `SecurityManager`.
+- Registered webhook routes in `routes/web.php`.
+- Added WhatsApp config in `config/laraclaw.php` and service binding in `LaraclawServiceProvider`.
+
+**2. Scheduler Skill + Cron Execution**
+- Added `SchedulerSkill` for cron-based task registration.
+- Added scheduled task persistence migration (`laraclaw_scheduled_tasks`).
+- Added command `laraclaw:run-scheduled-tasks` to execute due scheduled prompts.
+- Wired command into `routes/console.php` using `Schedule::command(...)->everyMinute()`.
+
+**3. Voice Note Integration (Inbound STT)**
+- Telegram:
+  - extended parser with `voice_file_id` / `audio_file_id`
+  - added file download helper
+  - transcribed audio in webhook controller via `VoiceService` before agent processing.
+- WhatsApp:
+  - extended parser with `audio_media_id` / `voice_media_id`
+  - added media download helper
+  - transcribed audio in webhook controller via `VoiceService`.
+
+**4. Document Ingestion UI + Storage**
+- Added `LaraclawDocument` model and migration (`laraclaw_documents`).
+- Added upload/index workflow to Livewire dashboard:
+  - file upload validation
+  - provider document storage
+  - vector-store indexing
+  - persisted ingestion status + errors
+  - recent document list in dashboard UI.
+
+**5. Multi-Agent Collaboration**
+- Added `MultiAgentOrchestrator` with planner/executor/reviewer sequence.
+- Added `AgentCollaboration` model and migration for persisted collaboration traces.
+- Integrated orchestration into `Laraclaw::chat()` with optional per-message override.
+- Added per-message chat toggle in Livewire UI (`useMultiAgent`).
+
+**6. Skill Marketplace / Plugin Controls**
+- Added `SkillPlugin` model + migration (`skill_plugins`).
+- Added `PluginManager` service:
+  - sync default skills to DB
+  - list available skills
+  - enable/disable skill classes
+  - filter active skills before `CoreAgent` instantiation.
+- Added marketplace controls in Livewire dashboard.
+
+**7. Chat UX + Metadata Improvements**
+- Added assistant reply metadata badge (`Single-Agent` / `Multi-Agent`) in both:
+  - Livewire chat view
+  - legacy Blade chat view.
+- Persisted `metadata.response_mode` on assistant messages.
+- Tagged streaming path responses as `single` mode.
+
+**8. Legacy Dashboard / Conversations Fixes**
+- Fixed route parameter binding for conversation links.
+- Added empty-state rows to legacy dashboard/conversations tables.
+
+#### Validation
+- Database migrations executed successfully (`php artisan migrate`).
+- Formatting applied (`vendor/bin/pint --dirty --format agent`).
+- Test suite passed (`28 passed, 0 failed`).
+- Post-change diagnostics showed no compile errors in touched files.
+
+#### Remaining Follow-ups
+- Outbound voice replies (TTS delivery to Telegram/WhatsApp) are still pending.
+- Optional: add conversation-level filters for response modes in history pages.
+
 ## Session: 2026-02-22
 
 ### Iteration 1

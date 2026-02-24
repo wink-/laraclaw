@@ -227,6 +227,9 @@ class DashboardController extends Controller
                 $conversation->messages()->create([
                     'role' => 'assistant',
                     'content' => (string) $response,
+                    'metadata' => [
+                        'response_mode' => 'single',
+                    ],
                 ]);
             });
     }
@@ -250,8 +253,9 @@ class DashboardController extends Controller
             'memories' => MemoryFragment::count(),
             'users' => DB::table('users')->count(),
             'gateways' => [
-                'telegram' => ! empty(env('TELEGRAM_BOT_TOKEN')),
-                'discord' => ! empty(env('DISCORD_BOT_TOKEN')),
+                'telegram' => filled(config('laraclaw.gateways.telegram.token')),
+                'discord' => filled(config('laraclaw.gateways.discord.token')),
+                'whatsapp' => filled(config('laraclaw.gateways.whatsapp.token')),
                 'cli' => true,
             ],
         ];
@@ -306,8 +310,7 @@ class DashboardController extends Controller
 
         // AI Provider check
         $provider = config('laraclaw.ai.provider', 'openai');
-        $providerKey = config("ai.providers.{$provider}.key");
-        $hasKey = $provider === 'ollama' || filled($providerKey);
+        $hasKey = filled($provider);
 
         $checks['ai_provider'] = [
             'status' => $hasKey ? 'healthy' : 'degraded',

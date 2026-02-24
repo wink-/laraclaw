@@ -3,41 +3,57 @@
 namespace App\Http\Controllers;
 
 use App\Laraclaw\Facades\Laraclaw;
-use App\Laraclaw\Gateways\TelegramGateway;
+use App\Laraclaw\Gateways\WhatsAppGateway;
 use App\Laraclaw\Security\SecurityManager;
 use App\Laraclaw\Voice\VoiceService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-class TelegramWebhookController extends Controller
+class WhatsAppWebhookController extends Controller
 {
     public function __construct(
-        protected TelegramGateway $gateway,
+        protected WhatsAppGateway $gateway,
         protected SecurityManager $security,
         protected VoiceService $voice,
     ) {}
 
     /**
-     * Handle incoming Telegram webhook.
+     * Handle WhatsApp webhook verification (GET).
      */
-    public function __invoke(Request $request): JsonResponse
+    public function verify(Request $request)
+    {
+        $mode = $request->query('hub.mode');
+        $token = $request->query('hub.verify_token');
+        $challenge = $request->query('hub.challenge');
+
+        $verifyToken = config('laraclaw.gateways.whatsapp.verify_token', env('WHATSAPP_VERIFY_TOKEN'));
+
+        if ($mode === 'subscribe' && $token === $verifyToken) {
+            return response($challenge, 200);
+        }
+
+        return response('Forbidden', 403);
+    }
+
+    /**
+     * Handle incoming WhatsApp webhook (POST).
+     */
+    public function handle(Request $request): JsonResponse
     {
         $payload = $request->all();
 
-        // Verify the webhook secret token
-        $secretToken = $request->header('X-Telegram-Bot-Api-Secret-Token');
-        $configuredSecret = config('services.telegram.secret_token');
-
-        if (! $this->security->verifyTelegramWebhook($configuredSecret, $secretToken)) {
-            return response()->json(['error' => 'Invalid webhook'], 403);
+        // Verify the webhook signature
+        $signature = $request->header('X-Hub-Signature-256');
+        if (! $this->gateway->verifyWebhook($payload, $signature)) {
+            return response()->json(['error' => 'Invalid signature'], 403);
         }
 
         // Parse the incoming message
         $parsedMessage = $this->gateway->parseIncomingMessage($payload);
 
-        $voiceFileId = $parsedMessage['voice_file_id'] ?? $parsedMessage['audio_file_id'] ?? null;
-        if ($voiceFileId) {
-            $localPath = $this->gateway->downloadFile($voiceFileId);
+        $mediaId = $parsedMessage['voice_media_id'] ?? $parsedMessage['audio_media_id'] ?? null;
+        if ($mediaId) {
+            $localPath = $this->gateway->downloadMedia($mediaId);
             if ($localPath) {
                 try {
                     $transcript = $this->voice->transcribe($localPath);
@@ -45,7 +61,7 @@ class TelegramWebhookController extends Controller
                         $parsedMessage['content'] = $transcript;
                     }
                 } catch (\Throwable $e) {
-                    logger()->warning('Telegram voice transcription failed', [
+                    logger()->warning('WhatsApp voice transcription failed', [
                         'error' => $e->getMessage(),
                     ]);
                 }
@@ -54,19 +70,9 @@ class TelegramWebhookController extends Controller
 
         // Check user authorization
         $userId = (string) ($parsedMessage['user_id'] ?? $parsedMessage['sender_id'] ?? '');
-        if (! $this->security->isUserAllowed($userId, 'telegram')) {
-            logger()->warning('Unauthorized Telegram user attempted access', [
+        if (! $this->security->isUserAllowed($userId, 'whatsapp')) {
+            logger()->warning('Unauthorized WhatsApp user attempted access', [
                 'user_id' => $userId,
-            ]);
-
-            return response()->json(['status' => 'unauthorized'], 403);
-        }
-
-        // Check channel authorization
-        $chatId = (string) ($parsedMessage['chat_id'] ?? '');
-        if (! $this->security->isChannelAllowed($chatId, 'telegram')) {
-            logger()->warning('Unauthorized Telegram channel', [
-                'chat_id' => $chatId,
             ]);
 
             return response()->json(['status' => 'unauthorized'], 403);
@@ -84,7 +90,7 @@ class TelegramWebhookController extends Controller
         try {
             $response = Laraclaw::chat($conversation, $parsedMessage['content']);
 
-            // Send response back to Telegram
+            // Send response back to WhatsApp
             $this->gateway->sendMessage($conversation, $response);
         } catch (\Throwable $e) {
             // Send error message to user
@@ -94,7 +100,7 @@ class TelegramWebhookController extends Controller
             );
 
             // Log the error
-            logger()->error('Telegram webhook error', [
+            logger()->error('WhatsApp webhook error', [
                 'error' => $e->getMessage(),
                 'conversation_id' => $conversation->id,
             ]);

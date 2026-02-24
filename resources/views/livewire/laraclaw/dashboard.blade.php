@@ -67,6 +67,20 @@
                 </div>
             </div>
         </div>
+
+        <div class="bg-gray-800 rounded-xl p-6 border border-gray-700">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-400 text-sm">Agent Collaborations</p>
+                    <p class="text-3xl font-bold text-gray-100">{{ $stats['agent_collaborations'] }}</p>
+                </div>
+                <div class="w-12 h-12 bg-cyan-600/20 rounded-lg flex items-center justify-center">
+                    <svg class="w-6 h-6 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5V4H2v16h5m10 0v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6m10 0H7"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- System Health & Recent Conversations -->
@@ -103,5 +117,81 @@
                 @endforelse
             </div>
         </div>
+    </div>
+
+    <div class="bg-gray-800 rounded-xl border border-gray-700 p-6">
+        <h2 class="text-lg font-semibold text-gray-100 mb-4">Document Ingestion</h2>
+
+        <form wire:submit="ingestDocument" class="space-y-3">
+            <input
+                type="file"
+                wire:model="document"
+                accept=".pdf,.txt,.doc,.docx,.md"
+                class="block w-full text-sm text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-indigo-600 file:text-white hover:file:bg-indigo-700"
+            >
+
+            @error('document')
+                <p class="text-sm text-red-400">{{ $message }}</p>
+            @enderror
+
+            @if($uploadStatus)
+                <p class="text-sm text-gray-300">{{ $uploadStatus }}</p>
+            @endif
+
+            <button
+                type="submit"
+                class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-lg font-medium transition disabled:opacity-50"
+            >
+                Upload & Index
+            </button>
+        </form>
+
+        <div class="mt-6">
+            <h3 class="text-sm font-semibold text-gray-300 mb-3">Recent Documents</h3>
+            <div class="space-y-2">
+                @forelse($recentDocuments as $doc)
+                    <div class="flex items-center justify-between py-2 px-3 rounded-lg bg-gray-700/40">
+                        <div>
+                            <p class="text-gray-200 text-sm">{{ $doc->original_name }}</p>
+                            <p class="text-xs text-gray-500">{{ $doc->created_at->diffForHumans() }}</p>
+                        </div>
+                        <span class="px-2 py-1 text-xs rounded-full {{ $doc->indexed ? 'bg-green-600/20 text-green-400' : 'bg-yellow-600/20 text-yellow-400' }}">
+                            {{ $doc->indexed ? 'Indexed' : 'Pending' }}
+                        </span>
+                    </div>
+                @empty
+                    <p class="text-sm text-gray-500">No uploaded documents yet.</p>
+                @endforelse
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-gray-800 rounded-xl border border-gray-700 p-6">
+        <h2 class="text-lg font-semibold text-gray-100 mb-4">Skill Marketplace</h2>
+
+        @if($marketplaceStatus)
+            <p class="text-sm text-gray-300 mb-4">{{ $marketplaceStatus }}</p>
+        @endif
+
+        @if(empty($skills))
+            <p class="text-sm text-gray-500">Marketplace is disabled or no skills are registered yet.</p>
+        @else
+            <div class="space-y-2">
+                @foreach($skills as $skill)
+                    <div class="flex items-center justify-between py-2 px-3 rounded-lg bg-gray-700/40">
+                        <div>
+                            <p class="text-gray-200 text-sm">{{ $skill['name'] }}</p>
+                            <p class="text-xs text-gray-500">{{ $skill['class_name'] }}</p>
+                        </div>
+                        <button
+                            wire:click='setSkillEnabled(@js($skill["class_name"]), {{ $skill["enabled"] ? "false" : "true" }})'
+                            class="px-3 py-1.5 text-xs rounded-lg {{ $skill['enabled'] ? 'bg-red-600/20 text-red-300 hover:bg-red-600/30' : 'bg-green-600/20 text-green-300 hover:bg-green-600/30' }}"
+                        >
+                            {{ $skill['enabled'] ? 'Disable' : 'Enable' }}
+                        </button>
+                    </div>
+                @endforeach
+            </div>
+        @endif
     </div>
 </div>

@@ -3,7 +3,9 @@
 namespace App\Laraclaw;
 
 use App\Laraclaw\Agents\CoreAgent;
+use App\Laraclaw\Agents\MultiAgentOrchestrator;
 use App\Laraclaw\Memory\MemoryManager;
+use App\Laraclaw\Skills\PluginManager;
 use App\Models\Conversation;
 
 class Laraclaw
@@ -11,6 +13,8 @@ class Laraclaw
     public function __construct(
         protected MemoryManager $memory,
         protected CoreAgent $agent,
+        protected MultiAgentOrchestrator $orchestrator,
+        protected PluginManager $plugins,
     ) {}
 
     /**
@@ -44,7 +48,7 @@ class Laraclaw
     /**
      * Send a message and get a response.
      */
-    public function chat(Conversation $conversation, string $message): string
+    public function chat(Conversation $conversation, string $message, ?bool $useMultiAgent = null): string
     {
         // Store the user message
         $conversation->messages()->create([
@@ -52,18 +56,28 @@ class Laraclaw
             'content' => $message,
         ]);
 
-        // Get conversation history and user memories
-        $history = $this->memory->getConversationHistory($conversation);
-        $memories = $this->memory->getRelevantMemories($message, $conversation->user_id);
-        $memoryContext = $this->memory->formatMemoriesForPrompt($memories);
+        $shouldUseMultiAgent = $useMultiAgent ?? config('laraclaw.multi_agent.enabled', false);
+        $responseMode = $shouldUseMultiAgent ? 'multi' : 'single';
 
-        // Prompt the agent with context
-        $response = $this->agent->promptWithContext($message, $history, $memoryContext);
+        if ($shouldUseMultiAgent) {
+            $response = $this->orchestrator->collaborate($conversation, $message);
+        } else {
+            // Get conversation history and user memories
+            $history = $this->memory->getConversationHistory($conversation);
+            $memories = $this->memory->getRelevantMemories($message, $conversation->user_id);
+            $memoryContext = $this->memory->formatMemoriesForPrompt($memories);
+
+            // Prompt the agent with context
+            $response = $this->agent->promptWithContext($message, $history, $memoryContext);
+        }
 
         // Store the assistant response
         $conversation->messages()->create([
             'role' => 'assistant',
             'content' => $response,
+            'metadata' => [
+                'response_mode' => $responseMode,
+            ],
         ]);
 
         return $response;
@@ -77,5 +91,15 @@ class Laraclaw
         $conversation = $this->startConversation($userId);
 
         return $this->chat($conversation, $message);
+    }
+
+    public function listSkills(): array
+    {
+        return $this->plugins->listSkills();
+    }
+
+    public function setSkillEnabled(string $className, bool $enabled): void
+    {
+        $this->plugins->setEnabled($className, $enabled);
     }
 }

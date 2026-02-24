@@ -130,6 +130,15 @@ return [
             'public_key' => env('DISCORD_PUBLIC_KEY'),
         ],
 
+        'whatsapp' => [
+            'enabled' => env('WHATSAPP_ENABLED', false),
+            'token' => env('WHATSAPP_TOKEN'),
+            'phone_number_id' => env('WHATSAPP_PHONE_NUMBER_ID'),
+            'verify_token' => env('WHATSAPP_VERIFY_TOKEN'),
+            'app_secret' => env('WHATSAPP_APP_SECRET'),
+            'api_version' => env('WHATSAPP_API_VERSION', 'v18.0'),
+        ],
+
         'cli' => [
             'enabled' => true,
         ],
@@ -248,6 +257,14 @@ return [
         'dimensions' => env('LARACLAW_VECTOR_DIMENSIONS', 1536),
         'min_similarity' => env('LARACLAW_MIN_SIMILARITY', 0.7),
         'search_limit' => env('LARACLAW_VECTOR_SEARCH_LIMIT', 10),
+    ],
+
+    'multi_agent' => [
+        'enabled' => env('LARACLAW_MULTI_AGENT_ENABLED', false),
+    ],
+
+    'marketplace' => [
+        'enabled' => env('LARACLAW_MARKETPLACE_ENABLED', true),
     ],
 
 ];

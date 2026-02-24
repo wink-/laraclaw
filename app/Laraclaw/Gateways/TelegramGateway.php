@@ -47,6 +47,8 @@ class TelegramGateway extends BaseGateway
             'chat_id' => (string) ($chat['id'] ?? ''),
             'username' => $from['username'] ?? null,
             'message_id' => (string) ($message['message_id'] ?? ''),
+            'voice_file_id' => $message['voice']['file_id'] ?? null,
+            'audio_file_id' => $message['audio']['file_id'] ?? null,
         ];
     }
 
@@ -207,5 +209,49 @@ class TelegramGateway extends BaseGateway
         }
 
         return null;
+    }
+
+    public function downloadFile(string $fileId): ?string
+    {
+        try {
+            $fileResponse = Http::get("{$this->apiBaseUrl}/getFile", [
+                'file_id' => $fileId,
+            ]);
+
+            if (! $fileResponse->successful()) {
+                return null;
+            }
+
+            $filePath = $fileResponse->json('result.file_path');
+            if (! $filePath) {
+                return null;
+            }
+
+            $downloadUrl = "https://api.telegram.org/file/bot{$this->botToken}/{$filePath}";
+            $downloadResponse = Http::get($downloadUrl);
+
+            if (! $downloadResponse->successful()) {
+                return null;
+            }
+
+            $extension = pathinfo($filePath, PATHINFO_EXTENSION) ?: 'ogg';
+            $localPath = storage_path('app/private/laraclaw/voice/telegram-'.uniqid().'.'.$extension);
+            $directory = dirname($localPath);
+
+            if (! is_dir($directory)) {
+                mkdir($directory, 0755, true);
+            }
+
+            file_put_contents($localPath, $downloadResponse->body());
+
+            return $localPath;
+        } catch (\Throwable $e) {
+            Log::error('TelegramGateway: Failed to download file', [
+                'file_id' => $fileId,
+                'error' => $e->getMessage(),
+            ]);
+
+            return null;
+        }
     }
 }

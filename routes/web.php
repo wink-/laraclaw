@@ -4,6 +4,7 @@ use App\Http\Controllers\DiscordWebhookController;
 use App\Http\Controllers\Laraclaw\DashboardController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\TelegramWebhookController;
+use App\Http\Controllers\WhatsAppWebhookController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -14,6 +15,8 @@ Route::get('/', function () {
 Route::prefix('laraclaw/webhooks')->group(function () {
     Route::post('telegram', TelegramWebhookController::class)->name('laraclaw.webhooks.telegram');
     Route::post('discord', DiscordWebhookController::class)->name('laraclaw.webhooks.discord');
+    Route::get('whatsapp', [WhatsAppWebhookController::class, 'verify'])->name('laraclaw.webhooks.whatsapp.verify');
+    Route::post('whatsapp', [WhatsAppWebhookController::class, 'handle'])->name('laraclaw.webhooks.whatsapp.handle');
 });
 
 // Laraclaw Streaming endpoint (called from Livewire)

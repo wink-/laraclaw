@@ -36,6 +36,13 @@
                 <input type="checkbox" wire:model="streaming" class="rounded bg-gray-700 border-gray-600 text-indigo-600 focus:ring-indigo-500">
                 <span>Enable streaming</span>
             </label>
+            <label class="flex items-center gap-2 text-sm cursor-pointer">
+                <input type="checkbox" wire:model="useMultiAgent" class="rounded bg-gray-700 border-gray-600 text-indigo-600 focus:ring-indigo-500">
+                <span>Use multi-agent mode</span>
+            </label>
+            @if($useMultiAgent)
+                <p class="text-xs text-gray-500">Multi-agent mode sends non-streaming responses for this message.</p>
+            @endif
         </div>
     </div>
 
@@ -48,6 +55,11 @@
                     <div class="max-w-[80%] {{ $msg->role === 'user' ? 'bg-indigo-600' : 'bg-gray-700' }} rounded-xl px-4 py-3">
                         <div class="text-xs {{ $msg->role === 'user' ? 'text-indigo-200' : 'text-gray-400' }} uppercase mb-1">
                             {{ $msg->role }}
+                            @if($msg->role === 'assistant' && filled($msg->metadata['response_mode'] ?? null))
+                                <span class="ml-2 px-1.5 py-0.5 rounded bg-gray-600 text-[10px] text-gray-200 normal-case tracking-normal">
+                                    {{ ($msg->metadata['response_mode'] ?? 'single') === 'multi' ? 'Multi-Agent' : 'Single-Agent' }}
+                                </span>
+                            @endif
                         </div>
                         <div class="whitespace-pre-wrap">{{ $msg->content }}</div>
                         <div class="text-xs {{ $msg->role === 'user' ? 'text-indigo-200' : 'text-gray-500' }} mt-2">
