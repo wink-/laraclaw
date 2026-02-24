@@ -181,6 +181,37 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Tailscale Network Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Configuration for Tailscale-first networking. Use `tailscale serve`
+    | to expose Laraclaw privately on your tailnet for multi-device access.
+    |
+    */
+
+    'tailscale' => [
+        'enabled' => env('LARACLAW_TAILSCALE_ENABLED', false),
+        'serve_port' => env('LARACLAW_TAILSCALE_SERVE_PORT', 8000),
+        'auto_serve' => env('LARACLAW_TAILSCALE_AUTO_SERVE', false),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Heartbeat Engine Configuration
+    |--------------------------------------------------------------------------
+    |
+    | HEARTBEAT.md is a natural-language task file that the AI agent executes
+    | on a schedule. Enable/disable and configure the heartbeat path here.
+    |
+    */
+
+    'heartbeat' => [
+        'enabled' => env('LARACLAW_HEARTBEAT_ENABLED', true),
+        'path' => env('LARACLAW_HEARTBEAT_PATH', storage_path('laraclaw/HEARTBEAT.md')),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Queue Configuration
     |--------------------------------------------------------------------------
     |

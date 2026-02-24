@@ -9,6 +9,7 @@ use App\Laraclaw\Gateways\CliGateway;
 use App\Laraclaw\Gateways\DiscordGateway;
 use App\Laraclaw\Gateways\TelegramGateway;
 use App\Laraclaw\Gateways\WhatsAppGateway;
+use App\Laraclaw\Heartbeat\HeartbeatEngine;
 use App\Laraclaw\Identity\IdentityManager;
 use App\Laraclaw\Laraclaw;
 use App\Laraclaw\Memory\MemoryManager;
@@ -26,6 +27,7 @@ use App\Laraclaw\Skills\TimeSkill;
 use App\Laraclaw\Skills\WebSearchSkill;
 use App\Laraclaw\Storage\FileStorageService;
 use App\Laraclaw\Storage\VectorStoreService;
+use App\Laraclaw\Tunnels\TailscaleNetworkManager;
 use App\Laraclaw\Tunnels\TunnelManager;
 use App\Laraclaw\Voice\VoiceService;
 use Illuminate\Support\ServiceProvider;
@@ -53,6 +55,12 @@ class LaraclawServiceProvider extends ServiceProvider
         $this->app->singleton(TunnelManager::class, function ($app) {
             return new TunnelManager(config('laraclaw.tunnels', []));
         });
+
+        // Register TailscaleNetworkManager as singleton
+        $this->app->singleton(TailscaleNetworkManager::class);
+
+        // Register HeartbeatEngine as singleton
+        $this->app->singleton(HeartbeatEngine::class);
 
         // Register VoiceService as singleton
         $this->app->singleton(VoiceService::class);

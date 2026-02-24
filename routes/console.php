@@ -10,3 +10,4 @@ Artisan::command('inspire', function () {
 
 Schedule::command('laraclaw:run-scheduled-tasks')->everyMinute();
 Schedule::command('laraclaw:dispatch-notifications')->everyMinute();
+Schedule::command('laraclaw:heartbeat:run')->everyFiveMinutes();

@@ -3,8 +3,10 @@
 namespace App\Livewire\Laraclaw;
 
 use App\Laraclaw\Facades\Laraclaw;
+use App\Laraclaw\Heartbeat\HeartbeatEngine;
 use App\Laraclaw\Storage\FileStorageService;
 use App\Laraclaw\Storage\VectorStoreService;
+use App\Laraclaw\Tunnels\TailscaleNetworkManager;
 use App\Models\AgentCollaboration;
 use App\Models\Conversation;
 use App\Models\LaraclawDocument;
@@ -49,6 +51,21 @@ class Dashboard extends Component
      */
     public array $scheduledTasks = [];
 
+    /**
+     * @var array<string, mixed>
+     */
+    public array $tailscaleStatus = [];
+
+    /**
+     * @var array<int, array<string, mixed>>
+     */
+    public array $heartbeatItems = [];
+
+    /**
+     * @var array<int, array<string, mixed>>
+     */
+    public array $recentHeartbeatRuns = [];
+
     public function mount(): void
     {
         $this->loadStats();
@@ -56,6 +73,8 @@ class Dashboard extends Component
         $this->loadSkills();
         $this->loadScheduledTasks();
         $this->loadOpsSignals();
+        $this->loadTailscaleStatus();
+        $this->loadHeartbeat();
     }
 
     protected function loadStats(): void
@@ -255,7 +274,60 @@ class Dashboard extends Component
             'skills' => $this->skills,
             'scheduledTasks' => $this->scheduledTasks,
             'opsSignals' => $this->opsSignals,
+            'tailscaleStatus' => $this->tailscaleStatus,
+            'heartbeatItems' => $this->heartbeatItems,
+            'recentHeartbeatRuns' => $this->recentHeartbeatRuns,
         ])->layout('components.laraclaw.layout');
+    }
+
+    protected function loadTailscaleStatus(): void
+    {
+        if (! config('laraclaw.tailscale.enabled', false)) {
+            $this->tailscaleStatus = ['enabled' => false];
+
+            return;
+        }
+
+        try {
+            $manager = app(TailscaleNetworkManager::class);
+            $status = $manager->getNetworkStatus();
+            $this->tailscaleStatus = array_merge($status, [
+                'enabled' => true,
+                'serve_active' => $manager->isServeActive(),
+                'serve_url' => $manager->getServeUrl(),
+            ]);
+        } catch (\Throwable) {
+            $this->tailscaleStatus = ['enabled' => true, 'connected' => false];
+        }
+    }
+
+    protected function loadHeartbeat(): void
+    {
+        if (! config('laraclaw.heartbeat.enabled', true)) {
+            $this->heartbeatItems = [];
+            $this->recentHeartbeatRuns = [];
+
+            return;
+        }
+
+        try {
+            $engine = app(HeartbeatEngine::class);
+            $this->heartbeatItems = $engine->parseHeartbeatFile();
+        } catch (\Throwable) {
+            $this->heartbeatItems = [];
+        }
+
+        $this->recentHeartbeatRuns = \App\Models\HeartbeatRun::query()
+            ->latest('executed_at')
+            ->limit(5)
+            ->get()
+            ->map(fn ($run) => [
+                'heartbeat_id' => $run->heartbeat_id,
+                'instruction' => $run->instruction,
+                'status' => $run->status,
+                'executed_at' => $run->executed_at?->diffForHumans(),
+            ])
+            ->all();
     }
 
     protected function loadOpsSignals(): void

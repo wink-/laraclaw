@@ -216,6 +216,102 @@
         <p class="mt-3 text-xs text-gray-500">Total collaborations recorded: {{ $opsSignals['collaborations_total'] ?? 0 }}</p>
     </div>
 
+    <!-- Tailscale Network Status & Heartbeat Engine -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Tailscale Network Status -->
+        <div class="bg-gray-800 rounded-xl border border-gray-700 p-6">
+            <h2 class="text-lg font-semibold text-gray-100 mb-4">Tailscale Network</h2>
+            @if(!($tailscaleStatus['enabled'] ?? false))
+                <p class="text-sm text-gray-500">Tailscale networking is disabled. Set <code class="text-xs bg-gray-700 px-1.5 py-0.5 rounded">LARACLAW_TAILSCALE_ENABLED=true</code> to enable.</p>
+            @elseif(!($tailscaleStatus['connected'] ?? false))
+                <div class="flex items-center gap-2 text-yellow-400 mb-3">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <span class="text-sm font-medium">Not connected to Tailnet</span>
+                </div>
+                <p class="text-xs text-gray-500">Run <code class="bg-gray-700 px-1.5 py-0.5 rounded">tailscale up</code> to connect.</p>
+            @else
+                <div class="space-y-3">
+                    <div class="flex items-center gap-2 text-green-400 mb-2">
+                        <div class="w-2 h-2 rounded-full bg-green-400 animate-pulse"></div>
+                        <span class="text-sm font-medium">Connected to {{ $tailscaleStatus['tailnet_name'] ?? 'tailnet' }}</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2 text-sm">
+                        <div class="bg-gray-700/40 px-3 py-2 rounded">
+                            <p class="text-xs text-gray-500">Hostname</p>
+                            <p class="text-gray-200 truncate">{{ $tailscaleStatus['self']['hostname'] ?? '-' }}</p>
+                        </div>
+                        <div class="bg-gray-700/40 px-3 py-2 rounded">
+                            <p class="text-xs text-gray-500">Serve</p>
+                            <p class="text-gray-200">{{ ($tailscaleStatus['serve_active'] ?? false) ? 'Active' : 'Inactive' }}</p>
+                        </div>
+                    </div>
+                    @if(!empty($tailscaleStatus['self']['tailscale_ips'] ?? []))
+                        <div class="bg-gray-700/40 px-3 py-2 rounded text-sm">
+                            <p class="text-xs text-gray-500 mb-1">IPs</p>
+                            @foreach($tailscaleStatus['self']['tailscale_ips'] as $ip)
+                                <span class="inline-block mr-2 text-gray-300">{{ $ip }}</span>
+                            @endforeach
+                        </div>
+                    @endif
+                    @if(count($tailscaleStatus['peers'] ?? []) > 0)
+                        <div>
+                            <p class="text-xs text-gray-500 mb-1">Peers ({{ count($tailscaleStatus['peers']) }})</p>
+                            <div class="space-y-1 max-h-32 overflow-y-auto">
+                                @foreach($tailscaleStatus['peers'] as $peer)
+                                    <div class="flex items-center justify-between text-xs bg-gray-700/30 px-2 py-1 rounded">
+                                        <span class="text-gray-300">{{ $peer['hostname'] }}</span>
+                                        <span class="{{ $peer['online'] ? 'text-green-400' : 'text-gray-500' }}">
+                                            {{ $peer['online'] ? 'online' : 'offline' }}
+                                        </span>
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                    @endif
+                </div>
+            @endif
+        </div>
+
+        <!-- Heartbeat Engine -->
+        <div class="bg-gray-800 rounded-xl border border-gray-700 p-6">
+            <h2 class="text-lg font-semibold text-gray-100 mb-4">Heartbeat Engine</h2>
+            @if(empty($heartbeatItems))
+                <p class="text-sm text-gray-500">No heartbeat tasks found. Create <code class="text-xs bg-gray-700 px-1.5 py-0.5 rounded">storage/laraclaw/HEARTBEAT.md</code> to add autonomous tasks.</p>
+            @else
+                <div class="space-y-2 mb-4">
+                    @foreach($heartbeatItems as $item)
+                        <div class="flex items-center gap-3 text-sm bg-gray-700/40 px-3 py-2 rounded">
+                            <span class="{{ $item['enabled'] ? 'text-green-400' : 'text-gray-500' }}">
+                                {{ $item['enabled'] ? '●' : '○' }}
+                            </span>
+                            <span class="text-gray-200 flex-1 truncate">{{ $item['instruction'] }}</span>
+                            <span class="text-xs text-gray-500 whitespace-nowrap">{{ $item['schedule'] }}</span>
+                        </div>
+                    @endforeach
+                </div>
+            @endif
+
+            @if(!empty($recentHeartbeatRuns))
+                <h3 class="text-sm font-semibold text-gray-300 mb-2 mt-4">Recent Runs</h3>
+                <div class="space-y-1">
+                    @foreach($recentHeartbeatRuns as $run)
+                        <div class="flex items-center justify-between text-xs bg-gray-700/30 px-2 py-1.5 rounded">
+                            <span class="text-gray-300 truncate mr-2">{{ $run['instruction'] }}</span>
+                            <div class="flex items-center gap-2 shrink-0">
+                                <span class="{{ $run['status'] === 'success' ? 'text-green-400' : 'text-red-400' }}">
+                                    {{ $run['status'] }}
+                                </span>
+                                <span class="text-gray-500">{{ $run['executed_at'] }}</span>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            @endif
+        </div>
+    </div>
+
     <div class="bg-gray-800 rounded-xl border border-gray-700 p-6">
         <h2 class="text-lg font-semibold text-gray-100 mb-4">Document Ingestion</h2>
 
