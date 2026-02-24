@@ -11,7 +11,7 @@
     </div>
 
     <!-- Stats Grid -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+    <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
         <div class="bg-gray-800 rounded-xl p-6 border border-gray-700">
             <div class="flex items-center justify-between">
                 <div>
@@ -95,6 +95,48 @@
                 </div>
             </div>
         </div>
+
+        <div class="bg-gray-800 rounded-xl p-6 border border-gray-700">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-400 text-sm">Tokens (7d)</p>
+                    <p class="text-3xl font-bold text-gray-100">{{ number_format($stats['tokens_7d']) }}</p>
+                </div>
+                <div class="w-12 h-12 bg-blue-600/20 rounded-lg flex items-center justify-center">
+                    <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6M7 4h10a2 2 0 012 2v12a2 2 0 01-2 2H7a2 2 0 01-2-2V6a2 2 0 012-2z"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-gray-800 rounded-xl p-6 border border-gray-700">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-400 text-sm">Estimated Cost (7d)</p>
+                    <p class="text-3xl font-bold text-gray-100">${{ number_format($stats['cost_7d'], 3) }}</p>
+                </div>
+                <div class="w-12 h-12 bg-rose-600/20 rounded-lg flex items-center justify-center">
+                    <svg class="w-6 h-6 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-2.21 0-4 1.79-4 4m8 0a4 4 0 00-4-4m0 0V5m0 15v-3m-7-5H3m18 0h-2"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-gray-800 rounded-xl p-6 border border-gray-700">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-400 text-sm">Pending Notifications</p>
+                    <p class="text-3xl font-bold text-gray-100">{{ $stats['pending_notifications'] }}</p>
+                </div>
+                <div class="w-12 h-12 bg-orange-600/20 rounded-lg flex items-center justify-center">
+                    <svg class="w-6 h-6 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V4a2 2 0 10-4 0v1.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0a3 3 0 11-6 0h6z"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- System Health & Recent Conversations -->
@@ -135,7 +177,7 @@
 
     <div class="bg-gray-800 rounded-xl border border-gray-700 p-6">
         <h2 class="text-lg font-semibold text-gray-100 mb-4">Ops Signals (24h)</h2>
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+        <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-3">
             <div class="py-3 px-3 rounded-lg bg-gray-700/40">
                 <p class="text-xs text-gray-500">Failed Scheduled Jobs</p>
                 <p class="text-xl font-semibold {{ ($opsSignals['failed_scheduled_jobs'] ?? 0) > 0 ? 'text-red-300' : 'text-gray-100' }}">
@@ -156,6 +198,18 @@
                 <p class="text-xs text-gray-500">Errors Metric</p>
                 <p class="text-xl font-semibold {{ ($opsSignals['errors_metric'] ?? 0) > 0 ? 'text-yellow-300' : 'text-gray-100' }}">
                     {{ $opsSignals['errors_metric'] ?? 0 }}
+                </p>
+            </div>
+            <div class="py-3 px-3 rounded-lg bg-gray-700/40">
+                <p class="text-xs text-gray-500">API Rate Limited</p>
+                <p class="text-xl font-semibold {{ ($opsSignals['api_rate_limited'] ?? 0) > 0 ? 'text-yellow-300' : 'text-gray-100' }}">
+                    {{ $opsSignals['api_rate_limited'] ?? 0 }}
+                </p>
+            </div>
+            <div class="py-3 px-3 rounded-lg bg-gray-700/40">
+                <p class="text-xs text-gray-500">Notification Failures</p>
+                <p class="text-xl font-semibold {{ ($opsSignals['notifications_failed_24h'] ?? 0) > 0 ? 'text-red-300' : 'text-gray-100' }}">
+                    {{ $opsSignals['notifications_failed_24h'] ?? 0 }}
                 </p>
             </div>
         </div>

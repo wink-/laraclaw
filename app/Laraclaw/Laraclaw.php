@@ -5,6 +5,7 @@ namespace App\Laraclaw;
 use App\Laraclaw\Agents\CoreAgent;
 use App\Laraclaw\Agents\MultiAgentOrchestrator;
 use App\Laraclaw\Memory\MemoryManager;
+use App\Laraclaw\Monitoring\TokenUsageTracker;
 use App\Laraclaw\Skills\PluginManager;
 use App\Models\Conversation;
 
@@ -15,6 +16,7 @@ class Laraclaw
         protected CoreAgent $agent,
         protected MultiAgentOrchestrator $orchestrator,
         protected PluginManager $plugins,
+        protected TokenUsageTracker $tokenUsageTracker,
     ) {}
 
     /**
@@ -63,7 +65,7 @@ class Laraclaw
             $response = $this->orchestrator->collaborate($conversation, $message);
         } else {
             // Get conversation history and user memories
-            $history = $this->memory->getConversationHistory($conversation);
+            $history = $this->memory->getConversationContextWithBudget($conversation);
             $memories = $this->memory->getRelevantMemories($message, $conversation->user_id);
             $memoryContext = $this->memory->formatMemoriesForPrompt($memories);
 
@@ -72,13 +74,23 @@ class Laraclaw
         }
 
         // Store the assistant response
-        $conversation->messages()->create([
+        $assistantMessage = $conversation->messages()->create([
             'role' => 'assistant',
             'content' => $response,
             'metadata' => [
                 'response_mode' => $responseMode,
             ],
         ]);
+
+        $this->tokenUsageTracker->record(
+            $conversation,
+            $assistantMessage,
+            $message,
+            $response,
+            [
+                'response_mode' => $responseMode,
+            ],
+        );
 
         return $response;
     }
