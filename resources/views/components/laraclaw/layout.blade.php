@@ -2,8 +2,15 @@
 <html lang="en" class="dark">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="theme-color" content="#1a202c">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Laraclaw">
+    <meta name="mobile-web-app-capable" content="yes">
+    <link rel="manifest" href="/manifest.json">
+    <link rel="apple-touch-icon" href="/icons/icon-192.svg">
     <title>@yield('title', 'Laraclaw') - Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -24,10 +31,26 @@
     @livewireStyles
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="bg-gray-900 text-gray-100 min-h-screen">
+<body class="bg-gray-900 text-gray-100 min-h-screen" x-data="{ sidebarOpen: false }">
     <div class="flex min-h-screen">
+        <!-- Mobile Overlay -->
+        <div
+            x-show="sidebarOpen"
+            x-transition:enter="transition-opacity ease-linear duration-200"
+            x-transition:enter-start="opacity-0"
+            x-transition:enter-end="opacity-100"
+            x-transition:leave="transition-opacity ease-linear duration-200"
+            x-transition:leave-start="opacity-100"
+            x-transition:leave-end="opacity-0"
+            @click="sidebarOpen = false"
+            class="fixed inset-0 bg-black/60 z-30 lg:hidden"
+        ></div>
+
         <!-- Sidebar -->
-        <aside class="w-64 bg-gray-800 border-r border-gray-700 flex flex-col">
+        <aside
+            :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'"
+            class="fixed lg:static inset-y-0 left-0 z-40 w-64 bg-gray-800 border-r border-gray-700 flex flex-col transition-transform duration-200 ease-in-out"
+        >
             <div class="p-4 border-b border-gray-700">
                 <a href="{{ route('laraclaw.dashboard.live') }}" class="flex items-center gap-3">
                     <div class="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center">
@@ -88,11 +111,27 @@
         </aside>
 
         <!-- Main Content -->
-        <main class="flex-1 p-6 overflow-y-auto">
-            @yield('content')
+        <main class="flex-1 flex flex-col min-w-0">
+            <!-- Mobile Header -->
+            <div class="lg:hidden flex items-center gap-3 p-4 border-b border-gray-700 bg-gray-800">
+                <button @click="sidebarOpen = true" class="p-1.5 rounded-lg hover:bg-gray-700 transition">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                    </svg>
+                </button>
+                <span class="font-bold text-lg">Laraclaw</span>
+            </div>
+            <div class="flex-1 p-4 sm:p-6 overflow-y-auto">
+                @yield('content')
+            </div>
         </main>
     </div>
 
     @livewireScripts
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js').catch(() => {});
+        }
+    </script>
 </body>
 </html>

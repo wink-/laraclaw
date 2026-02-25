@@ -3,8 +3,12 @@
 namespace App\Livewire\Laraclaw;
 
 use App\Laraclaw\Facades\Laraclaw;
+use App\Laraclaw\Heartbeat\HeartbeatEngine;
+use App\Laraclaw\Modules\ModuleManager;
+use App\Laraclaw\Skills\AppBuilderSkill;
 use App\Laraclaw\Storage\FileStorageService;
 use App\Laraclaw\Storage\VectorStoreService;
+use App\Laraclaw\Tunnels\TailscaleNetworkManager;
 use App\Models\AgentCollaboration;
 use App\Models\Conversation;
 use App\Models\LaraclawDocument;
@@ -34,6 +38,12 @@ class Dashboard extends Component
 
     public ?string $schedulerStatus = null;
 
+    public ?string $moduleStatus = null;
+
+    public string $newModuleName = '';
+
+    public string $newModuleDescription = '';
+
     /**
      * @var array<string, mixed>
      */
@@ -49,6 +59,41 @@ class Dashboard extends Component
      */
     public array $scheduledTasks = [];
 
+    /**
+     * @var array<string, mixed>
+     */
+    public array $tailscaleStatus = [];
+
+    /**
+     * @var array<int, array<string, mixed>>
+     */
+    public array $heartbeatItems = [];
+
+    /**
+     * @var array<int, array<string, mixed>>
+     */
+    public array $recentHeartbeatRuns = [];
+
+    /**
+     * @var array<int, array<string, mixed>>
+     */
+    public array $shoppingListItems = [];
+
+    /**
+     * @var array<string, int>
+     */
+    public array $memoryCategoryCounts = [];
+
+    /**
+     * @var array<int, array<string, mixed>>
+     */
+    public array $modules = [];
+
+    /**
+     * @var array<string, string>
+     */
+    public array $moduleDomainInputs = [];
+
     public function mount(): void
     {
         $this->loadStats();
@@ -56,6 +101,10 @@ class Dashboard extends Component
         $this->loadSkills();
         $this->loadScheduledTasks();
         $this->loadOpsSignals();
+        $this->loadTailscaleStatus();
+        $this->loadHeartbeat();
+        $this->loadShoppingAndMemory();
+        $this->loadModules();
     }
 
     protected function loadStats(): void
@@ -255,7 +304,146 @@ class Dashboard extends Component
             'skills' => $this->skills,
             'scheduledTasks' => $this->scheduledTasks,
             'opsSignals' => $this->opsSignals,
+            'tailscaleStatus' => $this->tailscaleStatus,
+            'heartbeatItems' => $this->heartbeatItems,
+            'recentHeartbeatRuns' => $this->recentHeartbeatRuns,
+            'shoppingListItems' => $this->shoppingListItems,
+            'memoryCategoryCounts' => $this->memoryCategoryCounts,
+            'modules' => $this->modules,
+            'moduleStatus' => $this->moduleStatus,
+            'moduleDomainInputs' => $this->moduleDomainInputs,
         ])->layout('components.laraclaw.layout');
+    }
+
+    public function createModuleApp(): void
+    {
+        $this->validate([
+            'newModuleName' => ['required', 'string', 'max:120'],
+            'newModuleDescription' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        $builder = app(AppBuilderSkill::class);
+
+        $this->moduleStatus = $builder->execute([
+            'action' => 'create_app',
+            'name' => $this->newModuleName,
+            'description' => $this->newModuleDescription,
+            'type' => 'blog',
+        ]);
+
+        $this->newModuleName = '';
+        $this->newModuleDescription = '';
+
+        $this->loadModules();
+    }
+
+    public function bindModuleDomain(string $slug): void
+    {
+        $builder = app(AppBuilderSkill::class);
+        $domain = trim($this->moduleDomainInputs[$slug] ?? '');
+
+        $this->moduleStatus = $builder->execute([
+            'action' => 'set_domain',
+            'slug' => $slug,
+            'domain' => $domain,
+        ]);
+
+        $this->loadModules();
+    }
+
+    protected function loadModules(): void
+    {
+        if (! config('laraclaw.modules.enabled', true)) {
+            $this->modules = [];
+
+            return;
+        }
+
+        $manager = app(ModuleManager::class);
+
+        $this->modules = $manager->allModules();
+
+        foreach ($this->modules as $module) {
+            $this->moduleDomainInputs[$module['slug']] = (string) ($module['domain'] ?? '');
+        }
+    }
+
+    protected function loadShoppingAndMemory(): void
+    {
+        $this->shoppingListItems = MemoryFragment::query()
+            ->where('category', 'shopping')
+            ->select(['id', 'key', 'content', 'metadata', 'created_at'])
+            ->latest('created_at')
+            ->limit(8)
+            ->get()
+            ->map(fn (MemoryFragment $memory) => [
+                'id' => $memory->id,
+                'list_name' => $memory->key ?: 'groceries',
+                'content' => $memory->content,
+                'quantity' => data_get($memory->metadata, 'quantity'),
+                'created_at' => $memory->created_at?->diffForHumans(),
+            ])
+            ->all();
+
+        $this->memoryCategoryCounts = MemoryFragment::query()
+            ->whereNotNull('category')
+            ->select(['category', DB::raw('COUNT(*) as total')])
+            ->groupBy('category')
+            ->orderByDesc('total')
+            ->limit(8)
+            ->pluck('total', 'category')
+            ->map(fn ($count) => (int) $count)
+            ->all();
+    }
+
+    protected function loadTailscaleStatus(): void
+    {
+        if (! config('laraclaw.tailscale.enabled', false)) {
+            $this->tailscaleStatus = ['enabled' => false];
+
+            return;
+        }
+
+        try {
+            $manager = app(TailscaleNetworkManager::class);
+            $status = $manager->getNetworkStatus();
+            $this->tailscaleStatus = array_merge($status, [
+                'enabled' => true,
+                'serve_active' => $manager->isServeActive(),
+                'serve_url' => $manager->getServeUrl(),
+            ]);
+        } catch (\Throwable) {
+            $this->tailscaleStatus = ['enabled' => true, 'connected' => false];
+        }
+    }
+
+    protected function loadHeartbeat(): void
+    {
+        if (! config('laraclaw.heartbeat.enabled', true)) {
+            $this->heartbeatItems = [];
+            $this->recentHeartbeatRuns = [];
+
+            return;
+        }
+
+        try {
+            $engine = app(HeartbeatEngine::class);
+            $this->heartbeatItems = $engine->parseHeartbeatFile();
+        } catch (\Throwable) {
+            $this->heartbeatItems = [];
+        }
+
+        $this->recentHeartbeatRuns = \App\Models\HeartbeatRun::query()
+            ->latest('executed_at')
+            ->limit(5)
+            ->get()
+            ->map(fn ($run) => [
+                'heartbeat_id' => $run->heartbeat_id,
+                'instruction' => $run->instruction,
+                'status' => $run->status,
+                'executed_at' => $run->executed_at?->diffForHumans(),
+            ])
+            ->all();
     }
 
     protected function loadOpsSignals(): void

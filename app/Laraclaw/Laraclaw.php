@@ -3,6 +3,7 @@
 namespace App\Laraclaw;
 
 use App\Laraclaw\Agents\CoreAgent;
+use App\Laraclaw\Agents\IntentRouter;
 use App\Laraclaw\Agents\MultiAgentOrchestrator;
 use App\Laraclaw\Memory\MemoryManager;
 use App\Laraclaw\Monitoring\TokenUsageTracker;
@@ -14,6 +15,7 @@ class Laraclaw
     public function __construct(
         protected MemoryManager $memory,
         protected CoreAgent $agent,
+        protected IntentRouter $intentRouter,
         protected MultiAgentOrchestrator $orchestrator,
         protected PluginManager $plugins,
         protected TokenUsageTracker $tokenUsageTracker,
@@ -60,6 +62,9 @@ class Laraclaw
 
         $shouldUseMultiAgent = $useMultiAgent ?? config('laraclaw.multi_agent.enabled', false);
         $responseMode = $shouldUseMultiAgent ? 'multi' : 'single';
+        $intent = config('laraclaw.intent_routing.enabled', true)
+            ? $this->intentRouter->route($message)
+            : ['intent' => 'general', 'specialist_prompt' => null];
 
         if ($shouldUseMultiAgent) {
             $response = $this->orchestrator->collaborate($conversation, $message);
@@ -70,7 +75,12 @@ class Laraclaw
             $memoryContext = $this->memory->formatMemoriesForPrompt($memories);
 
             // Prompt the agent with context
-            $response = $this->agent->promptWithContext($message, $history, $memoryContext);
+            $response = $this->agent->promptWithContext(
+                $message,
+                $history,
+                $memoryContext,
+                $intent['specialist_prompt']
+            );
         }
 
         // Store the assistant response
@@ -79,6 +89,7 @@ class Laraclaw
             'content' => $response,
             'metadata' => [
                 'response_mode' => $responseMode,
+                'intent' => $intent['intent'],
             ],
         ]);
 
@@ -89,6 +100,7 @@ class Laraclaw
             $response,
             [
                 'response_mode' => $responseMode,
+                'intent' => $intent['intent'],
             ],
         );
 

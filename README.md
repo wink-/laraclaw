@@ -24,7 +24,7 @@
 ### Features
 
 - 🧠 **Intelligent Memory** — SQLite FTS5 full-text search for long-term memory storage
-- 🔧 **9 Built-in Skills** — Time, Calculator, Web Search, Memory, File System, Execute, Email, Calendar, Scheduler
+- 🔧 **11 Built-in Skills** — Time, Calculator, Web Search, App Builder, Memory, Shopping List, File System, Execute, Email, Calendar, Scheduler
 - 💬 **Multi-Platform Gateways** — CLI, Telegram, Discord, and WhatsApp support
 - 🌐 **Web Dashboard** — Monitor conversations, metrics, and chat directly from your browser
 - 🤝 **Multi-Agent Mode** — Per-message planner/executor/reviewer orchestration for complex tasks
@@ -34,6 +34,8 @@
 - 🤖 **Multi-Provider AI** — OpenAI, Anthropic, Gemini, Ollama, Groq, Mistral, DeepSeek, xAI
 - 📋 **AIEOS Support** — AI Entity Object Specification v1.1 for portable AI identities
 - 🚇 **Tunnel Support** — ngrok, Cloudflare Tunnel, and Tailscale for local development
+- 🧭 **Intent Routing** — Specialist prompt routing for builder, memory, scheduling, shopping, and entertainment intents
+- 🧱 **Module App Builder (MVP)** — Generate blog apps inside the same Laravel install using Laravel MVC modules under `app/Modules`
 
 ---
 
@@ -145,19 +147,55 @@ $response = Laraclaw::ask("Calculate 15% of 850");
 
 ## Skills
 
-Laraclaw comes with 9 built-in skills that the AI can use automatically:
+Laraclaw comes with 11 built-in skills that the AI can use automatically:
 
 | Skill | Description |
 |-------|-------------|
 | **TimeSkill** | Get current date/time with timezone support |
 | **CalculatorSkill** | Safe mathematical expression evaluation |
 | **WebSearchSkill** | Search the web via DuckDuckGo API |
+| **AppBuilderSkill** | Create/list app modules, draft/publish posts, and set domain bindings |
 | **MemorySkill** | Store, recall, and manage long-term memories |
+| **ShoppingListSkill** | Add/view/remove/clear shopping list items |
 | **FileSystemSkill** | Read, write, and manage files (scoped) |
 | **ExecuteSkill** | Execute shell commands (full autonomy only) |
 | **EmailSkill** | Read (IMAP) and send emails |
 | **CalendarSkill** | Manage events with ICS export |
-| **SchedulerSkill** | Register recurring/delayed actions with cron expressions |
+| **SchedulerSkill** | Register recurring/delayed actions with cron or natural-language schedules |
+
+### Module Apps (MVP)
+
+Laraclaw can now generate blog modules in standard Laravel MVC style using `AppBuilderSkill`.
+
+Each generated module includes:
+- Module manifest in `app/Modules/{ModuleName}/module.json`
+- Eloquent model in `app/Modules/{ModuleName}/Models/*Post.php`
+- Controller in `app/Modules/{ModuleName}/Http/Controllers/*PostController.php`
+- Route file in `routes/modules/{slug}.php` loaded dynamically by `ModuleServiceProvider`
+- Blade views in `resources/views/modules/{slug}/`
+- Migration in `database/migrations/` for `{slug}_posts` table
+
+Runtime loading behavior:
+- `ModuleServiceProvider` discovers module manifests from `app/Modules`
+- Route groups are mounted from each module manifest (`prefix` or optional `domain`)
+
+After generating an app, run:
+
+```bash
+php artisan migrate
+```
+
+You can manage modules from:
+- `AppBuilderSkill` tool actions
+- Livewire dashboard “Module App Builder (Laravel MVC)” panel
+
+Current module actions (via tool calls):
+- `create_app`
+- `list_apps`
+- `create_post_draft`
+- `publish_post`
+- `list_posts`
+- `set_domain`
 
 ### Creating Custom Skills
 
@@ -167,6 +205,7 @@ Laraclaw comes with 9 built-in skills that the AI can use automatically:
 namespace App\Laraclaw\Skills;
 
 use App\Laraclaw\Skills\Contracts\SkillInterface;
+use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Laravel\Ai\Contracts\Tool;
 use Laravel\Ai\Tools\Request;
 
@@ -451,7 +490,9 @@ php artisan test --filter=Laraclaw
 ```
 app/Laraclaw/
 ├── Agents/
-│   └── CoreAgent.php          # LLM orchestration
+│   ├── CoreAgent.php          # LLM orchestration
+│   ├── IntentRouter.php
+│   └── MultiAgentOrchestrator.php
 ├── Channels/
 │   └── ChannelBindingManager.php
 ├── Events/
@@ -460,7 +501,8 @@ app/Laraclaw/
 ├── Gateways/
 │   ├── CliGateway.php
 │   ├── TelegramGateway.php
-│   └── DiscordGateway.php
+│   ├── DiscordGateway.php
+│   └── WhatsAppGateway.php
 ├── Identity/
 │   ├── IdentityManager.php
 │   └── Aieos/
@@ -472,17 +514,22 @@ app/Laraclaw/
 │   └── SendMessageJob.php
 ├── Memory/
 │   └── MemoryManager.php
+├── Modules/
+│   └── ModuleManager.php
 ├── Monitoring/
 │   └── MetricsCollector.php
 ├── Security/
 │   └── SecurityManager.php
 ├── Skills/
+│   ├── AppBuilderSkill.php
 │   ├── CalculatorSkill.php
 │   ├── CalendarSkill.php
 │   ├── EmailSkill.php
 │   ├── ExecuteSkill.php
 │   ├── FileSystemSkill.php
 │   ├── MemorySkill.php
+│   ├── SchedulerSkill.php
+│   ├── ShoppingListSkill.php
 │   ├── TimeSkill.php
 │   └── WebSearchSkill.php
 └── Tunnels/
@@ -490,6 +537,15 @@ app/Laraclaw/
     ├── NgrokService.php
     ├── CloudflareTunnelService.php
     └── TailscaleService.php
+
+app/Modules/
+└── {ModuleName}/
+  ├── module.json
+  ├── Models/
+  └── Http/Controllers/
+
+routes/modules/
+resources/views/modules/
 ```
 
 ---

@@ -3,5 +3,6 @@
 return [
     App\Providers\AppServiceProvider::class,
     App\Providers\LaraclawServiceProvider::class,
+    App\Providers\ModuleServiceProvider::class,
     App\Providers\VoltServiceProvider::class,
 ];

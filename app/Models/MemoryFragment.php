@@ -14,6 +14,7 @@ class MemoryFragment extends Model
         'conversation_id',
         'user_id',
         'key',
+        'category',
         'content',
         'embedding_id',
         'metadata',
@@ -50,5 +51,13 @@ class MemoryFragment extends Model
     public function scopeForUser($query, int $userId)
     {
         return $query->where('user_id', $userId);
+    }
+
+    /**
+     * Scope to find memories by category.
+     */
+    public function scopeForCategory($query, string $category)
+    {
+        return $query->where('category', $category);
     }
 }
