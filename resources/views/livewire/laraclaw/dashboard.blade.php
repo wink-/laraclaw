@@ -5,7 +5,7 @@
             <h1 class="text-2xl font-bold text-gray-100">Dashboard</h1>
             <p class="text-gray-400">Monitor your Laraclaw instance</p>
         </div>
-        <a href="{{ route('laraclaw.chat.live') }}" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-lg font-medium transition">
+        <a href="{{ route('laraclaw.chat') }}" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-lg font-medium transition">
             Open Chat
         </a>
     </div>

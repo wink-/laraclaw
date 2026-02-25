@@ -5,7 +5,7 @@
             <h1 class="text-2xl font-bold text-gray-100">Conversations</h1>
             <p class="text-gray-400">Browse and manage conversation history</p>
         </div>
-        <a href="{{ route('laraclaw.chat.live') }}" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-lg font-medium transition">
+        <a href="{{ route('laraclaw.chat') }}" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-lg font-medium transition">
             New Chat
         </a>
     </div>
@@ -98,7 +98,7 @@
                             @if($search || $gateway)
                                 No conversations match your filters.
                             @else
-                                No conversations yet. Start a <a href="{{ route('laraclaw.chat.live') }}" class="text-indigo-400 hover:underline">new chat</a>.
+                                No conversations yet. Start a <a href="{{ route('laraclaw.chat') }}" class="text-indigo-400 hover:underline">new chat</a>.
                             @endif
                         </td>
                     </tr>

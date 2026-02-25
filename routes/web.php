@@ -19,11 +19,6 @@ Route::middleware('throttle:laraclaw-webhooks')->prefix('laraclaw/webhooks')->gr
     Route::post('whatsapp', [WhatsAppWebhookController::class, 'handle'])->name('laraclaw.webhooks.whatsapp.handle');
 });
 
-// Laraclaw Streaming endpoint (called from Livewire)
-Route::post('laraclaw/chat/stream-vercel', [DashboardController::class, 'streamVercel'])
-    ->middleware('throttle:laraclaw-api')
-    ->name('laraclaw.chat.stream.vercel');
-
 // Authenticated Routes
 Route::middleware('auth')->group(function () {
     // Breeze Profile
@@ -32,27 +27,19 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     // Redirect /dashboard to Laraclaw
-    Route::get('/dashboard', fn () => redirect()->route('laraclaw.dashboard.live'))->name('dashboard');
+    Route::get('/dashboard', fn () => redirect()->route('laraclaw.dashboard'))->name('dashboard');
 
-    // Laraclaw Legacy Dashboard Routes
+    // Laraclaw streaming endpoint (called from Livewire)
+    Route::post('laraclaw/chat/stream-vercel', [DashboardController::class, 'streamVercel'])
+        ->middleware('throttle:laraclaw-api')
+        ->name('laraclaw.chat.stream.vercel');
+
+    // Laraclaw routes
     Route::prefix('laraclaw')->name('laraclaw.')->group(function () {
-        Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
-        Route::get('/conversations', [DashboardController::class, 'conversations'])->name('conversations');
-        Route::get('/conversations/{conversation}', [DashboardController::class, 'showConversation'])->name('conversation');
-        Route::get('/memories', [DashboardController::class, 'memories'])->name('memories');
-        Route::get('/metrics', [DashboardController::class, 'metrics'])->name('metrics');
-        Route::get('/chat', [DashboardController::class, 'chat'])->name('chat');
-        Route::post('/chat', [DashboardController::class, 'sendMessage'])->middleware('throttle:laraclaw-api')->name('chat.send');
-        Route::post('/chat/stream', [DashboardController::class, 'streamMessage'])->middleware('throttle:laraclaw-api')->name('chat.stream');
-        Route::get('/chat/new', [DashboardController::class, 'newChat'])->name('chat.new');
-    });
-
-    // Laraclaw Livewire Dashboard Routes
-    Route::prefix('laraclaw/live')->name('laraclaw.')->group(function () {
-        Route::get('/', \App\Livewire\Laraclaw\Dashboard::class)->name('dashboard.live');
-        Route::get('/chat', \App\Livewire\Laraclaw\Chat::class)->name('chat.live');
-        Route::get('/conversations', \App\Livewire\Laraclaw\Conversations::class)->name('conversations.live');
-        Route::get('/memories', \App\Livewire\Laraclaw\Memories::class)->name('memories.live');
+        Route::get('/', \App\Livewire\Laraclaw\Dashboard::class)->name('dashboard');
+        Route::get('/chat', \App\Livewire\Laraclaw\Chat::class)->name('chat');
+        Route::get('/conversations', \App\Livewire\Laraclaw\Conversations::class)->name('conversations');
+        Route::get('/memories', \App\Livewire\Laraclaw\Memories::class)->name('memories');
     });
 });
 
