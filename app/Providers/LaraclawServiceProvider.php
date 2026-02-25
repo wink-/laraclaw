@@ -23,6 +23,7 @@ use App\Laraclaw\Skills\EmailSkill;
 use App\Laraclaw\Skills\ExecuteSkill;
 use App\Laraclaw\Skills\FileSystemSkill;
 use App\Laraclaw\Skills\MemorySkill;
+use App\Laraclaw\Skills\NotificationSkill;
 use App\Laraclaw\Skills\PluginManager;
 use App\Laraclaw\Skills\SchedulerSkill;
 use App\Laraclaw\Skills\ShoppingListSkill;
@@ -92,6 +93,7 @@ class LaraclawServiceProvider extends ServiceProvider
         $this->app->singleton(CalendarSkill::class);
         $this->app->singleton(SchedulerSkill::class);
         $this->app->singleton(ShoppingListSkill::class);
+        $this->app->singleton(NotificationSkill::class);
 
         // Tag skills
         $this->app->tag([
@@ -106,6 +108,7 @@ class LaraclawServiceProvider extends ServiceProvider
             CalendarSkill::class,
             SchedulerSkill::class,
             ShoppingListSkill::class,
+            NotificationSkill::class,
         ], 'laraclaw.skills');
 
         // Register CoreAgent with skills

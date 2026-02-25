@@ -7,16 +7,20 @@ use Illuminate\Support\Str;
 
 class ModuleManager
 {
+    protected string $appsPath;
+
     public function __construct(?string $appsPath = null)
     {
-        if ($appsPath !== null) {
-            config()->set('laraclaw.modules.path', $appsPath);
-        }
+        $this->appsPath = (string) ($appsPath ?: config('laraclaw.modules.path', app_path('Modules')));
+
+        config()->set('laraclaw.modules.path', $this->appsPath);
     }
 
     public function appsPath(): string
     {
-        $appsPath = (string) config('laraclaw.modules.path', app_path('Modules'));
+        $appsPath = $this->appsPath !== ''
+            ? $this->appsPath
+            : (string) config('laraclaw.modules.path', app_path('Modules'));
 
         if (! File::isDirectory($appsPath)) {
             File::makeDirectory($appsPath, 0755, true);

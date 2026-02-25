@@ -3,14 +3,20 @@
 namespace App\Http\Controllers\Laraclaw;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\ExtractMemoriesJob;
+use App\Laraclaw\Agents\CoreAgent;
+use App\Laraclaw\Agents\IntentRouter;
+use App\Laraclaw\Facades\Laraclaw as LaraclawFacade;
 use App\Laraclaw\Monitoring\MetricsCollector;
 use App\Laraclaw\Monitoring\TokenUsageTracker;
+use App\Laraclaw\Skills\MemorySkill;
 use App\Models\Conversation;
 use App\Models\MemoryFragment;
 use App\Models\Message;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Laravel\Ai\Messages\Message as AiMessage;
 
 class DashboardController extends Controller
 {
@@ -162,17 +168,7 @@ class DashboardController extends Controller
             'content' => $request->message,
         ]);
 
-        // Get streaming response from agent
-        $agent = \App\Laraclaw\Facades\Laraclaw::agent();
-
-        // Set up conversation history
-        $history = $conversation->messages()
-            ->orderBy('created_at', 'asc')
-            ->get()
-            ->map(fn ($m) => new \Laravel\Ai\Messages\Message($m->role, $m->content))
-            ->all();
-
-        $agent->setConversationHistory($history);
+        $agent = $this->prepareStreamingAgent($conversation, $request->message);
 
         // Record metrics
         $this->metrics->increment('messages_received');
@@ -192,6 +188,12 @@ class DashboardController extends Controller
                     $request->string('message')->toString(),
                     (string) $response,
                     ['response_mode' => 'single_stream'],
+                );
+
+                ExtractMemoriesJob::dispatch(
+                    $conversation->id,
+                    $request->string('message')->toString(),
+                    (string) $response,
                 );
             });
     }
@@ -214,17 +216,7 @@ class DashboardController extends Controller
             'content' => $request->message,
         ]);
 
-        // Get streaming response from agent
-        $agent = \App\Laraclaw\Facades\Laraclaw::agent();
-
-        // Set up conversation history
-        $history = $conversation->messages()
-            ->orderBy('created_at', 'asc')
-            ->get()
-            ->map(fn ($m) => new \Laravel\Ai\Messages\Message($m->role, $m->content))
-            ->all();
-
-        $agent->setConversationHistory($history);
+        $agent = $this->prepareStreamingAgent($conversation, $request->message);
 
         // Record metrics
         $this->metrics->increment('messages_received');
@@ -249,7 +241,42 @@ class DashboardController extends Controller
                     (string) $response,
                     ['response_mode' => 'single_stream_vercel'],
                 );
+
+                ExtractMemoriesJob::dispatch(
+                    $conversation->id,
+                    $request->string('message')->toString(),
+                    (string) $response,
+                );
             });
+    }
+
+    protected function prepareStreamingAgent(Conversation $conversation, string $message): CoreAgent
+    {
+        app(MemorySkill::class)
+            ->forUser($conversation->user_id)
+            ->forConversation($conversation->id);
+
+        $memoryManager = LaraclawFacade::memory();
+        $agent = LaraclawFacade::agent();
+
+        $history = collect($memoryManager->getConversationContextWithBudget($conversation))
+            ->map(fn (array $entry) => new AiMessage($entry['role'], $entry['content']))
+            ->all();
+
+        $agent->setConversationHistory($history);
+
+        $memories = $memoryManager->getRelevantMemories($message, $conversation->user_id);
+        $memoryContext = $memoryManager->formatMemoriesForPrompt($memories);
+        $agent->setMemoryContext($memoryContext !== '' ? $memoryContext : null);
+
+        if (config('laraclaw.intent_routing.enabled', true)) {
+            $intent = app(IntentRouter::class)->route($message);
+            $agent->setInstructionOverride($intent['specialist_prompt']);
+        } else {
+            $agent->setInstructionOverride(null);
+        }
+
+        return $agent;
     }
 
     /**

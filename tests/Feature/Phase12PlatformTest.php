@@ -1,12 +1,16 @@
 <?php
 
 use App\Laraclaw\Facades\Laraclaw;
+use App\Laraclaw\Notifications\NotificationDispatcher;
+use App\Livewire\Laraclaw\Dashboard;
 use App\Models\ApiToken;
 use App\Models\Conversation;
 use App\Models\LaraclawNotification;
+use App\Models\Message;
 use App\Models\TokenUsage;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Livewire\Livewire;
 
 uses(RefreshDatabase::class);
 
@@ -101,4 +105,58 @@ it('marks unsupported proactive notifications as failed when dispatch runs', fun
         ->assertSuccessful();
 
     expect(LaraclawNotification::query()->first()->status)->toBe('failed');
+});
+
+it('keeps recurring proactive notifications pending after successful dispatch', function () {
+    $notification = LaraclawNotification::query()->create([
+        'gateway' => 'telegram',
+        'channel_id' => '123',
+        'message' => 'daily briefing',
+        'status' => 'pending',
+        'cron_expression' => '0 8 * * *',
+    ]);
+
+    $dispatcher = \Mockery::mock(NotificationDispatcher::class);
+    $dispatcher->shouldReceive('dispatch')
+        ->once()
+        ->andReturnTrue();
+    $this->app->instance(NotificationDispatcher::class, $dispatcher);
+
+    $this->artisan('laraclaw:dispatch-notifications')
+        ->assertSuccessful();
+
+    $notification->refresh();
+
+    expect($notification->status)->toBe('pending')
+        ->and($notification->send_at)->not->toBeNull()
+        ->and($notification->sent_at)->not->toBeNull();
+});
+
+it('shows token analytics breakdown on live dashboard', function () {
+    $conversation = Conversation::query()->create([
+        'gateway' => 'web',
+        'title' => 'Analytics Test Conversation',
+    ]);
+
+    $assistantMessage = Message::query()->create([
+        'conversation_id' => $conversation->id,
+        'role' => 'assistant',
+        'content' => 'test',
+    ]);
+
+    TokenUsage::query()->create([
+        'conversation_id' => $conversation->id,
+        'message_id' => $assistantMessage->id,
+        'provider' => 'openai',
+        'model' => 'gpt-4o-mini',
+        'prompt_tokens' => 40,
+        'completion_tokens' => 60,
+        'total_tokens' => 100,
+        'cost_usd' => 0.000300,
+    ]);
+
+    Livewire::test(Dashboard::class)
+        ->assertSet('tokenUsageAnalytics.totals.tokens_7d', 100)
+        ->assertSet('tokenUsageAnalytics.providers.0.provider', 'openai')
+        ->assertSet('tokenUsageAnalytics.conversations.0.title', 'Analytics Test Conversation');
 });

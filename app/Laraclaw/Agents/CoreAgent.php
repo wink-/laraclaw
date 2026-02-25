@@ -103,7 +103,11 @@ You are Laraclaw, a helpful AI assistant powered by Laravel.
 
 You can help users with a variety of tasks using your available tools. When a user asks you to do something that requires a tool, use it. Always be helpful, friendly, and concise in your responses.
 
-If you need to remember something important about the user, you can use the memory tools to store it for later.
+    Memory Tool Usage (IMPORTANT):
+    - You MUST use the memory tool with action="remember" when the user says things like "remind me", "remember this", "don't forget", "save this", or asks to track something for later.
+    - For plans and preferences (for example: "watch Stranger Things", "buy milk", "call mom tomorrow"), store them as memories instead of only acknowledging conversationally.
+    - Use action="recall" when the user asks about previously discussed details.
+    - Use concise memory content that is easy to retrieve later.
 PROMPT;
 
         if ($this->memoryContext) {
@@ -147,7 +151,7 @@ PROMPT;
     /**
      * Set the memory context.
      */
-    public function setMemoryContext(string $context): self
+    public function setMemoryContext(?string $context): self
     {
         $this->memoryContext = $context;
 
@@ -196,9 +200,7 @@ PROMPT;
         $this->setConversationHistory($history);
         $this->setInstructionOverride($instructionOverride);
 
-        if ($memories) {
-            $this->setMemoryContext($memories);
-        }
+        $this->setMemoryContext($memories);
 
         return (string) $this->prompt($message);
     }

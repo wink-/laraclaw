@@ -1,4 +1,69 @@
-<div class="flex h-[calc(100vh-80px)] bg-gray-900 text-gray-100" x-data="chatComponent()" @keydown.window.ctrl.s.prevent @keydown.window.ctrl.n.prevent="$wire.startNewConversation()" @keydown.window.escape="$wire.message = ''">
+<div class="flex h-full min-h-0 bg-gray-900 text-gray-100" x-data="window.chatComponent()" @keydown.window.ctrl.s.prevent @keydown.window.ctrl.n.prevent="$wire.startNewConversation()" @keydown.window.escape="$wire.message = ''">
+@push('scripts')
+<script>
+    window.chatComponent = () => ({
+        showShortcuts: false,
+
+        init() {
+            // Focus input on '/' key
+            document.addEventListener('keydown', (e) => {
+                if (e.key === '/' && !['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) {
+                    e.preventDefault();
+                    this.$refs.messageInput?.focus();
+                }
+                if (e.key === '?' && e.shiftKey) {
+                    this.showShortcuts = true;
+                }
+            });
+
+            // Handle streaming via SSE
+            this.$wire.on('start-streaming', async ({ conversationId, message }) => {
+                try {
+                    const response = await fetch('/laraclaw/chat/stream-vercel', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                            'Accept': 'text/plain',
+                        },
+                        body: JSON.stringify({
+                            conversation_id: conversationId,
+                            message: message,
+                        }),
+                    });
+
+                    const reader = response.body.getReader();
+                    const decoder = new TextDecoder();
+                    let fullContent = '';
+
+                    while (true) {
+                        const { done, value } = await reader.read();
+                        if (done) break;
+
+                        const chunk = decoder.decode(value, { stream: true });
+                        const lines = chunk.split('\n');
+
+                        for (const line of lines) {
+                            if (line.startsWith('0:"')) {
+                                try {
+                                    const text = JSON.parse(line.substring(2));
+                                    fullContent += text;
+                                    this.$wire.streamingContent = fullContent;
+                                } catch (e) {}
+                            }
+                        }
+                    }
+
+                    this.$wire.dispatch('streaming-complete', { content: fullContent });
+                } catch (error) {
+                    console.error('Streaming error:', error);
+                    this.$wire.dispatch('streaming-complete', { content: 'Sorry, an error occurred during streaming.' });
+                }
+            });
+        }
+    });
+</script>
+@endpush
     <!-- Sidebar -->
     <div class="w-64 bg-gray-800 border-r border-gray-700 flex flex-col">
         <div class="p-4 border-b border-gray-700">
@@ -9,9 +74,9 @@
 
         <div class="flex-1 overflow-y-auto p-2">
             @foreach($conversations as $conv)
-                <button
+                <div
                     wire:click="loadConversation({{ $conv->id }})"
-                    class="w-full text-left px-3 py-2 rounded-lg mb-1 text-sm {{ $conversationId === $conv->id ? 'bg-gray-700' : 'hover:bg-gray-700/50' }} transition group"
+                    class="w-full text-left px-3 py-2 rounded-lg mb-1 text-sm {{ $conversationId === $conv->id ? 'bg-gray-700' : 'hover:bg-gray-700/50' }} transition group cursor-pointer"
                 >
                     <div class="flex justify-between items-center">
                         <span class="truncate">{{ $conv->title }}</span>
@@ -26,7 +91,7 @@
                         </button>
                     </div>
                     <div class="text-xs text-gray-500 mt-1">{{ $conv->created_at->diffForHumans() }}</div>
-                </button>
+                </div>
             @endforeach
         </div>
 
@@ -47,10 +112,10 @@
     </div>
 
     <!-- Main Chat Area -->
-    <div class="flex-1 flex flex-col">
+    <div class="flex-1 flex flex-col min-h-0">
         <!-- Messages -->
-        <div class="flex-1 overflow-y-auto p-4 space-y-4" x-ref="messagesContainer">
-            @forelse($this->messages as $msg)
+        <div class="flex-1 min-h-0 overflow-y-auto p-4 space-y-4" x-ref="messagesContainer">
+            @forelse($this->conversationMessages as $msg)
                 <div class="flex {{ $msg->role === 'user' ? 'justify-end' : 'justify-start' }}">
                     <div class="max-w-[80%] {{ $msg->role === 'user' ? 'bg-indigo-600' : 'bg-gray-700' }} rounded-xl px-4 py-3">
                         <div class="text-xs {{ $msg->role === 'user' ? 'text-indigo-200' : 'text-gray-400' }} uppercase mb-1">
@@ -183,7 +248,6 @@
         </div>
     </div>
 
-    @script
     <script>
         document.addEventListener('livewire:init', () => {
             // Scroll to bottom when messages update
@@ -196,70 +260,5 @@
                 });
             });
         });
-
-        document.addEventListener('alpine:init', () => {
-            Alpine.data('chatComponent', () => ({
-                showShortcuts: false,
-
-                init() {
-                    // Focus input on '/' key
-                    document.addEventListener('keydown', (e) => {
-                        if (e.key === '/' && !['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) {
-                            e.preventDefault();
-                            this.$refs.messageInput?.focus();
-                        }
-                        if (e.key === '?' && e.shiftKey) {
-                            this.showShortcuts = true;
-                        }
-                    });
-
-                    // Handle streaming via SSE
-                    this.$wire.on('start-streaming', async ({ conversationId, message }) => {
-                        try {
-                            const response = await fetch('/laraclaw/chat/stream-vercel', {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                                    'Accept': 'text/plain',
-                                },
-                                body: JSON.stringify({
-                                    conversation_id: conversationId,
-                                    message: message,
-                                }),
-                            });
-
-                            const reader = response.body.getReader();
-                            const decoder = new TextDecoder();
-                            let fullContent = '';
-
-                            while (true) {
-                                const { done, value } = await reader.read();
-                                if (done) break;
-
-                                const chunk = decoder.decode(value, { stream: true });
-                                const lines = chunk.split('\n');
-
-                                for (const line of lines) {
-                                    if (line.startsWith('0:"')) {
-                                        try {
-                                            const text = JSON.parse(line.substring(2));
-                                            fullContent += text;
-                                            this.$wire.streamingContent = fullContent;
-                                        } catch (e) {}
-                                    }
-                                }
-                            }
-
-                            this.$wire.dispatch('streaming-complete', { content: fullContent });
-                        } catch (error) {
-                            console.error('Streaming error:', error);
-                            this.$wire.dispatch('streaming-complete', { content: 'Sorry, an error occurred during streaming.' });
-                        }
-                    });
-                }
-            }));
-        });
     </script>
-    @endscript
 </div>

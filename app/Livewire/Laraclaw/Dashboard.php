@@ -50,6 +50,11 @@ class Dashboard extends Component
     public array $opsSignals = [];
 
     /**
+     * @var array<string, mixed>
+     */
+    public array $tokenUsageAnalytics = [];
+
+    /**
      * @var array<int, array<string, mixed>>
      */
     public array $skills = [];
@@ -101,6 +106,7 @@ class Dashboard extends Component
         $this->loadSkills();
         $this->loadScheduledTasks();
         $this->loadOpsSignals();
+        $this->loadTokenUsageAnalytics();
         $this->loadTailscaleStatus();
         $this->loadHeartbeat();
         $this->loadShoppingAndMemory();
@@ -304,6 +310,7 @@ class Dashboard extends Component
             'skills' => $this->skills,
             'scheduledTasks' => $this->scheduledTasks,
             'opsSignals' => $this->opsSignals,
+            'tokenUsageAnalytics' => $this->tokenUsageAnalytics,
             'tailscaleStatus' => $this->tailscaleStatus,
             'heartbeatItems' => $this->heartbeatItems,
             'recentHeartbeatRuns' => $this->recentHeartbeatRuns,
@@ -473,6 +480,77 @@ class Dashboard extends Component
                 ->count(),
             'errors_metric' => (int) app(\App\Laraclaw\Monitoring\MetricsCollector::class)
                 ->getMetrics()['errors'],
+        ];
+    }
+
+    protected function loadTokenUsageAnalytics(): void
+    {
+        if (! Schema::hasTable('token_usages')) {
+            $this->tokenUsageAnalytics = [
+                'totals' => [
+                    'tokens_7d' => 0,
+                    'cost_7d' => 0.0,
+                ],
+                'daily' => [],
+                'providers' => [],
+                'conversations' => [],
+            ];
+
+            return;
+        }
+
+        $since = now()->subDays(7);
+
+        $daily = TokenUsage::query()
+            ->where('created_at', '>=', $since)
+            ->selectRaw('DATE(created_at) as day, SUM(total_tokens) as tokens, SUM(cost_usd) as cost')
+            ->groupBy('day')
+            ->orderBy('day')
+            ->get()
+            ->map(fn (TokenUsage $row) => [
+                'day' => (string) $row->day,
+                'tokens' => (int) $row->tokens,
+                'cost' => (float) $row->cost,
+            ])
+            ->all();
+
+        $providers = TokenUsage::query()
+            ->where('created_at', '>=', $since)
+            ->selectRaw('provider, SUM(total_tokens) as tokens, SUM(cost_usd) as cost')
+            ->groupBy('provider')
+            ->orderByDesc('tokens')
+            ->get()
+            ->map(fn (TokenUsage $row) => [
+                'provider' => $row->provider,
+                'tokens' => (int) $row->tokens,
+                'cost' => (float) $row->cost,
+            ])
+            ->all();
+
+        $conversations = TokenUsage::query()
+            ->with('conversation:id,title')
+            ->where('created_at', '>=', $since)
+            ->selectRaw('conversation_id, SUM(total_tokens) as tokens, SUM(cost_usd) as cost')
+            ->groupBy('conversation_id')
+            ->orderByDesc('tokens')
+            ->limit(5)
+            ->get()
+            ->map(fn (TokenUsage $row) => [
+                'conversation_id' => $row->conversation_id,
+                'title' => $row->conversation?->title ?: 'Untitled conversation',
+                'tokens' => (int) $row->tokens,
+                'cost' => (float) $row->cost,
+            ])
+            ->all();
+
+        $this->tokenUsageAnalytics = [
+            'totals' => [
+                'tokens_7d' => (int) TokenUsage::query()->where('created_at', '>=', $since)->sum('total_tokens'),
+                'cost_7d' => (float) TokenUsage::query()->where('created_at', '>=', $since)->sum('cost_usd'),
+            ],
+            'daily' => $daily,
+            'providers' => $providers,
+            'conversations' => $conversations,
         ];
     }
 
