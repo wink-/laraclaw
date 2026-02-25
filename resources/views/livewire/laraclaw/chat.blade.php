@@ -216,16 +216,32 @@ new class extends Component {
                     let buffer = '';
 
                     const processLine = (line) => {
-                        if (!line.startsWith('0:"')) {
+                        const normalizedLine = line.trim();
+                        if (normalizedLine === '') {
+                            return;
+                        }
+
+                        const dataLine = normalizedLine.startsWith('data:')
+                            ? normalizedLine.substring(5).trimStart()
+                            : normalizedLine;
+
+                        if (!dataLine.startsWith('0:')) {
+                            return;
+                        }
+
+                        const payload = dataLine.substring(2);
+                        if (payload === '') {
                             return;
                         }
 
                         try {
-                            const text = JSON.parse(line.substring(2));
-                            fullContent += text;
-                            this.$wire.streamingContent = fullContent;
+                            const text = JSON.parse(payload);
+                            if (typeof text === 'string') {
+                                fullContent += text;
+                                this.$wire.streamingContent = fullContent;
+                            }
                         } catch (error) {
-                            console.error('Failed to parse streaming chunk:', error, line);
+                            console.error('Failed to parse streaming chunk:', error, dataLine);
                         }
                     };
 
@@ -249,10 +265,6 @@ new class extends Component {
                         processLine(buffer);
                     }
 
-                    if (fullContent.trim() === '') {
-                        throw new Error('The selected model returned no content.');
-                    }
-
                     this.$wire.dispatch('streaming-complete', { content: fullContent });
                 } catch (error) {
                     console.error('Streaming error:', error);
@@ -264,14 +276,14 @@ new class extends Component {
 </script>
 @endpush
     <!-- Sidebar -->
-    <div class="w-64 bg-gray-800 border-r border-gray-700 flex flex-col">
-        <div class="p-4 border-b border-gray-700">
+    <div class="w-64 min-h-0 bg-gray-800 border-r border-gray-700 flex flex-col">
+        <div class="sticky top-0 z-10 p-4 border-b border-gray-700 bg-gray-800">
             <button wire:click="startNewConversation" class="w-full px-4 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-lg font-medium transition">
                 + New Chat
             </button>
         </div>
 
-        <div class="flex-1 overflow-y-auto overscroll-contain p-2">
+        <div class="flex-1 min-h-0 overflow-y-auto p-2">
             @foreach($conversations as $conv)
                 <div
                     wire:click="loadConversation({{ $conv->id }})"
@@ -295,7 +307,7 @@ new class extends Component {
         </div>
 
         <!-- Options -->
-        <div class="p-4 border-t border-gray-700 space-y-2">
+        <div class="sticky bottom-0 z-10 p-4 border-t border-gray-700 bg-gray-800 space-y-2">
             <label class="flex items-center gap-2 text-sm cursor-pointer">
                 <input type="checkbox" wire:model="streaming" class="rounded bg-gray-700 border-gray-600 text-indigo-600 focus:ring-indigo-500">
                 <span>Enable streaming</span>
@@ -313,7 +325,7 @@ new class extends Component {
     <!-- Main Chat Area -->
     <div class="flex-1 flex flex-col min-h-0 overflow-hidden">
         <!-- Input Area -->
-        <div class="p-4 bg-gray-800 border-b border-gray-700">
+        <div class="sticky top-0 z-10 p-4 bg-gray-800 border-b border-gray-700">
             <form wire:submit="sendMessage" class="flex gap-3">
                 <textarea
                     wire:model="message"
@@ -362,8 +374,20 @@ new class extends Component {
         </div>
 
         <!-- Messages -->
-        <div class="flex-1 min-h-0 overflow-y-auto overscroll-contain p-4 space-y-4" x-ref="messagesContainer">
-            @forelse($this->conversationMessages as $msg)
+        <div class="flex-1 min-h-0 overflow-y-auto p-4 space-y-4" x-ref="messagesContainer">
+            @if($isStreaming)
+                <div class="flex justify-start">
+                    <div class="max-w-[80%] bg-gray-700 rounded-xl px-4 py-3">
+                        <div class="text-xs text-gray-400 uppercase mb-1">assistant</div>
+                        <div class="whitespace-pre-wrap">
+                            <span x-text="$wire.streamingContent"></span>
+                            <span class="animate-pulse">|</span>
+                        </div>
+                    </div>
+                </div>
+            @endif
+
+            @forelse($this->conversationMessages->reverse()->values() as $msg)
                 <div class="flex {{ $msg->role === 'user' ? 'justify-end' : 'justify-start' }}">
                     <div class="max-w-[80%] {{ $msg->role === 'user' ? 'bg-indigo-600' : 'bg-gray-700' }} rounded-xl px-4 py-3">
                         <div class="text-xs {{ $msg->role === 'user' ? 'text-indigo-200' : 'text-gray-400' }} uppercase mb-1">
@@ -392,18 +416,6 @@ new class extends Component {
                 </div>
             @endforelse
 
-            <!-- Streaming message placeholder -->
-            @if($isStreaming)
-                <div class="flex justify-start">
-                    <div class="max-w-[80%] bg-gray-700 rounded-xl px-4 py-3">
-                        <div class="text-xs text-gray-400 uppercase mb-1">assistant</div>
-                        <div class="whitespace-pre-wrap">
-                            <span x-text="$wire.streamingContent"></span>
-                            <span class="animate-pulse">|</span>
-                        </div>
-                    </div>
-                </div>
-            @endif
         </div>
     </div>
 
