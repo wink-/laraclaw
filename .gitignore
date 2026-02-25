@@ -19,6 +19,7 @@
 /storage/*.key
 /storage/laraclaw/IDENTITY.md
 /storage/laraclaw/SOUL.md
+/storage/laraclaw/aieos.json
 /storage/pail
 /vendor
 Homestead.json
