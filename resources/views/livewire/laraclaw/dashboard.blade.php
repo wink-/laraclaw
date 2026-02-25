@@ -216,6 +216,48 @@
         <p class="mt-3 text-xs text-gray-500">Total collaborations recorded: {{ $opsSignals['collaborations_total'] ?? 0 }}</p>
     </div>
 
+    <div class="bg-gray-800 rounded-xl border border-gray-700 p-6">
+        <h2 class="text-lg font-semibold text-gray-100 mb-4">Token Usage Analytics (7d)</h2>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <div class="bg-gray-700/40 rounded-lg p-4">
+                <h3 class="text-sm text-gray-300 mb-3">Daily Usage</h3>
+                @forelse($tokenUsageAnalytics['daily'] ?? [] as $entry)
+                    <div class="flex items-center justify-between text-xs py-1 border-b border-gray-700/60 last:border-0">
+                        <span class="text-gray-400">{{ $entry['day'] }}</span>
+                        <span class="text-gray-200">{{ number_format($entry['tokens']) }} • ${{ number_format($entry['cost'], 4) }}</span>
+                    </div>
+                @empty
+                    <p class="text-xs text-gray-500">No token usage recorded in the last 7 days.</p>
+                @endforelse
+            </div>
+
+            <div class="bg-gray-700/40 rounded-lg p-4">
+                <h3 class="text-sm text-gray-300 mb-3">By Provider</h3>
+                @forelse($tokenUsageAnalytics['providers'] ?? [] as $entry)
+                    <div class="flex items-center justify-between text-xs py-1 border-b border-gray-700/60 last:border-0">
+                        <span class="text-gray-400">{{ $entry['provider'] }}</span>
+                        <span class="text-gray-200">{{ number_format($entry['tokens']) }} • ${{ number_format($entry['cost'], 4) }}</span>
+                    </div>
+                @empty
+                    <p class="text-xs text-gray-500">No provider breakdown available yet.</p>
+                @endforelse
+            </div>
+
+            <div class="bg-gray-700/40 rounded-lg p-4">
+                <h3 class="text-sm text-gray-300 mb-3">Top Conversations</h3>
+                @forelse($tokenUsageAnalytics['conversations'] ?? [] as $entry)
+                    <div class="py-1 border-b border-gray-700/60 last:border-0">
+                        <p class="text-xs text-gray-300 truncate">{{ $entry['title'] }}</p>
+                        <p class="text-xs text-gray-500">{{ number_format($entry['tokens']) }} tokens • ${{ number_format($entry['cost'], 4) }}</p>
+                    </div>
+                @empty
+                    <p class="text-xs text-gray-500">No conversation breakdown available yet.</p>
+                @endforelse
+            </div>
+        </div>
+    </div>
+
     <!-- Tailscale Network Status & Heartbeat Engine -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <!-- Tailscale Network Status -->

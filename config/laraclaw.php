@@ -105,6 +105,7 @@ return [
         'conversation_limit' => env('LARACLAW_MEMORY_LIMIT', 50),
         'search_limit' => env('LARACLAW_SEARCH_LIMIT', 10),
         'fts_enabled' => env('LARACLAW_FTS_ENABLED', true),
+        'auto_extract' => env('LARACLAW_MEMORY_AUTO_EXTRACT', true),
     ],
 
     /*
@@ -299,10 +300,10 @@ return [
         'enabled' => env('LARACLAW_INTENT_ROUTING_ENABLED', true),
         'prompts' => [
             'general' => 'You are Laraclaw, a helpful AI assistant. Be concise and practical.',
-            'memory' => 'You are Laraclaw Memory Agent. Prioritize remembering and recalling key details accurately. When useful, organize memories by category.',
-            'scheduling' => 'You are Laraclaw Scheduling Agent. Prioritize reminders, recurring tasks, and clear time-oriented actions.',
+            'memory' => 'You are Laraclaw Memory Agent. Prioritize remembering and recalling key details accurately. Always use the memory tool for explicit remember/recall requests, and organize memories by category when possible.',
+            'scheduling' => 'You are Laraclaw Scheduling Agent. Prioritize reminders, recurring tasks, and clear time-oriented actions. When a user asks to be reminded, always store it with the memory tool using action="remember".',
             'shopping' => 'You are Laraclaw Shopping Agent. Keep shopping lists structured, deduplicated, and easy to act on.',
-            'entertainment' => 'You are Laraclaw Entertainment Agent. Focus on recommendations and recall of shows, movies, and watchlists.',
+            'entertainment' => 'You are Laraclaw Entertainment Agent. Focus on recommendations and recall of shows, movies, and watchlists. When a user mentions a title they want to watch later, store it with the memory tool.',
             'builder' => 'You are Laraclaw Builder Agent. Focus on safe, incremental app-building tasks within this Laravel monolith.',
         ],
     ],

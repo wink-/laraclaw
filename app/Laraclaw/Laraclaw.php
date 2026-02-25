@@ -2,11 +2,13 @@
 
 namespace App\Laraclaw;
 
+use App\Jobs\ExtractMemoriesJob;
 use App\Laraclaw\Agents\CoreAgent;
 use App\Laraclaw\Agents\IntentRouter;
 use App\Laraclaw\Agents\MultiAgentOrchestrator;
 use App\Laraclaw\Memory\MemoryManager;
 use App\Laraclaw\Monitoring\TokenUsageTracker;
+use App\Laraclaw\Skills\MemorySkill;
 use App\Laraclaw\Skills\PluginManager;
 use App\Models\Conversation;
 
@@ -60,6 +62,10 @@ class Laraclaw
             'content' => $message,
         ]);
 
+        app(MemorySkill::class)
+            ->forUser($conversation->user_id)
+            ->forConversation($conversation->id);
+
         $shouldUseMultiAgent = $useMultiAgent ?? config('laraclaw.multi_agent.enabled', false);
         $responseMode = $shouldUseMultiAgent ? 'multi' : 'single';
         $intent = config('laraclaw.intent_routing.enabled', true)
@@ -103,6 +109,8 @@ class Laraclaw
                 'intent' => $intent['intent'],
             ],
         );
+
+        ExtractMemoriesJob::dispatch($conversation->id, $message, $response);
 
         return $response;
     }

@@ -41,7 +41,7 @@ class Chat extends Component
     }
 
     #[Computed]
-    public function messages()
+    public function conversationMessages()
     {
         return $this->conversation?->messages ?? collect();
     }
@@ -138,7 +138,7 @@ class Chat extends Component
 
     public function conversations()
     {
-        return Conversation::latest()->limit(20)->get();
+        return Conversation::latest()->limit(10)->get();
     }
 
     public function render()

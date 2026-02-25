@@ -53,7 +53,7 @@ it('core agent has skills registered', function () {
 
     $tools = $agent->tools();
 
-    expect($tools)->toHaveCount(11);
+    expect($tools)->toHaveCount(12);
 });
 
 it('time skill can get current time', function () {

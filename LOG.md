@@ -1,6 +1,72 @@
 # Laraclaw Implementation Log
 
+## Session: 2026-02-25
+
+### Iteration: Memory Reliability Overhaul (Streaming + Auto-Extract)
+
+**Goal:** Make reminders and long-term memory capture reliable in live chat, especially in streaming mode.
+
+#### Completed
+
+**1. Streaming Memory Context Parity**
+- Updated streaming endpoints to use token-budgeted history context from `MemoryManager`.
+- Added relevant memory retrieval and memory-context injection before streamed responses.
+- Applied intent-routing specialist prompt override in streaming mode, matching non-streaming behavior.
+
+**2. Memory Tool Invocation Reliability**
+- Strengthened `CoreAgent` instructions so reminder-style prompts (`remind me`, `remember`, `don't forget`) explicitly require memory-tool usage.
+- Scoped `MemorySkill` to current user/conversation before chat execution.
+
+**3. Auto-Extraction Pipeline**
+- Added `ExtractMemoriesJob` to capture key memory candidates from user prompts (reminders, preferences, watch intents).
+- Wired extraction dispatch in both standard chat and streaming response paths.
+- Added config toggle: `LARACLAW_MEMORY_AUTO_EXTRACT`.
+
+**4. Memory Dashboard Safety + UX**
+- Scoped Livewire memories listing and deletion to authenticated user records.
+- Added category filter and category badges in the memories UI.
+
+#### Validation
+- Ran Pint formatting and full test suite (`113 passed`).
+- Verified memory row creation after sending: “Remind me to watch Stranger Things”.
+
+#### Outcome
+- Reminder-style messages are now captured more consistently in memory.
+- Streaming and non-streaming chat paths now share the same memory-context strategy.
+
 ## Session: 2026-02-24
+
+### Iteration: Phase 12 Token Analytics + Proactive Notifications
+
+**Goal:** Complete Phase 12 items for usage-cost observability and assistant-initiated outbound notifications.
+
+#### Completed
+
+**1. Token Usage & Cost Analytics Expansion**
+- Kept per-message token tracking through `TokenUsageTracker` in `Laraclaw::chat()` and streaming paths.
+- Expanded Livewire dashboard analytics with 7-day breakdowns for:
+  - daily token/cost totals,
+  - provider-level token/cost totals,
+  - top conversations by token usage.
+
+**2. Proactive Notification Engine Tooling**
+- Added `NotificationSkill` with actions:
+  - `create`, `list`, `cancel`, `dispatch_now`.
+- Supports one-time schedules (`send_at` / natural-language `when`) and recurring schedules (`cron`).
+- Registered skill in `LaraclawServiceProvider` and exposed it through tool registry.
+
+**3. Notification Dispatch Routing Hardening**
+- Updated `NotificationDispatcher` to resolve missing `channel_id` from active `ChannelBinding` records for the target user + gateway.
+- Keeps proactive delivery functional when only user-level binding context is available.
+
+#### Validation
+- Added/updated focused Phase 12 tests for:
+  - recurring notification status behavior after successful dispatch,
+  - dashboard token analytics breakdown state.
+- Updated base skill-count expectation for new skill registration.
+
+#### Outcome
+- Phase 12 item 2 (Token Usage Tracking & Cost Analytics) and item 3 (Proactive Notification Engine) are now fully delivered and reflected in the dashboard and tool layer.
 
 ### Iteration: Phase 14/15 Intelligence + App Builder MVP
 

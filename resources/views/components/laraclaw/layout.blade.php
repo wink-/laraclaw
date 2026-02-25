@@ -30,6 +30,7 @@
     </script>
     @livewireStyles
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @stack('scripts')
 </head>
 <body class="bg-gray-900 text-gray-100 min-h-screen" x-data="{ sidebarOpen: false }">
     <div class="flex min-h-screen">
@@ -121,8 +122,12 @@
                 </button>
                 <span class="font-bold text-lg">Laraclaw</span>
             </div>
-            <div class="flex-1 p-4 sm:p-6 overflow-y-auto">
-                @yield('content')
+            <div class="flex-1 {{ request()->routeIs('laraclaw.chat.live') ? 'p-0 overflow-hidden' : 'p-4 sm:p-6 overflow-y-auto' }}">
+                @hasSection('content')
+                    @yield('content')
+                @else
+                    {{ $slot ?? '' }}
+                @endif
             </div>
         </main>
     </div>
