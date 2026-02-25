@@ -8,9 +8,7 @@ use App\Http\Controllers\WhatsAppWebhookController;
 use Illuminate\Support\Facades\Route;
 use Livewire\Volt\Volt;
 
-Route::get('/', function () {
-    return view('welcome');
-});
+Route::redirect('/', '/laraclaw/live');
 
 // Laraclaw Webhook Routes (no auth required - verified by signatures)
 Route::middleware('throttle:laraclaw-webhooks')->prefix('laraclaw/webhooks')->group(function () {

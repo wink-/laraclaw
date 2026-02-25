@@ -102,6 +102,19 @@ new class extends Component {
         $this->streamingContent = '';
     }
 
+    public function handleStreamingError(string $error): void
+    {
+        if ($this->conversation) {
+            $this->conversation->messages()->create([
+                'role' => 'assistant',
+                'content' => $error,
+            ]);
+        }
+
+        $this->isStreaming = false;
+        $this->streamingContent = '';
+    }
+
     #[On('streaming-chunk')]
     public function handleStreamingChunk(string $chunk): void
     {
@@ -153,7 +166,7 @@ new class extends Component {
     }
 }; ?>
 
-<div class="flex h-full min-h-0 bg-gray-900 text-gray-100" x-data="window.chatComponent()" @keydown.window.ctrl.s.prevent @keydown.window.ctrl.n.prevent="$wire.startNewConversation()" @keydown.window.escape="$wire.message = ''">
+<div class="flex h-full min-h-0 overflow-hidden bg-gray-900 text-gray-100" x-data="window.chatComponent()" @keydown.window.ctrl.s.prevent @keydown.window.ctrl.n.prevent="$wire.startNewConversation()" @keydown.window.escape="$wire.message = ''">
 @push('scripts')
 <script>
     window.chatComponent = () => ({
@@ -166,7 +179,8 @@ new class extends Component {
                     e.preventDefault();
                     this.$refs.messageInput?.focus();
                 }
-                if (e.key === '?' && e.shiftKey) {
+                if (e.ctrlKey && e.key === '/') {
+                    e.preventDefault();
                     this.showShortcuts = true;
                 }
             });
@@ -187,32 +201,62 @@ new class extends Component {
                         }),
                     });
 
+                    if (!response.ok) {
+                        const errorBody = await response.text();
+                        throw new Error(errorBody || `Streaming request failed with status ${response.status}`);
+                    }
+
+                    if (!response.body) {
+                        throw new Error('Streaming response body was empty.');
+                    }
+
                     const reader = response.body.getReader();
                     const decoder = new TextDecoder();
                     let fullContent = '';
+                    let buffer = '';
+
+                    const processLine = (line) => {
+                        if (!line.startsWith('0:"')) {
+                            return;
+                        }
+
+                        try {
+                            const text = JSON.parse(line.substring(2));
+                            fullContent += text;
+                            this.$wire.streamingContent = fullContent;
+                        } catch (error) {
+                            console.error('Failed to parse streaming chunk:', error, line);
+                        }
+                    };
 
                     while (true) {
                         const { done, value } = await reader.read();
-                        if (done) break;
+                        if (done) {
+                            break;
+                        }
 
                         const chunk = decoder.decode(value, { stream: true });
-                        const lines = chunk.split('\n');
+                        buffer += chunk;
+                        const lines = buffer.split('\n');
+                        buffer = lines.pop() ?? '';
 
                         for (const line of lines) {
-                            if (line.startsWith('0:"')) {
-                                try {
-                                    const text = JSON.parse(line.substring(2));
-                                    fullContent += text;
-                                    this.$wire.streamingContent = fullContent;
-                                } catch (e) {}
-                            }
+                            processLine(line);
                         }
+                    }
+
+                    if (buffer !== '') {
+                        processLine(buffer);
+                    }
+
+                    if (fullContent.trim() === '') {
+                        throw new Error('The selected model returned no content.');
                     }
 
                     this.$wire.dispatch('streaming-complete', { content: fullContent });
                 } catch (error) {
                     console.error('Streaming error:', error);
-                    this.$wire.dispatch('streaming-complete', { content: 'Sorry, an error occurred during streaming.' });
+                    this.$wire.handleStreamingError('Sorry, I could not get a response from the selected model. Verify AI_PROVIDER and AI_MODEL compatibility, then try again.');
                 }
             });
         }
@@ -227,7 +271,7 @@ new class extends Component {
             </button>
         </div>
 
-        <div class="flex-1 overflow-y-auto p-2">
+        <div class="flex-1 overflow-y-auto overscroll-contain p-2">
             @foreach($conversations as $conv)
                 <div
                     wire:click="loadConversation({{ $conv->id }})"
@@ -267,54 +311,9 @@ new class extends Component {
     </div>
 
     <!-- Main Chat Area -->
-    <div class="flex-1 flex flex-col min-h-0">
-        <!-- Messages -->
-        <div class="flex-1 min-h-0 overflow-y-auto p-4 space-y-4" x-ref="messagesContainer">
-            @forelse($this->conversationMessages as $msg)
-                <div class="flex {{ $msg->role === 'user' ? 'justify-end' : 'justify-start' }}">
-                    <div class="max-w-[80%] {{ $msg->role === 'user' ? 'bg-indigo-600' : 'bg-gray-700' }} rounded-xl px-4 py-3">
-                        <div class="text-xs {{ $msg->role === 'user' ? 'text-indigo-200' : 'text-gray-400' }} uppercase mb-1">
-                            {{ $msg->role }}
-                            @if($msg->role === 'assistant' && filled($msg->metadata['response_mode'] ?? null))
-                                <span class="ml-2 px-1.5 py-0.5 rounded bg-gray-600 text-[10px] text-gray-200 normal-case tracking-normal">
-                                    {{ ($msg->metadata['response_mode'] ?? 'single') === 'multi' ? 'Multi-Agent' : 'Single-Agent' }}
-                                </span>
-                            @endif
-                        </div>
-                        <div class="whitespace-pre-wrap">{{ $msg->content }}</div>
-                        <div class="text-xs {{ $msg->role === 'user' ? 'text-indigo-200' : 'text-gray-500' }} mt-2">
-                            {{ $msg->created_at->format('M j, g:i A') }}
-                        </div>
-                    </div>
-                </div>
-            @empty
-                <div class="flex items-center justify-center h-full text-gray-500">
-                    <div class="text-center">
-                        <svg class="w-16 h-16 mx-auto mb-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
-                        </svg>
-                        <h3 class="text-lg font-medium text-gray-400">Start a conversation</h3>
-                        <p class="mt-2">Ask me anything! I can help with time, calculations, web searches, and more.</p>
-                    </div>
-                </div>
-            @endforelse
-
-            <!-- Streaming message placeholder -->
-            @if($isStreaming)
-                <div class="flex justify-start">
-                    <div class="max-w-[80%] bg-gray-700 rounded-xl px-4 py-3">
-                        <div class="text-xs text-gray-400 uppercase mb-1">assistant</div>
-                        <div class="whitespace-pre-wrap">
-                            <span x-text="$wire.streamingContent"></span>
-                            <span class="animate-pulse">|</span>
-                        </div>
-                    </div>
-                </div>
-            @endif
-        </div>
-
+    <div class="flex-1 flex flex-col min-h-0 overflow-hidden">
         <!-- Input Area -->
-        <div class="p-4 bg-gray-800 border-t border-gray-700">
+        <div class="p-4 bg-gray-800 border-b border-gray-700">
             <form wire:submit="sendMessage" class="flex gap-3">
                 <textarea
                     wire:model="message"
@@ -358,8 +357,53 @@ new class extends Component {
                 <span><kbd class="px-1.5 py-0.5 bg-gray-700 rounded text-gray-400">Shift+Enter</kbd> newline</span>
                 <span><kbd class="px-1.5 py-0.5 bg-gray-700 rounded text-gray-400">Ctrl+N</kbd> new chat</span>
                 <span><kbd class="px-1.5 py-0.5 bg-gray-700 rounded text-gray-400">Esc</kbd> clear</span>
-                <button @click="showShortcuts = true" class="ml-auto text-indigo-400 hover:text-indigo-300">More shortcuts</button>
+                <button @click="showShortcuts = true" class="ml-auto text-indigo-400 hover:text-indigo-300"><kbd class="px-1.5 py-0.5 bg-gray-700 rounded text-gray-400">Ctrl+/</kbd> shortcuts</button>
             </div>
+        </div>
+
+        <!-- Messages -->
+        <div class="flex-1 min-h-0 overflow-y-auto overscroll-contain p-4 space-y-4" x-ref="messagesContainer">
+            @forelse($this->conversationMessages as $msg)
+                <div class="flex {{ $msg->role === 'user' ? 'justify-end' : 'justify-start' }}">
+                    <div class="max-w-[80%] {{ $msg->role === 'user' ? 'bg-indigo-600' : 'bg-gray-700' }} rounded-xl px-4 py-3">
+                        <div class="text-xs {{ $msg->role === 'user' ? 'text-indigo-200' : 'text-gray-400' }} uppercase mb-1">
+                            {{ $msg->role }}
+                            @if($msg->role === 'assistant' && filled($msg->metadata['response_mode'] ?? null))
+                                <span class="ml-2 px-1.5 py-0.5 rounded bg-gray-600 text-[10px] text-gray-200 normal-case tracking-normal">
+                                    {{ ($msg->metadata['response_mode'] ?? 'single') === 'multi' ? 'Multi-Agent' : 'Single-Agent' }}
+                                </span>
+                            @endif
+                        </div>
+                        <div class="whitespace-pre-wrap">{{ $msg->content }}</div>
+                        <div class="text-xs {{ $msg->role === 'user' ? 'text-indigo-200' : 'text-gray-500' }} mt-2">
+                            {{ $msg->created_at->format('M j, g:i A') }}
+                        </div>
+                    </div>
+                </div>
+            @empty
+                <div class="flex items-center justify-center h-full text-gray-500">
+                    <div class="text-center">
+                        <svg class="w-16 h-16 mx-auto mb-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                        </svg>
+                        <h3 class="text-lg font-medium text-gray-400">Start a conversation</h3>
+                        <p class="mt-2">Ask me anything! I can help with time, calculations, web searches, and more.</p>
+                    </div>
+                </div>
+            @endforelse
+
+            <!-- Streaming message placeholder -->
+            @if($isStreaming)
+                <div class="flex justify-start">
+                    <div class="max-w-[80%] bg-gray-700 rounded-xl px-4 py-3">
+                        <div class="text-xs text-gray-400 uppercase mb-1">assistant</div>
+                        <div class="whitespace-pre-wrap">
+                            <span x-text="$wire.streamingContent"></span>
+                            <span class="animate-pulse">|</span>
+                        </div>
+                    </div>
+                </div>
+            @endif
         </div>
     </div>
 
@@ -399,21 +443,12 @@ new class extends Component {
                     <span class="text-gray-400">Close modal</span>
                     <kbd class="px-2 py-1 bg-gray-700 rounded text-gray-300">Escape</kbd>
                 </div>
+                <div class="flex justify-between py-2 border-t border-gray-700 pt-3">
+                    <span class="text-gray-400">Show shortcuts</span>
+                    <span><kbd class="px-2 py-1 bg-gray-700 rounded text-gray-300">Ctrl</kbd> + <kbd class="px-2 py-1 bg-gray-700 rounded text-gray-300">/</kbd></span>
+                </div>
             </div>
         </div>
     </div>
 
-    <script>
-        document.addEventListener('livewire:init', () => {
-            // Scroll to bottom when messages update
-            Livewire.hook('request', ({ succeed }) => {
-                succeed(() => {
-                    setTimeout(() => {
-                        const container = document.querySelector('[x-ref="messagesContainer"]');
-                        if (container) container.scrollTop = container.scrollHeight;
-                    }, 50);
-                });
-            });
-        });
-    </script>
 </div>
