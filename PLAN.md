@@ -188,6 +188,9 @@ database/
 ```
 
 ## Current Focus (Next)
+- [x] Align streaming path with per-agent provider/model routing and improve model compatibility guidance.
+- [x] Refine chat UX with internal frame scrolling, sticky composer/sidebar controls, and newest-first message ordering.
+- [x] Remove legacy welcome page and route root traffic directly to the live Laraclaw UI.
 - Stabilize and expand MVC module templates (additional app types beyond blog).
 - Harden module lifecycle operations (update/remove) with safety checks.
 - Keep generated apps operable through both chat tools and dashboard controls.

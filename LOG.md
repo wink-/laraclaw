@@ -1215,3 +1215,21 @@ All Phase 7 items implemented:
 - `routes/auth.php` - Authentication routes
 
 **All 74 tests passing**
+
+---
+
+## Update - 2026-02-25
+
+### Streaming + Provider Routing Reliability
+- Aligned streaming chat path with per-agent provider/model routing by passing intent keys into streaming agent preparation.
+- Added explicit `setAgentKey()` support on `CoreAgent` to keep streaming and non-streaming provider resolution behavior consistent.
+- Updated README provider notes to clarify model identifier compatibility requirements (especially OpenRouter vendor-prefixed model IDs).
+
+### Chat UX Refinements
+- Moved composer to top of chat pane and constrained chat to an internal scroll frame so the full page does not stretch vertically.
+- Updated message ordering in chat history to render newest messages first.
+- Improved stream chunk parsing tolerance (`data:` + `0:` lines) to avoid false "no response" fallback errors when model output is present.
+- Added sticky anchoring for key chat UI sections while preserving independent scroll for sidebar conversations and message history.
+
+### Navigation Simplification
+- Removed `welcome.blade.php` and switched root route to redirect into the live Laraclaw interface (`/laraclaw/live`).

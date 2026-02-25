@@ -272,8 +272,10 @@ class DashboardController extends Controller
         if (config('laraclaw.intent_routing.enabled', true)) {
             $intent = app(IntentRouter::class)->route($message);
             $agent->setInstructionOverride($intent['specialist_prompt']);
+            $agent->setAgentKey($intent['intent']);
         } else {
             $agent->setInstructionOverride(null);
+            $agent->setAgentKey(null);
         }
 
         return $agent;

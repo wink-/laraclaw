@@ -34,7 +34,7 @@
 - 🧩 **Skill Marketplace** — Enable/disable registered skills from the dashboard
 - 📄 **Document Ingestion** — Upload and index documents into vector storage for retrieval
 - 🔐 **Security First** — User allowlists, autonomy levels, filesystem scoping, webhook verification
-- 🤖 **Multi-Provider AI** — OpenAI, Anthropic, Gemini, Ollama, Groq, Mistral, DeepSeek, xAI
+- 🤖 **Multi-Provider AI** — OpenAI, Anthropic, Gemini, Ollama, Groq, Mistral, DeepSeek, xAI, Openrouter
 - 📋 **AIEOS Support** — AI Entity Object Specification v1.1 for portable AI identities
 - 🚇 **Tunnel Support** — ngrok, Cloudflare Tunnel, and Tailscale for local development
 - 🧭 **Intent Routing** — Specialist prompt routing for builder, memory, scheduling, shopping, and entertainment intents
@@ -140,6 +140,8 @@ AGENT_PLANNER_MODEL=gemini-2.5-flash
 ```
 
 If an agent-specific provider/model is not set, Laraclaw falls back to `AI_PROVIDER` and `AI_MODEL`.
+
+Model IDs must be valid for the selected provider. For example, when using OpenRouter, use OpenRouter model identifiers (often vendor-prefixed), such as `openai/gpt-4o-mini` or provider-specific IDs published by OpenRouter.
 
 ---
 

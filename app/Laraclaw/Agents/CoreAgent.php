@@ -202,6 +202,16 @@ PROMPT;
     }
 
     /**
+     * Set provider/model resolution key for this request.
+     */
+    public function setAgentKey(?string $agentKey): self
+    {
+        $this->configureProvider($agentKey);
+
+        return $this;
+    }
+
+    /**
      * Prompt the agent with context.
      */
     public function promptWithContext(
