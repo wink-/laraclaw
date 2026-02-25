@@ -123,6 +123,7 @@ class LaraclawDoctorCommand extends Command
         $configured = match ($provider) {
             'openai' => ! empty(env('OPENAI_API_KEY')),
             'anthropic' => ! empty(env('ANTHROPIC_API_KEY')),
+            'openrouter' => ! empty(env('OPENROUTER_API_KEY')),
             'ollama' => $this->checkOllamaConnection(),
             default => false,
         };

@@ -95,6 +95,8 @@ Laraclaw will mirror the four core pillars of the OpenClaw architecture, adapted
 
 ### Phase 9: Enhanced Dashboard & UX ✅ COMPLETE
 *   [x] Add real-time chat with Livewire/Volt.
+*   [x] Standardize dashboard/chat UI on Volt single-file components.
+*   [x] Adopt Tailwind CSS 4 as the UI styling standard for new/refactored interfaces.
 *   [x] Create conversation export (Markdown, JSON).
 *   [x] Add user authentication for web dashboard.
 *   [ ] Create conversation sharing feature.
@@ -133,6 +135,7 @@ Laraclaw will mirror the four core pillars of the OpenClaw architecture, adapted
 
 ### Phase 14: Specialist Intelligence Layer
 *   [x] **Intent Router + Prompt Switching**: Route messages to specialist assistant modes (`builder`, `memory`, `scheduling`, `shopping`, `entertainment`) while keeping a unified CoreAgent architecture.
+*   [x] **Per-Agent Model Routing**: Added config-driven provider/model overrides per intent/role with fallback to global defaults (`AI_PROVIDER`, `AI_MODEL`).
 *   [x] **Categorized Memory Model**: Add memory categories for better recall quality and contextual retrieval (e.g., entertainment watchlists, shopping, scheduling).
 *   [x] **Shopping List Agent Skill**: Add first-class shopping list operations (`add/view/remove/clear`) with list names and quantity metadata.
 *   [x] **Natural-Language Scheduler**: Extend scheduler to parse phrases like "every weekday at 8am" and "tomorrow at noon" into cron entries.
@@ -188,3 +191,4 @@ database/
 - Stabilize and expand MVC module templates (additional app types beyond blog).
 - Harden module lifecycle operations (update/remove) with safety checks.
 - Keep generated apps operable through both chat tools and dashboard controls.
+- Keep all upcoming UI work aligned with Laravel Volt + Tailwind CSS 4 conventions.

@@ -29,6 +29,7 @@
 - 🔧 **12 Built-in Skills** — Time, Calculator, Web Search, App Builder, Memory, Shopping List, File System, Execute, Email, Calendar, Scheduler, Notifications
 - 💬 **Multi-Platform Gateways** — CLI, Telegram, Discord, and WhatsApp support
 - 🌐 **Web Dashboard** — Monitor conversations, metrics, and chat directly from your browser
+- 🎨 **Modern UI Stack** — Laravel Volt single-file components with Tailwind CSS 4 conventions for dashboard and chat UI
 - 🤝 **Multi-Agent Mode** — Per-message planner/executor/reviewer orchestration for complex tasks
 - 🧩 **Skill Marketplace** — Enable/disable registered skills from the dashboard
 - 📄 **Document Ingestion** — Upload and index documents into vector storage for retrieval
@@ -47,6 +48,18 @@
 - Laravel 12.x
 - SQLite (default) / MySQL / PostgreSQL
 - Composer
+
+## UI Stack Standard
+
+- **Component model:** Laravel Volt (classless Livewire components in Blade single-file components)
+- **Styling standard:** Tailwind CSS 4 utility conventions
+- **Scope:** All new or refactored dashboard/chat UI should follow this standard
+
+### Tailwind 4 Configuration (CSS-First)
+
+- Tailwind is configured in `resources/css/app.css` using `@import`, `@source`, `@theme`, and `@plugin` directives.
+- Add new template scan paths via `@source` entries in `app.css` (instead of a JS config file).
+- Keep shared design tokens (e.g. fonts) in the `@theme` block in `app.css`.
 
 ---
 
@@ -76,7 +89,7 @@ This interactive command will:
 Add your AI provider credentials to `.env`:
 
 ```env
-# AI Provider (openai, anthropic, gemini, ollama, groq, mistral, deepseek, xai)
+# AI Provider (openai, anthropic, gemini, ollama, groq, mistral, deepseek, xai, openrouter)
 AI_PROVIDER=openai
 AI_MODEL=gpt-4o-mini
 
@@ -84,6 +97,7 @@ AI_MODEL=gpt-4o-mini
 OPENAI_API_KEY=sk-...
 # ANTHROPIC_API_KEY=sk-ant-...
 # GEMINI_API_KEY=...
+# OPENROUTER_API_KEY=sk-or-...
 
 # Telegram (optional)
 TELEGRAM_BOT_TOKEN=123456:ABC-DEF...
@@ -108,6 +122,24 @@ LARACLAW_MARKETPLACE_ENABLED=true
 # Memory extraction (auto-save reminders/preferences)
 LARACLAW_MEMORY_AUTO_EXTRACT=true
 ```
+
+### Per-Agent AI Overrides (Optional)
+
+You can keep global defaults with `AI_PROVIDER` / `AI_MODEL` and override specific agent keys when needed.
+
+Use `config/laraclaw.php` under `ai.agents` to define per-agent keys. The config is pre-wired for `general`, `builder`, `memory`, `entertainment`, `shopping`, `scheduling`, `planner`, `executor`, and `reviewer` (and you can add any additional key).
+
+Example environment overrides:
+
+```env
+AGENT_BUILDER_PROVIDER=anthropic
+AGENT_BUILDER_MODEL=claude-opus-4-20250514
+
+AGENT_PLANNER_PROVIDER=gemini
+AGENT_PLANNER_MODEL=gemini-2.5-flash
+```
+
+If an agent-specific provider/model is not set, Laraclaw falls back to `AI_PROVIDER` and `AI_MODEL`.
 
 ---
 

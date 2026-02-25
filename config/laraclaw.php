@@ -8,8 +8,10 @@ return [
     |--------------------------------------------------------------------------
     |
     | Configure the default AI provider and model for Laraclaw.
+    | You may also optionally override provider/model per agent key
+    | through the ai.agents map (for example: builder, planner, reviewer).
     | Supported providers: openai, anthropic, gemini, ollama, groq, mistral,
-    | deepseek, xai
+    | deepseek, xai, openrouter
     |
     | Each provider requires its API key to be set in the environment:
     | - OpenAI: OPENAI_API_KEY
@@ -20,6 +22,7 @@ return [
     | - Mistral: MISTRAL_API_KEY
     | - DeepSeek: DEEPSEEK_API_KEY
     | - xAI: XAI_API_KEY
+    | - OpenRouter: OPENROUTER_API_KEY
     |
     */
 
@@ -28,6 +31,46 @@ return [
         'model' => env('AI_MODEL', 'gpt-4o-mini'),
         'max_tokens' => env('AI_MAX_TOKENS', 4096),
         'temperature' => env('AI_TEMPERATURE', 0.7),
+        'agents' => [
+            // Optional per-agent overrides. Any key can be used.
+            // Unset values fall back to AI_PROVIDER / AI_MODEL.
+            'general' => [
+                'provider' => env('AGENT_GENERAL_PROVIDER'),
+                'model' => env('AGENT_GENERAL_MODEL'),
+            ],
+            'builder' => [
+                'provider' => env('AGENT_BUILDER_PROVIDER'),
+                'model' => env('AGENT_BUILDER_MODEL'),
+            ],
+            'memory' => [
+                'provider' => env('AGENT_MEMORY_PROVIDER'),
+                'model' => env('AGENT_MEMORY_MODEL'),
+            ],
+            'entertainment' => [
+                'provider' => env('AGENT_ENTERTAINMENT_PROVIDER'),
+                'model' => env('AGENT_ENTERTAINMENT_MODEL'),
+            ],
+            'shopping' => [
+                'provider' => env('AGENT_SHOPPING_PROVIDER'),
+                'model' => env('AGENT_SHOPPING_MODEL'),
+            ],
+            'scheduling' => [
+                'provider' => env('AGENT_SCHEDULING_PROVIDER'),
+                'model' => env('AGENT_SCHEDULING_MODEL'),
+            ],
+            'planner' => [
+                'provider' => env('AGENT_PLANNER_PROVIDER'),
+                'model' => env('AGENT_PLANNER_MODEL'),
+            ],
+            'executor' => [
+                'provider' => env('AGENT_EXECUTOR_PROVIDER'),
+                'model' => env('AGENT_EXECUTOR_MODEL'),
+            ],
+            'reviewer' => [
+                'provider' => env('AGENT_REVIEWER_PROVIDER'),
+                'model' => env('AGENT_REVIEWER_MODEL'),
+            ],
+        ],
     ],
 
     /*

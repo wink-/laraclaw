@@ -6,6 +6,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\TelegramWebhookController;
 use App\Http\Controllers\WhatsAppWebhookController;
 use Illuminate\Support\Facades\Route;
+use Livewire\Volt\Volt;
 
 Route::get('/', function () {
     return view('welcome');
@@ -49,10 +50,10 @@ Route::middleware('auth')->group(function () {
 
     // Laraclaw Livewire Dashboard Routes
     Route::prefix('laraclaw/live')->name('laraclaw.')->group(function () {
-        Route::get('/', \App\Livewire\Laraclaw\Dashboard::class)->name('dashboard.live');
-        Route::get('/chat', \App\Livewire\Laraclaw\Chat::class)->name('chat.live');
-        Route::get('/conversations', \App\Livewire\Laraclaw\Conversations::class)->name('conversations.live');
-        Route::get('/memories', \App\Livewire\Laraclaw\Memories::class)->name('memories.live');
+        Volt::route('/', 'laraclaw.dashboard')->name('dashboard.live');
+        Volt::route('/chat', 'laraclaw.chat')->name('chat.live');
+        Volt::route('/conversations', 'laraclaw.conversations')->name('conversations.live');
+        Volt::route('/memories', 'laraclaw.memories')->name('memories.live');
     });
 });
 

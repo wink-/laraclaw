@@ -85,7 +85,8 @@ class Laraclaw
                 $message,
                 $history,
                 $memoryContext,
-                $intent['specialist_prompt']
+                $intent['specialist_prompt'],
+                $intent['intent']
             );
         }
 

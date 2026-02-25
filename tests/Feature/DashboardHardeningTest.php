@@ -2,12 +2,11 @@
 
 use App\Laraclaw\Skills\SchedulerSkill;
 use App\Laraclaw\Skills\TimeSkill;
-use App\Livewire\Laraclaw\Dashboard;
 use App\Models\SkillPlugin;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
-use Livewire\Livewire;
+use Livewire\Volt\Volt;
 
 uses(RefreshDatabase::class);
 
@@ -24,14 +23,14 @@ it('can pause and resume a scheduled task from dashboard', function () {
         'updated_at' => now(),
     ]);
 
-    Livewire::test(Dashboard::class)
+    Volt::test('laraclaw.dashboard')
         ->call('toggleScheduledTask', $taskId)
         ->assertSet('schedulerStatus', 'Scheduled task paused.');
 
     expect(DB::table('laraclaw_scheduled_tasks')->where('id', $taskId)->value('is_active'))
         ->toBe(0);
 
-    Livewire::test(Dashboard::class)
+    Volt::test('laraclaw.dashboard')
         ->call('toggleScheduledTask', $taskId)
         ->assertSet('schedulerStatus', 'Scheduled task resumed.');
 
@@ -52,7 +51,7 @@ it('can remove a scheduled task from dashboard', function () {
         'updated_at' => now(),
     ]);
 
-    Livewire::test(Dashboard::class)
+    Volt::test('laraclaw.dashboard')
         ->call('removeScheduledTask', $taskId)
         ->assertSet('schedulerStatus', 'Scheduled task removed.');
 
@@ -64,7 +63,7 @@ it('prevents disabling required core skills from dashboard', function () {
     $user = User::factory()->create();
     $this->actingAs($user);
 
-    Livewire::test(Dashboard::class)
+    Volt::test('laraclaw.dashboard')
         ->call('setSkillEnabled', TimeSkill::class, false)
         ->assertSet('marketplaceStatus', 'This skill is required and cannot be disabled.');
 
@@ -77,7 +76,7 @@ it('allows disabling non-required skills from dashboard', function () {
     $user = User::factory()->create();
     $this->actingAs($user);
 
-    Livewire::test(Dashboard::class)
+    Volt::test('laraclaw.dashboard')
         ->call('setSkillEnabled', SchedulerSkill::class, false)
         ->assertSet('marketplaceStatus', 'Skill disabled successfully.');
 

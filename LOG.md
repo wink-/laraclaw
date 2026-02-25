@@ -2,6 +2,75 @@
 
 ## Session: 2026-02-25
 
+### Iteration: Per-Agent AI Provider + Model Routing
+
+**Goal:** Allow different intents and orchestration roles to use different AI providers/models while preserving global defaults.
+
+#### Completed
+
+**1. Config-Driven Agent Overrides**
+- Added `laraclaw.ai.agents` configuration map for agent-specific provider/model overrides.
+- Pre-wired keys for current intents and orchestration roles:
+  - `general`, `builder`, `memory`, `entertainment`, `shopping`, `scheduling`
+  - `planner`, `executor`, `reviewer`
+- Added environment examples in `.env.example` for all pre-wired keys.
+
+**2. Runtime Resolution in Core Agent**
+- Extended `CoreAgent::configureProvider()` to accept an optional agent key and resolve:
+  - agent-specific provider/model when configured
+  - fallback to global `AI_PROVIDER` / `AI_MODEL` when not configured
+- Updated `promptWithContext()` to re-resolve provider/model per call, enabling safe behavior with singleton agent lifecycle.
+
+**3. Intent + Multi-Agent Wiring**
+- Updated single-agent chat flow to pass routed intent key into `CoreAgent` resolution.
+- Updated multi-agent orchestrator to pass role keys (`planner`, `executor`, `reviewer`) on each stage.
+
+**4. Documentation + Validation**
+- Updated `README.md` with per-agent override documentation and fallback behavior.
+- Added `CoreAgentConfigurationTest` coverage for:
+  - agent-specific override selection,
+  - unknown-key fallback,
+  - no-key global defaults.
+
+#### Validation
+- `php artisan test --compact --filter=CoreAgentConfigurationTest` passed (`3 passed`).
+- `php artisan test --compact` passed (`116 passed`).
+
+#### Outcome
+- Laraclaw can now route different workloads to different providers/models without splitting into separate agent classes.
+- Teams can tune model cost/quality per intent and per orchestration role while keeping global defaults as a safety baseline.
+
+### Iteration: Volt UI Completion + Documentation Alignment
+
+**Goal:** Finish migrating live dashboard/chat surfaces to Volt and align project docs/agent rules with the frontend standard.
+
+#### Completed
+
+**1. Live UI Conversion to Volt**
+- Converted remaining class-based Livewire pages to Volt single-file components:
+  - chat,
+  - conversations,
+  - dashboard,
+  - memories.
+- Updated `/laraclaw/live/*` routes to use `Volt::route(...)` mappings.
+- Removed obsolete `app/Livewire/Laraclaw/*` component classes replaced by Volt files.
+
+**2. Test + Build Stabilization**
+- Updated dashboard-related tests to target Volt components via `Volt::test('laraclaw.dashboard')`.
+- Regenerated Composer autoload metadata after class deletions (`composer dump-autoload`).
+- Built frontend assets to satisfy Vite manifest requirements for feature tests (`npm run build`).
+
+**3. Documentation + Agent Guidance**
+- Updated `README.md`, `PLAN.md`, and `AGENTS.md` to explicitly document UI standards.
+- Standardized guidance to build/refactor UI with Laravel Volt and Tailwind CSS 4 conventions.
+
+#### Validation
+- `php artisan test --compact` passed (`113 passed`).
+
+#### Outcome
+- The live UI migration to Volt is complete for core dashboard/chat surfaces.
+- Documentation and agent instructions now consistently enforce the Volt + Tailwind 4 frontend direction.
+
 ### Iteration: Memory Reliability Overhaul (Streaming + Auto-Extract)
 
 **Goal:** Make reminders and long-term memory capture reliable in live chat, especially in streaming mode.

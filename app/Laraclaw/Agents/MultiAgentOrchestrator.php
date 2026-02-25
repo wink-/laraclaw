@@ -22,19 +22,25 @@ class MultiAgentOrchestrator
         $plannerOutput = $this->agent->promptWithContext(
             "You are the planning agent. Produce a concise execution plan for this user request:\n\n{$message}",
             $history,
-            $memoryContext
+            $memoryContext,
+            null,
+            'planner'
         );
 
         $executorOutput = $this->agent->promptWithContext(
             "You are the execution agent. Execute this plan to answer the user.\n\nPlan:\n{$plannerOutput}\n\nUser request:\n{$message}",
             $history,
-            $memoryContext
+            $memoryContext,
+            null,
+            'executor'
         );
 
         $reviewerOutput = $this->agent->promptWithContext(
             "You are the review agent. Improve correctness, safety, and clarity for this draft answer:\n\n{$executorOutput}",
             $history,
-            $memoryContext
+            $memoryContext,
+            null,
+            'reviewer'
         );
 
         AgentCollaboration::create([

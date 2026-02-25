@@ -43,10 +43,23 @@ class CoreAgent implements Agent, Conversational, HasTools
     /**
      * Configure the AI provider from config.
      */
-    protected function configureProvider(): void
+    protected function configureProvider(?string $agentKey = null): void
     {
         $provider = config('laraclaw.ai.provider', 'openai');
         $model = config('laraclaw.ai.model', 'gpt-4o-mini');
+
+        if ($agentKey !== null) {
+            $agentProvider = config("laraclaw.ai.agents.{$agentKey}.provider");
+            $agentModel = config("laraclaw.ai.agents.{$agentKey}.model");
+
+            if (is_string($agentProvider) && $agentProvider !== '') {
+                $provider = $agentProvider;
+            }
+
+            if (is_string($agentModel) && $agentModel !== '') {
+                $model = $agentModel;
+            }
+        }
 
         // Map config provider to Lab enum
         $labProvider = match ($provider) {
@@ -196,7 +209,9 @@ PROMPT;
         array $history = [],
         ?string $memories = null,
         ?string $instructionOverride = null,
+        ?string $agentKey = null,
     ): string {
+        $this->configureProvider($agentKey);
         $this->setConversationHistory($history);
         $this->setInstructionOverride($instructionOverride);
 

@@ -2,7 +2,6 @@
 
 use App\Laraclaw\Facades\Laraclaw;
 use App\Laraclaw\Notifications\NotificationDispatcher;
-use App\Livewire\Laraclaw\Dashboard;
 use App\Models\ApiToken;
 use App\Models\Conversation;
 use App\Models\LaraclawNotification;
@@ -10,7 +9,7 @@ use App\Models\Message;
 use App\Models\TokenUsage;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Livewire\Livewire;
+use Livewire\Volt\Volt;
 
 uses(RefreshDatabase::class);
 
@@ -155,7 +154,7 @@ it('shows token analytics breakdown on live dashboard', function () {
         'cost_usd' => 0.000300,
     ]);
 
-    Livewire::test(Dashboard::class)
+    Volt::test('laraclaw.dashboard')
         ->assertSet('tokenUsageAnalytics.totals.tokens_7d', 100)
         ->assertSet('tokenUsageAnalytics.providers.0.provider', 'openai')
         ->assertSet('tokenUsageAnalytics.conversations.0.title', 'Analytics Test Conversation');

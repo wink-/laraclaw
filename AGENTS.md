@@ -33,6 +33,12 @@ This project has domain-specific skills available. You MUST activate the relevan
 - Use descriptive names for variables and methods. For example, `isRegisteredForDiscounts`, not `discount()`.
 - Check for existing components to reuse before writing a new one.
 
+## UI Architecture
+
+- Build all new UI using Laravel Volt single-file components.
+- Use Tailwind CSS 4 utility conventions for styling.
+- When refactoring existing UI, migrate class-based Livewire components toward Volt rather than adding new class-based components.
+
 ## Verification Scripts
 
 - Do not create verification scripts or tinker when tests cover that functionality and prove they work. Unit and feature tests are more important.

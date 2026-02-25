@@ -67,6 +67,7 @@ class LaraclawHealthCommand extends Command
         $hasKey = match ($provider) {
             'openai' => ! empty(env('OPENAI_API_KEY')),
             'anthropic' => ! empty(env('ANTHROPIC_API_KEY')),
+            'openrouter' => ! empty(env('OPENROUTER_API_KEY')),
             'ollama' => true,
             default => false,
         };
