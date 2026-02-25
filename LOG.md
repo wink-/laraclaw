@@ -2,6 +2,93 @@
 
 ## Session: 2026-02-24
 
+### Iteration: Phase 14/15 Intelligence + App Builder MVP
+
+**Goal:** Continue toward personal life OS workflows by shipping specialist-intent routing, categorized memory, shopping/scheduler intelligence, and first module app-builder capabilities.
+
+#### Completed
+
+**1. Intent Routing + Specialist Prompts**
+- Added deterministic intent router with intents: `general`, `memory`, `scheduling`, `shopping`, `entertainment`, `builder`.
+- Wired intent resolution into `Laraclaw::chat()`.
+- Added specialist prompt overrides in `CoreAgent` and persisted detected intent in assistant message metadata.
+
+**2. Categorized Memory**
+- Added `category` support to memory fragments.
+- Extended memory storage and retrieval to support category-aware remember/recall.
+- Added category listing and improved memory outputs.
+
+**3. Shopping List Agent**
+- Added `ShoppingListSkill` with actions:
+  - `add`, `view`, `remove`, `clear`
+- Implemented user-scoped shopping items via memory fragments (`category=shopping`) with quantity metadata.
+
+**4. Natural-Language Scheduler**
+- Enhanced `SchedulerSkill` to support `when` phrases (while keeping raw cron support), including:
+  - `every weekday at 8am`
+  - `daily at 9am`
+  - `in 3 hours`
+  - `tomorrow at noon`
+
+**5. Dashboard Intelligence Panels**
+- Added dashboard visibility for:
+  - recent shopping list items,
+  - memory category counts.
+
+**6. Module App Builder MVP (Phase 15 foundation)**
+- Added `ModuleManager` for discovering/managing generated apps in `storage/laraclaw/apps`.
+- Added `ModuleServiceProvider` for dynamic route + view loading per module.
+- Added `AppBuilderSkill` with actions:
+  - `create_app`, `list_apps`, `create_post_draft`, `publish_post`, `list_posts`, `set_domain`.
+- Generated blog modules now include:
+  - `module.json`, `routes.php`, Blade views, and JSON post store.
+
+#### Validation
+- Added and ran focused tests:
+  - `Phase14IntelligenceTest`
+  - `Phase15ModuleBuilderTest`
+- Updated core skill-count test for new skills.
+- Ran Pint formatting successfully.
+- Full test suite passed (`107 passed`).
+
+#### Outcome
+- Laraclaw now supports practical “remember/schedule/shop/watch” life-assistant workflows with intent-aware behavior and categorized recall.
+- First “build me a blog” module scaffolding path is now implemented in-MVP with dynamic runtime route loading.
+
+### Iteration: Phase 15 MVC Refactor + Module Dashboard Control
+
+**Goal:** Make generated apps look and behave like standard Laravel MVC projects, and expose module controls in the dashboard.
+
+#### Completed
+
+**1. Standard Laravel MVC App Generation**
+- Refactored `AppBuilderSkill` to generate:
+  - model classes under `app/Modules/{Module}/Models`,
+  - controller classes under `app/Modules/{Module}/Http/Controllers`,
+  - route files under `routes/modules/{slug}.php`,
+  - views under `resources/views/modules/{slug}`,
+  - migrations for module posts tables.
+- Switched draft/publish/list post workflows from JSON file storage to Eloquent database records.
+
+**2. Module Runtime Adjustments**
+- Updated `ModuleManager` to use Laravel-style module metadata and configurable routes/views paths.
+- Kept dynamic route loading via `ModuleServiceProvider` for runtime-discovered modules.
+
+**3. Dashboard Module Management (Livewire)**
+- Added “Module App Builder (Laravel MVC)” panel to dashboard:
+  - create blog app,
+  - list generated modules,
+  - set/clear per-module domain binding.
+
+#### Validation
+- Added/updated Phase 15 tests for MVC file generation and DB-backed post publishing.
+- Focused Phase 15 test suite passed.
+
+#### Outcome
+- “Build me a blog” now scaffolds conventional Laravel MVC artifacts, not ad-hoc closure/json module files.
+
+## Session: 2026-02-24
+
 ### Iteration: Phase 11 Ops Dashboard Signals
 
 **Goal:** Complete the final Phase 11 hardening item by surfacing operations signals in one dashboard panel.

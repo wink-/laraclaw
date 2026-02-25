@@ -131,20 +131,60 @@ Laraclaw will mirror the four core pillars of the OpenClaw architecture, adapted
 *   [x] **PWA Mobile Web App (Livewire)**: Progressive Web App using Livewire — no JavaScript frontend framework. Web app manifest for home-screen installation on phones, service worker for offline shell caching, responsive mobile-first chat UI, viewport-optimised layout with collapsible sidebar, touch-friendly controls, and a standalone display mode. Makes Laraclaw feel like a native app on any device over the tailnet.
 *   [x] **HEARTBEAT.md Engine**: Natural-language periodic task runner inspired by ZeroClaw. The agent reads a `HEARTBEAT.md` file containing loose instructions (e.g. "check my email every morning", "summarise Hacker News at 6pm") and autonomously runs them on a configurable schedule. Persists run history in a `heartbeat_runs` table, supports enabling/disabling individual heartbeat items, and surfaces status on the dashboard. Different from cron — heartbeats are natural-language AI-driven awareness tasks.
 
+### Phase 14: Specialist Intelligence Layer
+*   [x] **Intent Router + Prompt Switching**: Route messages to specialist assistant modes (`builder`, `memory`, `scheduling`, `shopping`, `entertainment`) while keeping a unified CoreAgent architecture.
+*   [x] **Categorized Memory Model**: Add memory categories for better recall quality and contextual retrieval (e.g., entertainment watchlists, shopping, scheduling).
+*   [x] **Shopping List Agent Skill**: Add first-class shopping list operations (`add/view/remove/clear`) with list names and quantity metadata.
+*   [x] **Natural-Language Scheduler**: Extend scheduler to parse phrases like "every weekday at 8am" and "tomorrow at noon" into cron entries.
+*   [x] **Dashboard Intelligence Panels**: Add shopping and memory-category visibility in dashboard for daily-life workflows.
+
+### Phase 15: Monolith App Builder & Dynamic Module Runtime
+*   [x] **Module Runtime Foundation (MVP)**: Dynamic module discovery and runtime route loading for generated modules via dedicated module manager/provider.
+*   [x] **AppBuilder Skill (MVP)**: Tooling to create/list app modules and manage draft/publish blog posts in generated modules.
+*   [x] **Domain Binding Metadata (MVP)**: Persist optional per-module domain in module manifest and route grouping support.
+*   [x] **Rich Blog Template Scaffold**: Generate Laravel MVC artifacts (model/controller/routes/views/migration) and support DB-backed post workflow.
+*   [x] **Voice-to-Post Review Pipeline**: Convert phone voice input into post drafts, present structured preview, and publish on confirmation.
+*   [x] **Livewire Module Management UI**: Add dashboard module management (create/apply domain/list posts/publish) without requiring tool calls.
+
 ## 5. Proposed Directory Structure
 ```text
 app/
   Laraclaw/
     Agents/
       CoreAgent.php
+      MultiAgentOrchestrator.php
+      IntentRouter.php
     Gateways/
       Contracts/GatewayInterface.php
       TelegramGateway.php
       DiscordGateway.php
+      WhatsAppGateway.php
     Memory/
       MemoryManager.php
+    Modules/
+      ModuleManager.php
     Skills/
       Contracts/SkillInterface.php
       WebSearchSkill.php
       CalculatorSkill.php
+      AppBuilderSkill.php
+      ShoppingListSkill.php
+      SchedulerSkill.php
+app/
+  Modules/
+    {ModuleName}/
+      module.json
+      Models/
+      Http/Controllers/
+routes/
+  modules/
+resources/
+  views/modules/
+database/
+  migrations/
 ```
+
+## Current Focus (Next)
+- Stabilize and expand MVC module templates (additional app types beyond blog).
+- Harden module lifecycle operations (update/remove) with safety checks.
+- Keep generated apps operable through both chat tools and dashboard controls.

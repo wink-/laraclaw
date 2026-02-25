@@ -17,12 +17,14 @@ class PluginManager
                 TimeSkill::class,
                 CalculatorSkill::class,
                 WebSearchSkill::class,
+                AppBuilderSkill::class,
                 MemorySkill::class,
                 FileSystemSkill::class,
                 ExecuteSkill::class,
                 EmailSkill::class,
                 CalendarSkill::class,
                 SchedulerSkill::class,
+                ShoppingListSkill::class,
             ];
         }
     }

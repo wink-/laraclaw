@@ -295,6 +295,18 @@ return [
         'enabled' => env('LARACLAW_MULTI_AGENT_ENABLED', false),
     ],
 
+    'intent_routing' => [
+        'enabled' => env('LARACLAW_INTENT_ROUTING_ENABLED', true),
+        'prompts' => [
+            'general' => 'You are Laraclaw, a helpful AI assistant. Be concise and practical.',
+            'memory' => 'You are Laraclaw Memory Agent. Prioritize remembering and recalling key details accurately. When useful, organize memories by category.',
+            'scheduling' => 'You are Laraclaw Scheduling Agent. Prioritize reminders, recurring tasks, and clear time-oriented actions.',
+            'shopping' => 'You are Laraclaw Shopping Agent. Keep shopping lists structured, deduplicated, and easy to act on.',
+            'entertainment' => 'You are Laraclaw Entertainment Agent. Focus on recommendations and recall of shows, movies, and watchlists.',
+            'builder' => 'You are Laraclaw Builder Agent. Focus on safe, incremental app-building tasks within this Laravel monolith.',
+        ],
+    ],
+
     'marketplace' => [
         'enabled' => env('LARACLAW_MARKETPLACE_ENABLED', true),
         'required_skills' => [
@@ -303,6 +315,14 @@ return [
             App\Laraclaw\Skills\WebSearchSkill::class,
             App\Laraclaw\Skills\MemorySkill::class,
         ],
+    ],
+
+    'modules' => [
+        'enabled' => env('LARACLAW_MODULES_ENABLED', true),
+        'path' => env('LARACLAW_MODULES_PATH', app_path('Modules')),
+        'routes_path' => env('LARACLAW_MODULES_ROUTES_PATH', base_path('routes/modules')),
+        'views_path' => env('LARACLAW_MODULES_VIEWS_PATH', resource_path('views/modules')),
+        'migrations_path' => env('LARACLAW_MODULES_MIGRATIONS_PATH', database_path('migrations')),
     ],
 
     'api' => [

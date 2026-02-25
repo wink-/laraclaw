@@ -359,6 +359,111 @@
         </div>
     </div>
 
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="bg-gray-800 rounded-xl border border-gray-700 p-6">
+            <h2 class="text-lg font-semibold text-gray-100 mb-4">Shopping List Agent</h2>
+            @if(empty($shoppingListItems))
+                <p class="text-sm text-gray-500">No shopping items yet. Ask the assistant to add items to your list.</p>
+            @else
+                <div class="space-y-2">
+                    @foreach($shoppingListItems as $item)
+                        <div class="flex items-center justify-between py-2 px-3 rounded-lg bg-gray-700/40 text-sm">
+                            <div class="min-w-0">
+                                <p class="text-gray-200 truncate">{{ $item['content'] }}</p>
+                                <p class="text-xs text-gray-500">List: {{ $item['list_name'] }}</p>
+                            </div>
+                            <div class="text-right shrink-0 ml-3">
+                                <p class="text-xs text-gray-400">{{ $item['quantity'] ?: '1x' }}</p>
+                                <p class="text-xs text-gray-500">{{ $item['created_at'] }}</p>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            @endif
+        </div>
+
+        <div class="bg-gray-800 rounded-xl border border-gray-700 p-6">
+            <h2 class="text-lg font-semibold text-gray-100 mb-4">Memory Categories</h2>
+            @if(empty($memoryCategoryCounts))
+                <p class="text-sm text-gray-500">No categorized memories yet. Ask the assistant to remember something.</p>
+            @else
+                <div class="space-y-2">
+                    @foreach($memoryCategoryCounts as $category => $count)
+                        <div class="flex items-center justify-between py-2 px-3 rounded-lg bg-gray-700/40">
+                            <span class="text-sm text-gray-200 capitalize">{{ str_replace('_', ' ', $category) }}</span>
+                            <span class="px-2 py-1 text-xs rounded-full bg-indigo-600/20 text-indigo-300">{{ $count }}</span>
+                        </div>
+                    @endforeach
+                </div>
+            @endif
+        </div>
+    </div>
+
+    <div class="bg-gray-800 rounded-xl border border-gray-700 p-6 space-y-5">
+        <h2 class="text-lg font-semibold text-gray-100">Module App Builder (Laravel MVC)</h2>
+
+        @if($moduleStatus)
+            <p class="text-sm text-gray-300">{{ $moduleStatus }}</p>
+        @endif
+
+        <form wire:submit="createModuleApp" class="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <input
+                type="text"
+                wire:model="newModuleName"
+                placeholder="App name (e.g. Home Blog)"
+                class="bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-sm text-gray-100"
+            >
+            <input
+                type="text"
+                wire:model="newModuleDescription"
+                placeholder="Description (optional)"
+                class="bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-sm text-gray-100"
+            >
+            <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-lg text-sm font-medium">
+                Create Blog App
+            </button>
+        </form>
+
+        @error('newModuleName')
+            <p class="text-sm text-red-400">{{ $message }}</p>
+        @enderror
+
+        @if(empty($modules))
+            <p class="text-sm text-gray-500">No generated Laravel MVC modules yet.</p>
+        @else
+            <div class="space-y-3">
+                @foreach($modules as $module)
+                    <div class="rounded-lg bg-gray-700/40 p-3 space-y-2">
+                        <div class="flex items-center justify-between gap-4">
+                            <div class="min-w-0">
+                                <p class="text-sm font-medium text-gray-100 truncate">{{ $module['name'] }} ({{ $module['slug'] }})</p>
+                                <p class="text-xs text-gray-400">Route: {{ $module['domain'] ? $module['domain'] : '/' . $module['prefix'] }}</p>
+                                <p class="text-xs text-gray-500 truncate">Model: {{ $module['model_class'] ?? 'n/a' }}</p>
+                            </div>
+                            <a href="/{{ $module['prefix'] }}" class="text-xs text-indigo-300 hover:text-indigo-200">Open</a>
+                        </div>
+
+                        <div class="flex items-center gap-2">
+                            <input
+                                type="text"
+                                wire:model="moduleDomainInputs.{{ $module['slug'] }}"
+                                placeholder="Domain (optional)"
+                                class="flex-1 bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-xs text-gray-100"
+                            >
+                            <button
+                                type="button"
+                                wire:click="bindModuleDomain('{{ $module['slug'] }}')"
+                                class="px-3 py-2 text-xs bg-blue-600 hover:bg-blue-700 rounded-lg"
+                            >
+                                Save Domain
+                            </button>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        @endif
+    </div>
+
     <div class="bg-gray-800 rounded-xl border border-gray-700 p-6">
         <h2 class="text-lg font-semibold text-gray-100 mb-4">Skill Marketplace</h2>
 

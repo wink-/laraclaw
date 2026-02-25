@@ -26,6 +26,8 @@ class CoreAgent implements Agent, Conversational, HasTools
 
     protected string $model;
 
+    protected ?string $instructionOverride = null;
+
     /**
      * @param  Collection<int, SkillInterface>  $skills
      */
@@ -86,6 +88,16 @@ class CoreAgent implements Agent, Conversational, HasTools
      */
     public function instructions(): Stringable|string
     {
+        if ($this->instructionOverride) {
+            $override = $this->instructionOverride;
+
+            if ($this->memoryContext) {
+                return $override."\n\n".$this->memoryContext;
+            }
+
+            return $override;
+        }
+
         $baseInstructions = <<<'PROMPT'
 You are Laraclaw, a helpful AI assistant powered by Laravel.
 
@@ -143,6 +155,16 @@ PROMPT;
     }
 
     /**
+     * Set specialist instruction override.
+     */
+    public function setInstructionOverride(?string $instructions): self
+    {
+        $this->instructionOverride = $instructions;
+
+        return $this;
+    }
+
+    /**
      * Add a skill to the agent.
      */
     public function addSkill(SkillInterface $skill): self
@@ -165,9 +187,14 @@ PROMPT;
     /**
      * Prompt the agent with context.
      */
-    public function promptWithContext(string $message, array $history = [], ?string $memories = null): string
-    {
+    public function promptWithContext(
+        string $message,
+        array $history = [],
+        ?string $memories = null,
+        ?string $instructionOverride = null,
+    ): string {
         $this->setConversationHistory($history);
+        $this->setInstructionOverride($instructionOverride);
 
         if ($memories) {
             $this->setMemoryContext($memories);
