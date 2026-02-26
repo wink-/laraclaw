@@ -1,7 +1,7 @@
 <?php
 
-it('returns a successful response', function () {
+it('redirects root to the live Laraclaw app', function () {
     $response = $this->get('/');
 
-    $response->assertStatus(200);
+    $response->assertRedirect('/laraclaw/live');
 });
