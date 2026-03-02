@@ -269,14 +269,11 @@ class DashboardController extends Controller
         $memoryContext = $memoryManager->formatMemoriesForPrompt($memories);
         $agent->setMemoryContext($memoryContext !== '' ? $memoryContext : null);
 
-        if (config('laraclaw.intent_routing.enabled', true)) {
-            $intent = app(IntentRouter::class)->route($message);
-            $agent->setInstructionOverride($intent['specialist_prompt']);
-            $agent->setAgentKey($intent['intent']);
-        } else {
-            $agent->setInstructionOverride(null);
-            $agent->setAgentKey(null);
-        }
+        $intent = config('laraclaw.intent_routing.enabled', true)
+            ? app(IntentRouter::class)->route($message)
+            : null;
+
+        $agent->configureForIntent($intent);
 
         return $agent;
     }

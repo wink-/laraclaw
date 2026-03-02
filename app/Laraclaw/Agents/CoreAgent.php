@@ -212,6 +212,20 @@ PROMPT;
     }
 
     /**
+     * Configure agent for intent-based routing.
+     *
+     * Combines instruction override and provider/model configuration
+     * into a single call when intent routing is enabled.
+     */
+    public function configureForIntent(?array $intent): self
+    {
+        $this->setInstructionOverride($intent['specialist_prompt'] ?? null);
+        $this->configureProvider($intent['intent'] ?? null);
+
+        return $this;
+    }
+
+    /**
      * Prompt the agent with context.
      */
     public function promptWithContext(
