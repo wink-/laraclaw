@@ -115,6 +115,9 @@ return [
 
         // Command execution timeout in seconds
         'command_timeout' => env('LARACLAW_COMMAND_TIMEOUT', 30),
+
+        // Approval request TTL in minutes (for supervised autonomy actions)
+        'approval_ttl_minutes' => env('LARACLAW_APPROVAL_TTL_MINUTES', 30),
     ],
 
     /*

@@ -2,6 +2,32 @@
 
 ## Session: 2026-03-03
 
+### Iteration: Approval System MVP + Signature Verification Hardening
+
+**Goal:** Add practical supervised-approval flow for high-risk actions and harden Slack webhook signature handling.
+
+#### Completed
+
+**1. Approval Persistence + Lifecycle**
+- Added `ApprovalRequest` model, factory, and migration-backed table for pending/approved/rejected request state.
+- Added `ApprovalManager` service to create, approve, reject, validate, and consume approval requests.
+- Added `laraclaw:approval` command to list pending requests and approve/reject specific IDs.
+
+**2. Supervised Execution Gating**
+- Updated `ExecuteSkill` to create approval requests in supervised mode and require `approval_id` before command execution.
+- Updated `SecurityManager` execute permission mapping to allow supervised-mode execution when approval is present.
+- Added approval TTL configuration in `laraclaw.security.approval_ttl_minutes`.
+
+**3. Slack Signature Hardening**
+- Added shared `SlackSignatureVerifier` and refactored both Slack webhook controllers to use it.
+- Added regression coverage for invalid signature rejection on both `/api/webhooks/slack` and `/laraclaw/webhooks/slack`.
+
+#### Validation
+- `php artisan test --compact tests/Feature/ApprovalSystemTest.php tests/Feature/Phase16OpenBrainTest.php` passed (`7 passed`, `31 assertions`).
+
+#### Outcome
+- Supervised autonomy now has a concrete approval workflow for command execution, and Slack signature validation is centralized and consistently enforced.
+
 ### Iteration: Phase 16 Open Brain Completion + Slack Parity Route
 
 **Goal:** Deliver and validate the Open Brain memory layer with Supabase-ready storage, Slack ingest parity, and MCP retrieval endpoints.

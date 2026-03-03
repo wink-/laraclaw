@@ -16,6 +16,7 @@ use App\Laraclaw\Identity\IdentityManager;
 use App\Laraclaw\Laraclaw;
 use App\Laraclaw\Memory\MemoryManager;
 use App\Laraclaw\Monitoring\TokenUsageTracker;
+use App\Laraclaw\Security\ApprovalManager;
 use App\Laraclaw\Security\SecurityManager;
 use App\Laraclaw\Skills\AppBuilderSkill;
 use App\Laraclaw\Skills\CalculatorSkill;
@@ -49,6 +50,9 @@ class LaraclawServiceProvider extends ServiceProvider
 
         // Register SecurityManager as singleton
         $this->app->singleton(SecurityManager::class);
+
+        // Register ApprovalManager as singleton
+        $this->app->singleton(ApprovalManager::class);
 
         // Register IdentityManager as singleton
         $this->app->singleton(IdentityManager::class);

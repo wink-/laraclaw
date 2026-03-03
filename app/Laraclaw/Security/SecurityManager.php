@@ -154,7 +154,8 @@ class SecurityManager
         return match ($action) {
             'read', 'search', 'recall' => true,
             'write', 'remember', 'send' => $this->autonomyLevel->canWrite(),
-            'execute', 'delete', 'forget' => $this->autonomyLevel->canExecute(),
+            'execute' => in_array($this->autonomyLevel, [AutonomyLevel::SUPERVISED, AutonomyLevel::FULL], true),
+            'delete', 'forget' => $this->autonomyLevel->canExecute(),
             default => false,
         };
     }

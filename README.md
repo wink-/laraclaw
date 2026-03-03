@@ -46,6 +46,7 @@
 
 - ✅ **Phase 16 Open Brain** — Supabase-ready memory store with pgvector-aware semantic search and MCP-friendly retrieval endpoints
 - ✅ **Slack Integration** — Slack gateway plus unified API webhook and dedicated `/laraclaw/webhooks/slack` parity route
+- ✅ **Approval System MVP** — Supervised command execution now creates approval requests and supports explicit approve/reject workflows
 - ✅ **HEARTBEAT Engine** — Natural-language periodic task execution for proactive assistant behavior
 - ✅ **Cost Analytics** — Token usage + provider cost tracking surfaced in dashboard analytics
 
