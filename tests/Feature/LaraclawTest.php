@@ -4,7 +4,9 @@ use App\Laraclaw\Agents\CoreAgent;
 use App\Laraclaw\Facades\Laraclaw;
 use App\Laraclaw\Memory\MemoryManager;
 use App\Laraclaw\Skills\CalculatorSkill;
+use App\Laraclaw\Skills\HttpRequestSkill;
 use App\Laraclaw\Skills\TimeSkill;
+use App\Laraclaw\Skills\WebFetchSkill;
 use App\Laraclaw\Skills\WebSearchSkill;
 use App\Models\Conversation;
 use App\Models\User;
@@ -53,7 +55,7 @@ it('core agent has skills registered', function () {
 
     $tools = $agent->tools();
 
-    expect($tools)->toHaveCount(12);
+    expect($tools)->toHaveCount(14);
 });
 
 it('time skill can get current time', function () {
@@ -107,5 +109,7 @@ it('skills are registered as tagged services', function () {
 
     expect($skillClasses)->toContain(TimeSkill::class)
         ->and($skillClasses)->toContain(CalculatorSkill::class)
-        ->and($skillClasses)->toContain(WebSearchSkill::class);
+        ->and($skillClasses)->toContain(WebSearchSkill::class)
+        ->and($skillClasses)->toContain(HttpRequestSkill::class)
+        ->and($skillClasses)->toContain(WebFetchSkill::class);
 });

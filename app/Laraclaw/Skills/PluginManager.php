@@ -25,6 +25,8 @@ class PluginManager
                 CalendarSkill::class,
                 SchedulerSkill::class,
                 ShoppingListSkill::class,
+                HttpRequestSkill::class,
+                WebFetchSkill::class,
             ];
         }
     }

@@ -24,12 +24,14 @@ use App\Laraclaw\Skills\CalendarSkill;
 use App\Laraclaw\Skills\EmailSkill;
 use App\Laraclaw\Skills\ExecuteSkill;
 use App\Laraclaw\Skills\FileSystemSkill;
+use App\Laraclaw\Skills\HttpRequestSkill;
 use App\Laraclaw\Skills\MemorySkill;
 use App\Laraclaw\Skills\NotificationSkill;
 use App\Laraclaw\Skills\PluginManager;
 use App\Laraclaw\Skills\SchedulerSkill;
 use App\Laraclaw\Skills\ShoppingListSkill;
 use App\Laraclaw\Skills\TimeSkill;
+use App\Laraclaw\Skills\WebFetchSkill;
 use App\Laraclaw\Skills\WebSearchSkill;
 use App\Laraclaw\Storage\FileStorageService;
 use App\Laraclaw\Storage\VectorStoreService;
@@ -99,6 +101,8 @@ class LaraclawServiceProvider extends ServiceProvider
         $this->app->singleton(SchedulerSkill::class);
         $this->app->singleton(ShoppingListSkill::class);
         $this->app->singleton(NotificationSkill::class);
+        $this->app->singleton(HttpRequestSkill::class);
+        $this->app->singleton(WebFetchSkill::class);
 
         // Tag skills
         $this->app->tag([
@@ -114,6 +118,8 @@ class LaraclawServiceProvider extends ServiceProvider
             SchedulerSkill::class,
             ShoppingListSkill::class,
             NotificationSkill::class,
+            HttpRequestSkill::class,
+            WebFetchSkill::class,
         ], 'laraclaw.skills');
 
         // Register CoreAgent with skills

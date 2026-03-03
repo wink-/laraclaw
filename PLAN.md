@@ -205,7 +205,9 @@ database/
 - [x] Remove legacy welcome page and route root traffic directly to the live Laraclaw UI.
 - [x] **Phase 16: Open Brain** — Supabase-ready universal memory store, Slack gateway, MCP retrieval tools, and dedicated Slack web parity route delivered.
 - [x] **Approval System MVP** — Added approval request persistence, CLI approve/reject command, and supervised execute gating.
-- **Next Target:** Add HTTP Request + Web Fetch tools for safer external API/page retrieval workflows.
+- [x] **HTTP Request + Web Fetch Tools** — Added safe external API/page retrieval skills with URL guardrails and focused test coverage.
+- [x] **Trusted Private-Network Mode** — Added opt-in toggles so web tools can target Tailscale/private/loopback endpoints in single-user VPS/home-network deployments.
+- **Next Target:** Add REST API v1 with token auth for conversations/messages/memories and MCP-aligned retrieval endpoints.
 - Stabilize and expand MVC module templates (additional app types beyond blog).
 - Harden module lifecycle operations (update/remove) with safety checks.
 - Keep generated apps operable through both chat tools and dashboard controls.

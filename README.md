@@ -28,7 +28,7 @@
 - 🧠 **Open Brain Memory** — Supabase-ready memory store with pgvector semantic search and fallback lexical search
 - 🔄 **Streaming-Aware Memory Context** — Streaming chat now uses token-budgeted history, relevant memory retrieval, and intent routing
 - 📝 **Automatic Memory Extraction** — Reminder/preference/watch-intent messages can be auto-saved into memory fragments after replies
-- 🔧 **12 Built-in Skills** — Time, Calculator, Web Search, App Builder, Memory, Shopping List, File System, Execute, Email, Calendar, Scheduler, Notifications
+- 🔧 **14 Built-in Skills** — Time, Calculator, Web Search, HTTP Request, Web Fetch, App Builder, Memory, Shopping List, File System, Execute, Email, Calendar, Scheduler, Notifications
 - 💬 **Multi-Platform Gateways** — CLI, Telegram, Discord, WhatsApp, and Slack support
 - 🌐 **Web Dashboard** — Monitor conversations, metrics, and chat directly from your browser
 - 🎨 **Modern UI Stack** — Laravel Volt single-file components with Tailwind CSS 4 conventions for dashboard and chat UI
@@ -47,6 +47,7 @@
 - ✅ **Phase 16 Open Brain** — Supabase-ready memory store with pgvector-aware semantic search and MCP-friendly retrieval endpoints
 - ✅ **Slack Integration** — Slack gateway plus unified API webhook and dedicated `/laraclaw/webhooks/slack` parity route
 - ✅ **Approval System MVP** — Supervised command execution now creates approval requests and supports explicit approve/reject workflows
+- ✅ **External Retrieval Tools** — Added `HttpRequestSkill` and `WebFetchSkill` with URL safety rails for public API/page retrieval
 - ✅ **HEARTBEAT Engine** — Natural-language periodic task execution for proactive assistant behavior
 - ✅ **Cost Analytics** — Token usage + provider cost tracking surfaced in dashboard analytics
 
@@ -131,6 +132,10 @@ LARACLAW_MARKETPLACE_ENABLED=true
 
 # Memory extraction (auto-save reminders/preferences)
 LARACLAW_MEMORY_AUTO_EXTRACT=true
+
+# Web tools network policy (set true for private VPS/Tailscale-only deployments)
+LARACLAW_ALLOW_PRIVATE_NETWORK_URLS=false
+LARACLAW_ALLOW_LOOPBACK_URLS=false
 
 # Optional: route memory storage to Supabase
 # LARACLAW_MEMORY_CONNECTION=supabase
@@ -223,13 +228,15 @@ These endpoints queue memory ingestion, persist memory records via `MemoryStore`
 
 ## Skills
 
-Laraclaw comes with 12 built-in skills that the AI can use automatically:
+Laraclaw comes with 14 built-in skills that the AI can use automatically:
 
 | Skill | Description |
 |-------|-------------|
 | **TimeSkill** | Get current date/time with timezone support |
 | **CalculatorSkill** | Safe mathematical expression evaluation |
 | **WebSearchSkill** | Search the web via DuckDuckGo API |
+| **HttpRequestSkill** | Perform safe outbound HTTP API requests with method/query/header/body support |
+| **WebFetchSkill** | Fetch and clean webpage text content for summarization/analysis |
 | **AppBuilderSkill** | Create/list app modules, draft/publish posts, and set domain bindings |
 | **MemorySkill** | Store, recall, and manage long-term memories |
 | **ShoppingListSkill** | Add/view/remove/clear shopping list items |
