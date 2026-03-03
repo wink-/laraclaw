@@ -115,6 +115,15 @@ return [
 
         // Command execution timeout in seconds
         'command_timeout' => env('LARACLAW_COMMAND_TIMEOUT', 30),
+
+        // Approval request TTL in minutes (for supervised autonomy actions)
+        'approval_ttl_minutes' => env('LARACLAW_APPROVAL_TTL_MINUTES', 30),
+
+        // Allow web skills (http_request/web_fetch) to access private/reserved IP ranges
+        'allow_private_network_urls' => env('LARACLAW_ALLOW_PRIVATE_NETWORK_URLS', false),
+
+        // Allow web skills (http_request/web_fetch) to access localhost / loopback
+        'allow_loopback_urls' => env('LARACLAW_ALLOW_LOOPBACK_URLS', false),
     ],
 
     /*

@@ -2,6 +2,66 @@
 
 ## Session: 2026-03-03
 
+### Iteration: HTTP Request + Web Fetch Skills
+
+**Goal:** Add safer outbound API/page retrieval tools for external data access workflows.
+
+#### Completed
+
+**1. New External Retrieval Skills**
+- Added `HttpRequestSkill` with method allowlist (`GET`, `POST`, `PUT`, `PATCH`, `DELETE`), timeout controls, and query/header/body/json support.
+- Added `WebFetchSkill` for HTML/plain-page retrieval with title extraction and cleaned text output for downstream summarization.
+
+**2. URL Safety Guardrails**
+- Added shared safety behavior in each skill to reject invalid URLs, non-HTTP(S) schemes, localhost/loopback targets, and private/reserved IP targets.
+- Kept both skills focused on public internet retrieval use cases.
+- Added deployment-aware policy toggles for private environments:
+  - `LARACLAW_ALLOW_PRIVATE_NETWORK_URLS`
+  - `LARACLAW_ALLOW_LOOPBACK_URLS`
+  enabling trusted Tailscale/VPS-only deployments to opt in to private target access while keeping secure defaults.
+
+**3. Skill Registration + Discovery**
+- Registered both skills in `LaraclawServiceProvider` singleton and `laraclaw.skills` tagging.
+- Added both skills to `PluginManager` default enabled class list.
+- Updated base skill registration/agent tool-count expectations from 12 to 14.
+
+#### Validation
+- `vendor/bin/pint --dirty --format agent` completed (auto-fixed formatting in changed files).
+- `runTests` on:
+  - `tests/Feature/Phase17WebToolsTest.php`
+  - `tests/Feature/LaraclawTest.php`
+  passed (`13 passed`, `0 failed`).
+- Additional focused validation: `php artisan test --compact tests/Feature/Phase17WebToolsTest.php` passed (`6 passed`, `14 assertions`) after trusted-network toggle coverage updates.
+
+#### Outcome
+- Laraclaw now has first-class, safer HTTP/API retrieval and webpage fetch capabilities available to the core tool layer.
+
+### Iteration: Approval System MVP + Signature Verification Hardening
+
+**Goal:** Add practical supervised-approval flow for high-risk actions and harden Slack webhook signature handling.
+
+#### Completed
+
+**1. Approval Persistence + Lifecycle**
+- Added `ApprovalRequest` model, factory, and migration-backed table for pending/approved/rejected request state.
+- Added `ApprovalManager` service to create, approve, reject, validate, and consume approval requests.
+- Added `laraclaw:approval` command to list pending requests and approve/reject specific IDs.
+
+**2. Supervised Execution Gating**
+- Updated `ExecuteSkill` to create approval requests in supervised mode and require `approval_id` before command execution.
+- Updated `SecurityManager` execute permission mapping to allow supervised-mode execution when approval is present.
+- Added approval TTL configuration in `laraclaw.security.approval_ttl_minutes`.
+
+**3. Slack Signature Hardening**
+- Added shared `SlackSignatureVerifier` and refactored both Slack webhook controllers to use it.
+- Added regression coverage for invalid signature rejection on both `/api/webhooks/slack` and `/laraclaw/webhooks/slack`.
+
+#### Validation
+- `php artisan test --compact tests/Feature/ApprovalSystemTest.php tests/Feature/Phase16OpenBrainTest.php` passed (`7 passed`, `31 assertions`).
+
+#### Outcome
+- Supervised autonomy now has a concrete approval workflow for command execution, and Slack signature validation is centralized and consistently enforced.
+
 ### Iteration: Phase 16 Open Brain Completion + Slack Parity Route
 
 **Goal:** Deliver and validate the Open Brain memory layer with Supabase-ready storage, Slack ingest parity, and MCP retrieval endpoints.

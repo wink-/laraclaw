@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Jobs\ProcessNewMemoryJob;
 use App\Laraclaw\Gateways\SlackGateway;
 use App\Laraclaw\Security\SecurityManager;
+use App\Laraclaw\Security\SlackSignatureVerifier;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -13,6 +14,7 @@ class SlackWebhookController extends Controller
     public function __construct(
         protected SlackGateway $gateway,
         protected SecurityManager $security,
+        protected SlackSignatureVerifier $slackSignatureVerifier,
     ) {}
 
     /**
@@ -26,7 +28,7 @@ class SlackWebhookController extends Controller
             ]);
         }
 
-        if (! $this->verifySlackSignature($request)) {
+        if (! $this->slackSignatureVerifier->verify($request)) {
             return response()->json(['error' => 'Invalid signature'], 403);
         }
 
@@ -59,30 +61,5 @@ class SlackWebhookController extends Controller
             'status' => 'queued',
             'conversation_id' => $conversation->id,
         ], 202);
-    }
-
-    protected function verifySlackSignature(Request $request): bool
-    {
-        $signingSecret = (string) config('services.slack.signing_secret', '');
-
-        if ($signingSecret === '') {
-            return true;
-        }
-
-        $timestamp = (string) $request->header('X-Slack-Request-Timestamp');
-        $signature = (string) $request->header('X-Slack-Signature');
-
-        if ($timestamp === '' || $signature === '') {
-            return false;
-        }
-
-        if (abs(time() - (int) $timestamp) > 60 * 5) {
-            return false;
-        }
-
-        $baseString = 'v0:'.$timestamp.':'.$request->getContent();
-        $expected = 'v0='.hash_hmac('sha256', $baseString, $signingSecret);
-
-        return hash_equals($expected, $signature);
     }
 }

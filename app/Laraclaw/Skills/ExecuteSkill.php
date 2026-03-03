@@ -2,6 +2,7 @@
 
 namespace App\Laraclaw\Skills;
 
+use App\Laraclaw\Security\ApprovalManager;
 use App\Laraclaw\Security\SecurityManager;
 use App\Laraclaw\Skills\Contracts\SkillInterface;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
@@ -12,8 +13,6 @@ use Stringable;
 
 class ExecuteSkill implements SkillInterface, Tool
 {
-    protected bool $canExecute;
-
     protected array $allowedCommands = [];
 
     protected array $blockedPatterns = [
@@ -35,9 +34,9 @@ class ExecuteSkill implements SkillInterface, Tool
     protected int $timeout = 30;
 
     public function __construct(
-        protected SecurityManager $security
+        protected SecurityManager $security,
+        protected ApprovalManager $approvals,
     ) {
-        $this->canExecute = $security->getAutonomyLevel()->canExecute();
         $this->allowedCommands = config('laraclaw.security.allowed_commands', []);
         $this->timeout = config('laraclaw.security.command_timeout', 30);
     }
@@ -54,8 +53,8 @@ class ExecuteSkill implements SkillInterface, Tool
 
     public function execute(array $parameters): string
     {
-        if (! $this->canExecute) {
-            return 'Error: Command execution is disabled. Autonomy level must be "full" to execute commands.';
+        if (! $this->security->canPerformAction('execute')) {
+            return 'Error: Command execution is disabled under the current autonomy level.';
         }
 
         $command = $parameters['command'] ?? '';
@@ -72,6 +71,33 @@ class ExecuteSkill implements SkillInterface, Tool
         // Check against allowed commands if whitelist is configured
         if (! empty($this->allowedCommands) && ! $this->isCommandAllowed($command)) {
             return 'Error: Command is not in the allowed list.';
+        }
+
+        if ($this->security->requiresApproval('execute')) {
+            $payload = [
+                'command' => $command,
+            ];
+
+            $approvalId = isset($parameters['approval_id']) ? (int) $parameters['approval_id'] : null;
+
+            if (! $approvalId) {
+                $request = $this->approvals->createRequest(
+                    action: 'execute',
+                    payload: $payload,
+                    requesterGateway: 'agent',
+                    requesterId: 'laraclaw',
+                );
+
+                return "Approval required. Request #{$request->id} created. "
+                    ."Approve with: php artisan laraclaw:approval {$request->id} --approve "
+                    ."then retry with approval_id={$request->id}.";
+            }
+
+            if (! $this->approvals->canProceed($approvalId, 'execute', $payload)) {
+                return 'Error: Approval not granted or expired for this command.';
+            }
+
+            $this->approvals->consume($approvalId);
         }
 
         return $this->runCommand($command);
@@ -154,6 +180,8 @@ class ExecuteSkill implements SkillInterface, Tool
         return [
             'command' => $schema->string()
                 ->description('The shell command to execute (must be safe and allowed)'),
+            'approval_id' => $schema->integer()
+                ->description('Required in supervised mode after an approval request has been approved'),
         ];
     }
 

@@ -42,6 +42,35 @@ it('queues new memory processing from dedicated web slack webhook route', functi
     });
 });
 
+it('rejects invalid slack signatures on both webhook routes', function () {
+    config()->set('services.slack.signing_secret', 'test-secret');
+
+    $payload = [
+        'type' => 'event_callback',
+        'event' => [
+            'type' => 'message',
+            'user' => 'U1',
+            'text' => 'invalid sig check',
+            'channel' => 'C1',
+            'ts' => '1710000000.300000',
+        ],
+    ];
+
+    $this->withHeaders([
+        'X-Slack-Request-Timestamp' => (string) time(),
+        'X-Slack-Signature' => 'v0=invalid-signature',
+        'Content-Type' => 'application/json',
+    ])->postJson('/api/webhooks/slack', $payload)
+        ->assertForbidden();
+
+    $this->withHeaders([
+        'X-Slack-Request-Timestamp' => (string) time(),
+        'X-Slack-Signature' => 'v0=invalid-signature',
+        'Content-Type' => 'application/json',
+    ])->postJson('/laraclaw/webhooks/slack', $payload)
+        ->assertForbidden();
+});
+
 it('queues new memory processing from slack webhook', function () {
     Queue::fake();
 

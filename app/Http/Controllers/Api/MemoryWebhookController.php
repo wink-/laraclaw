@@ -9,6 +9,7 @@ use App\Laraclaw\Gateways\SlackGateway;
 use App\Laraclaw\Gateways\TelegramGateway;
 use App\Laraclaw\Gateways\WhatsAppGateway;
 use App\Laraclaw\Security\SecurityManager;
+use App\Laraclaw\Security\SlackSignatureVerifier;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -16,6 +17,7 @@ class MemoryWebhookController extends Controller
 {
     public function __construct(
         protected SecurityManager $security,
+        protected SlackSignatureVerifier $slackSignatureVerifier,
     ) {}
 
     public function __invoke(Request $request, string $platform): JsonResponse
@@ -107,35 +109,10 @@ class MemoryWebhookController extends Controller
         }
 
         if ($platform === 'slack') {
-            return $this->verifySlackSignature($request);
+            return $this->slackSignatureVerifier->verify($request);
         }
 
         return true;
-    }
-
-    protected function verifySlackSignature(Request $request): bool
-    {
-        $signingSecret = (string) config('services.slack.signing_secret', '');
-
-        if ($signingSecret === '') {
-            return true;
-        }
-
-        $timestamp = (string) $request->header('X-Slack-Request-Timestamp');
-        $signature = (string) $request->header('X-Slack-Signature');
-
-        if ($timestamp === '' || $signature === '') {
-            return false;
-        }
-
-        if (abs(time() - (int) $timestamp) > 60 * 5) {
-            return false;
-        }
-
-        $baseString = 'v0:'.$timestamp.':'.$request->getContent();
-        $expected = 'v0='.hash_hmac('sha256', $baseString, $signingSecret);
-
-        return hash_equals($expected, $signature);
     }
 
     protected function resolveGateway(string $platform): TelegramGateway|DiscordGateway|WhatsAppGateway|SlackGateway|null
