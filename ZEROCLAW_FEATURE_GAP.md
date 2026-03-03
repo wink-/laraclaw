@@ -1,19 +1,23 @@
 # ZeroClaw → Laraclaw Feature Gap Analysis
 
-> Features from [zeroclaw-labs/zeroclaw](https://github.com/zeroclaw-labs/zeroclaw) that are **NOT yet in Laraclaw** (phases 1-12), prioritised for a multi-device personal AI assistant accessible via Tailscale.
+_Last updated: 2026-03-03_
+
+> Features from [zeroclaw-labs/zeroclaw](https://github.com/zeroclaw-labs/zeroclaw) that are **NOT yet in Laraclaw** (updated after Phase 16), prioritised for a multi-device personal AI assistant accessible via Tailscale.
+
+---
+
+## Recently Closed Gaps (Now Implemented in Laraclaw)
+
+- ✅ **HEARTBEAT.md Engine** — implemented and tracked in Laraclaw (Phase 13).
+- ✅ **Slack Channel Integration** — gateway + webhook handling now implemented.
+- ✅ **MCP Memory Retrieval APIs** — memory search/recent/stats endpoints implemented (Phase 16).
+- ✅ **Cost Tracking & Analytics** — token usage + provider cost analytics implemented (Phase 12).
 
 ---
 
 ## Priority 1 — High-Impact, Directly Portable
 
-### 1. HEARTBEAT.md — Autonomous Periodic Task Engine
-**ZeroClaw:** `src/heartbeat/engine.rs` (10 KB)  
-Reads a `HEARTBEAT.md` file from the workspace. Lines prefixed with `- ` are treated as natural-language tasks. The engine runs them on a configurable interval (min 5 min) through the agent, creating an autonomous background pulse.  
-**Config:** `HeartbeatConfig { enabled: bool, interval_minutes: u64 }`  
-**Why it matters:** This is *not* the same as the Laraclaw `SchedulerSkill`. Scheduled tasks are explicit cron entries; heartbeat tasks are loose reminders ("Check my email", "Review my calendar") the agent interprets each tick. It makes the assistant feel genuinely proactive.  
-**Laravel port:** A `HeartbeatService` reading `storage/app/HEARTBEAT.md`, a scheduled artisan command running every N minutes, dispatching each line through the agent as a fresh conversation.
-
-### 2. SOP Engine — Multi-Step Workflow Execution
+### 1. SOP Engine — Multi-Step Workflow Execution
 **ZeroClaw:** `src/sop/` — 8 files, ~200 KB total  
 - `engine.rs` (56 KB) — core orchestrator  
 - `gates.rs` (26 KB) — approval/condition gates within workflows  
@@ -28,7 +32,7 @@ Reads a `HEARTBEAT.md` file from the workspace. Lines prefixed with `- ` are tre
 **Why it matters:** Turns the assistant from a Q&A bot into a process executor. Critical for personal automation (morning routines, weekly reviews, deployment workflows).  
 **Laravel port:** Eloquent-backed `SopProcedure`, `SopStep`, `SopExecution` models; a gate/condition evaluator; approval via Telegram/Discord callback buttons; 5 matching tools.
 
-### 3. SkillForge — Auto-Discovery & Integration of Skills
+### 2. SkillForge — Auto-Discovery & Integration of Skills
 **ZeroClaw:** `src/skillforge/` — 4 files, ~35 KB  
 - Pipeline: **Scout** (discovers from GitHub/ClawHub/HuggingFace) → **Evaluate** (scores candidates, min 0.7) → **Integrate** (generates manifests)  
 - Config: `SkillForgeConfig { enabled, auto_integrate, sources, scan_interval_hours, min_score, github_token, output_dir }`
@@ -37,13 +41,13 @@ Reads a `HEARTBEAT.md` file from the workspace. Lines prefixed with `- ` are tre
 **Why it matters:** Enables a growing ecosystem where skills can be discovered and installed without manual coding.  
 **Laravel port:** A `SkillForge` service with a GitHub search scout, evaluation rubric, and auto-generation of skill plugin database entries in the existing `PluginManager`.
 
-### 4. Approval System — Human-in-the-Loop Gating
+### 3. Approval System — Human-in-the-Loop Gating
 **ZeroClaw:** `src/approval/mod.rs` (14.5 KB)  
 Standalone approval module for gating any action that requires human confirmation before execution.  
 **Why it matters:** Essential for the "supervised" autonomy level. Currently Laraclaw has the autonomy level concept but no interactive approval flow where the agent pauses and asks "Should I proceed?" via channel.  
 **Laravel port:** `ApprovalRequest` model with pending/approved/rejected state; channel-specific callback handlers (Telegram inline keyboard, Discord buttons); timeout auto-reject.
 
-### 5. Screenshot Tool
+### 4. Screenshot Tool
 **ZeroClaw:** `src/tools/screenshot.rs` (11.5 KB)  
 Platform-native screenshot capture: macOS (`screencapture`), Linux (`gnome-screenshot` / `scrot` / `import`). Returns base64-encoded PNG. Supports region selection on macOS. Security-scoped with filename sanitisation and shell injection prevention.  
 **Why it matters:** A Tailscale-connected device can screenshot its display and send it to the user on another device. Critical for remote monitoring.  
@@ -73,7 +77,7 @@ Full headless browser automation — navigate, click, fill forms, extract conten
 ### 8. Cost Tracking Module
 **ZeroClaw:** `src/cost/` — 3 files (tracker.rs 17 KB, types.rs 5 KB)  
 Dedicated cost tracking with provider-specific pricing, daily/weekly/monthly aggregation.  
-**Laraclaw has:** `TokenUsageTracker` and a phase 12 TODO for "Token Usage Tracking & Cost Analytics" — but the ZeroClaw implementation is a more complete reference with per-provider cost calculation and budget alerting.  
+**Laraclaw has:** `TokenUsageTracker` and implemented phase 12 cost analytics. Remaining gap is deeper budget controls/alerts and richer cost policy tooling parity with ZeroClaw.  
 **Laravel port:** Extend `TokenUsageTracker` with provider pricing tables, budget limits, and a dashboard cost analytics panel.
 
 ### 9. Delegate Tool — Multi-Agent Task Delegation
@@ -188,12 +192,11 @@ Integration with [Composio](https://composio.dev/) — third-party automation pl
 
 ZeroClaw's registry (`src/integrations/registry.rs`) lists 70+ integrations. Key ones **not in Laraclaw**:
 
-### Chat Channels (Laraclaw has: Telegram, Discord, WhatsApp, CLI)
+### Chat Channels (Laraclaw has: Telegram, Discord, WhatsApp, Slack, CLI)
 | Missing | Status in ZeroClaw | Priority |
 |---------|-------------------|----------|
 | Signal | Available | High |
 | iMessage | Available | Medium |
-| Slack | Available | High |
 | Matrix | Available | Medium |
 | Webhooks (generic) | Available | High |
 | Microsoft Teams | ComingSoon | Medium |
@@ -228,7 +231,7 @@ Spotify, Sonos, Shazam
 ---
 
 ## MCP (Model Context Protocol) Support
-ZeroClaw's MCP references are minimal (3 code search hits: README.md, providers-reference.md, onboard/wizard.rs). There is **no dedicated MCP server module** — it appears to be referenced as a future direction. Laraclaw already has `laravel/mcp` as a dependency, which puts it *ahead* of ZeroClaw in this area.
+ZeroClaw's MCP references are minimal (3 code search hits: README.md, providers-reference.md, onboard/wizard.rs). There is **no dedicated MCP server module** — it appears to be referenced as a future direction. Laraclaw already has `laravel/mcp` as a dependency and now exposes memory retrieval endpoints (`search`, `recent`, `stats`), which keeps Laraclaw *ahead* of ZeroClaw in this area.
 
 ---
 
@@ -236,13 +239,13 @@ ZeroClaw's MCP references are minimal (3 code search hits: README.md, providers-
 
 | # | Feature | Effort | Impact | ZeroClaw Source |
 |---|---------|--------|--------|-----------------|
-| 1 | HEARTBEAT.md Engine | Small | High | `src/heartbeat/` |
-| 2 | Approval System | Medium | High | `src/approval/` |
-| 3 | Screenshot Tool | Small | High | `src/tools/screenshot.rs` |
-| 4 | SOP Engine | Large | High | `src/sop/` |
-| 5 | HTTP Request Tool | Small | Medium | `src/tools/http_request.rs` |
-| 6 | Web Fetch/Extract Tool | Small | Medium | `src/tools/web_fetch.rs` |
-| 7 | PDF Read Tool | Small | Medium | `src/tools/pdf_read.rs` |
-| 8 | Cron CRUD Tools | Medium | Medium | `src/tools/cron_*.rs` |
-| 9 | SkillForge | Medium | Medium | `src/skillforge/` |
-| 10 | Browser Automation | Large | High | `src/tools/browser.rs` |
+| 1 | Approval System | Medium | High | `src/approval/` |
+| 2 | Screenshot Tool | Small | High | `src/tools/screenshot.rs` |
+| 3 | SOP Engine | Large | High | `src/sop/` |
+| 4 | HTTP Request Tool | Small | Medium | `src/tools/http_request.rs` |
+| 5 | Web Fetch/Extract Tool | Small | Medium | `src/tools/web_fetch.rs` |
+| 6 | PDF Read Tool | Small | Medium | `src/tools/pdf_read.rs` |
+| 7 | Cron CRUD Tools | Medium | Medium | `src/tools/cron_*.rs` |
+| 8 | SkillForge | Medium | Medium | `src/skillforge/` |
+| 9 | Browser Automation | Large | High | `src/tools/browser.rs` |
+| 10 | Delegate Tool | Medium | Medium | `src/tools/delegate.rs` |

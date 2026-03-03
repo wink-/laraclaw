@@ -3,7 +3,21 @@
     "allow": [
       "Bash(git checkout:*)",
       "mcp__laravel-boost__application-info",
-      "mcp__laravel-boost__database-schema"
+      "mcp__laravel-boost__database-schema",
+      "Bash(vendor/bin/pint:*)",
+      "Bash(php artisan:*)",
+      "Bash(php:*)",
+      "Bash(git push:*)",
+      "Bash(ls:*)",
+      "Bash(npm run:*)",
+      "Bash(dig +short:*)",
+      "Bash(getent ahosts db.pjtqgqbfhdbioxpcvnxm.supabase.co)",
+      "Bash(ping6:*)",
+      "Bash(code .:*)"
     ]
-  }
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "laravel-boost"
+  ]
 }

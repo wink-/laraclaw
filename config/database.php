@@ -98,6 +98,36 @@ return [
             'sslmode' => env('DB_SSLMODE', 'prefer'),
         ],
 
+        'supabase' => [
+            'driver' => 'pgsql',
+            'url' => env('DB_SUPABASE_URL'),
+            'host' => env('DB_SUPABASE_HOST', '127.0.0.1'),
+            'port' => env('DB_SUPABASE_PORT', '5432'),
+            'database' => env('DB_SUPABASE_DATABASE', 'postgres'),
+            'username' => env('DB_SUPABASE_USERNAME', 'postgres'),
+            'password' => env('DB_SUPABASE_PASSWORD', ''),
+            'charset' => 'utf8',
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'search_path' => 'public',
+            'sslmode' => 'require',
+        ],
+
+        'supabase_direct' => [
+            'driver' => 'pgsql',
+            'url' => env('DB_SUPABASE_DIRECT_URL'),
+            'host' => env('DB_SUPABASE_HOST', '127.0.0.1'),
+            'port' => env('DB_SUPABASE_PORT', '5432'),
+            'database' => env('DB_SUPABASE_DATABASE', 'postgres'),
+            'username' => env('DB_SUPABASE_USERNAME', 'postgres'),
+            'password' => env('DB_SUPABASE_PASSWORD', ''),
+            'charset' => 'utf8',
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'search_path' => 'public',
+            'sslmode' => 'require',
+        ],
+
         'sqlsrv' => [
             'driver' => 'sqlsrv',
             'url' => env('DB_URL'),

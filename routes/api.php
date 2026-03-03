@@ -1,10 +1,24 @@
 <?php
 
+use App\Http\Controllers\Api\McpMemoryController;
+use App\Http\Controllers\Api\MemoryWebhookController;
 use App\Http\Controllers\Api\V1\ConversationController;
 use App\Http\Controllers\Api\V1\MemoryController;
 use App\Http\Controllers\Api\V1\MessageController;
 use App\Http\Controllers\Api\V1\SkillController;
 use Illuminate\Support\Facades\Route;
+
+Route::middleware('throttle:laraclaw-webhooks')->group(function () {
+    Route::post('webhooks/{platform}', MemoryWebhookController::class);
+});
+
+Route::prefix('mcp')
+    ->middleware(['laraclaw.api', 'throttle:laraclaw-api'])
+    ->group(function () {
+        Route::post('search', [McpMemoryController::class, 'search']);
+        Route::get('recent', [McpMemoryController::class, 'recent']);
+        Route::get('stats', [McpMemoryController::class, 'stats']);
+    });
 
 Route::prefix('v1')
     ->middleware(['laraclaw.api', 'throttle:laraclaw-api'])

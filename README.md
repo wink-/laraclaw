@@ -15,6 +15,8 @@
     <a href="#configuration">Configuration</a>
 </p>
 
+<p align="center"><sub>Last updated: 2026-03-03</sub></p>
+
 ---
 
 ## What is Laraclaw?
@@ -23,11 +25,11 @@
 
 ### Features
 
-- 🧠 **Intelligent Memory** — SQLite FTS5 full-text search for long-term memory storage
+- 🧠 **Open Brain Memory** — Supabase-ready memory store with pgvector semantic search and fallback lexical search
 - 🔄 **Streaming-Aware Memory Context** — Streaming chat now uses token-budgeted history, relevant memory retrieval, and intent routing
 - 📝 **Automatic Memory Extraction** — Reminder/preference/watch-intent messages can be auto-saved into memory fragments after replies
 - 🔧 **12 Built-in Skills** — Time, Calculator, Web Search, App Builder, Memory, Shopping List, File System, Execute, Email, Calendar, Scheduler, Notifications
-- 💬 **Multi-Platform Gateways** — CLI, Telegram, Discord, and WhatsApp support
+- 💬 **Multi-Platform Gateways** — CLI, Telegram, Discord, WhatsApp, and Slack support
 - 🌐 **Web Dashboard** — Monitor conversations, metrics, and chat directly from your browser
 - 🎨 **Modern UI Stack** — Laravel Volt single-file components with Tailwind CSS 4 conventions for dashboard and chat UI
 - 🤝 **Multi-Agent Mode** — Per-message planner/executor/reviewer orchestration for complex tasks
@@ -39,6 +41,13 @@
 - 🚇 **Tunnel Support** — ngrok, Cloudflare Tunnel, and Tailscale for local development
 - 🧭 **Intent Routing** — Specialist prompt routing for builder, memory, scheduling, shopping, and entertainment intents
 - 🧱 **Module App Builder (MVP)** — Generate blog apps inside the same Laravel install using Laravel MVC modules under `app/Modules`
+
+### Recent Delivery Highlights
+
+- ✅ **Phase 16 Open Brain** — Supabase-ready memory store with pgvector-aware semantic search and MCP-friendly retrieval endpoints
+- ✅ **Slack Integration** — Slack gateway plus unified API webhook and dedicated `/laraclaw/webhooks/slack` parity route
+- ✅ **HEARTBEAT Engine** — Natural-language periodic task execution for proactive assistant behavior
+- ✅ **Cost Analytics** — Token usage + provider cost tracking surfaced in dashboard analytics
 
 ---
 
@@ -121,6 +130,22 @@ LARACLAW_MARKETPLACE_ENABLED=true
 
 # Memory extraction (auto-save reminders/preferences)
 LARACLAW_MEMORY_AUTO_EXTRACT=true
+
+# Optional: route memory storage to Supabase
+# LARACLAW_MEMORY_CONNECTION=supabase
+
+# Slack (optional)
+# SLACK_BOT_USER_OAUTH_TOKEN=xoxb-...
+# SLACK_SIGNING_SECRET=...
+
+# Supabase (optional)
+# DB_SUPABASE_HOST=...
+# DB_SUPABASE_PORT=5432
+# DB_SUPABASE_DATABASE=postgres
+# DB_SUPABASE_USERNAME=postgres
+# DB_SUPABASE_PASSWORD=...
+# DB_SUPABASE_URL=
+# DB_SUPABASE_DIRECT_URL=
 ```
 
 ### Per-Agent AI Overrides (Optional)
@@ -181,6 +206,17 @@ $response = Laraclaw::chat($conversation, "Research and summarize this topic", t
 // Quick one-off question
 $response = Laraclaw::ask("Calculate 15% of 850");
 ```
+
+### Open Brain Endpoints (Phase 16)
+
+- Unified webhook ingest: `POST /api/webhooks/{platform}` (`slack`, `telegram`, `discord`, `whatsapp`)
+- Dedicated Slack parity webhook: `POST /laraclaw/webhooks/slack`
+- MCP memory tools:
+  - `POST /api/mcp/search`
+  - `GET /api/mcp/recent`
+  - `GET /api/mcp/stats`
+
+These endpoints queue memory ingestion, persist memory records via `MemoryStore`, and expose retrieval-friendly outputs for MCP clients.
 
 ---
 

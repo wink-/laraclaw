@@ -8,6 +8,7 @@ use App\Laraclaw\Agents\MultiAgentOrchestrator;
 use App\Laraclaw\Channels\ChannelBindingManager;
 use App\Laraclaw\Gateways\CliGateway;
 use App\Laraclaw\Gateways\DiscordGateway;
+use App\Laraclaw\Gateways\SlackGateway;
 use App\Laraclaw\Gateways\TelegramGateway;
 use App\Laraclaw\Gateways\WhatsAppGateway;
 use App\Laraclaw\Heartbeat\HeartbeatEngine;
@@ -133,6 +134,7 @@ class LaraclawServiceProvider extends ServiceProvider
         $this->app->singleton(TelegramGateway::class);
         $this->app->singleton(DiscordGateway::class);
         $this->app->singleton(WhatsAppGateway::class);
+        $this->app->singleton(SlackGateway::class);
 
         // Tag gateways
         $this->app->tag([
@@ -140,6 +142,7 @@ class LaraclawServiceProvider extends ServiceProvider
             TelegramGateway::class,
             DiscordGateway::class,
             WhatsAppGateway::class,
+            SlackGateway::class,
         ], 'laraclaw.gateways');
 
         // Register main Laraclaw service

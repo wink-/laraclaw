@@ -5,9 +5,8 @@
             "type": "local",
             "enabled": true,
             "command": [
-                "wsl.exe",
-                "/usr/bin/php8.5",
-                "/home/winkky/code/laraclaw/artisan",
+                "php",
+                "artisan",
                 "boost:mcp"
             ]
         }

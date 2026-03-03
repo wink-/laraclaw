@@ -1,5 +1,7 @@
 # Laraclaw Development Plan
 
+_Last updated: 2026-03-03_
+
 ## 1. Project Overview
 **Laraclaw** is a Laravel-based implementation of OpenClaw, the open-source personal AI assistant platform. It aims to bring the powerful, local-first, and highly extensible AI assistant capabilities of OpenClaw to the Laravel ecosystem, leveraging Laravel's robust queue system, Eloquent ORM, and the new `laravel/ai` (Prism) integration.
 
@@ -187,10 +189,21 @@ database/
   migrations/
 ```
 
+### Phase 16: Open Brain — Supabase Universal Memory
+*   [x] **Supabase Memory Schema**: Added `memories` migration + Supabase connection support (`supabase` / `supabase_direct`) with pgvector-aware behavior on PostgreSQL.
+*   [x] **Slack Gateway**: Implemented `SlackGateway` (Events API parsing, signature verification path support, thread-aware replies).
+*   [x] **Platform-Aware Capture**: Added dedicated `Memory` model with `platform_source` and unified ingest route `POST /api/webhooks/{platform}`.
+*   [x] **Supabase Vector Search**: Implemented pgvector cosine search (`<=>`) in `MemoryStore` with lexical fallback.
+*   [x] **MCP Memory Tools**: Added memory retrieval endpoints for `semantic_search`, `list_recent`, and `stats`.
+*   [x] **Async Embedding Pipeline**: Added `ProcessNewMemoryJob` to extract metadata, generate embeddings, and persist records.
+*   [x] **Confirmation Replies**: Added post-processing confirmation messages via gateway-specific senders.
+*   [x] **Slack Webhook Parity Route**: Added dedicated `POST /laraclaw/webhooks/slack` controller route to mirror existing webhook namespace patterns.
+
 ## Current Focus (Next)
 - [x] Align streaming path with per-agent provider/model routing and improve model compatibility guidance.
 - [x] Refine chat UX with internal frame scrolling, sticky composer/sidebar controls, and newest-first message ordering.
 - [x] Remove legacy welcome page and route root traffic directly to the live Laraclaw UI.
+- [x] **Phase 16: Open Brain** — Supabase-ready universal memory store, Slack gateway, MCP retrieval tools, and dedicated Slack web parity route delivered.
 - Stabilize and expand MVC module templates (additional app types beyond blog).
 - Harden module lifecycle operations (update/remove) with safety checks.
 - Keep generated apps operable through both chat tools and dashboard controls.

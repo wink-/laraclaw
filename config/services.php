@@ -29,6 +29,8 @@ return [
     ],
 
     'slack' => [
+        'bot_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),
+        'signing_secret' => env('SLACK_SIGNING_SECRET'),
         'notifications' => [
             'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),
             'channel' => env('SLACK_BOT_USER_DEFAULT_CHANNEL'),

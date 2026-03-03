@@ -145,6 +145,7 @@ return [
     */
 
     'memory' => [
+        'connection' => env('LARACLAW_MEMORY_CONNECTION', env('DB_CONNECTION', 'sqlite')),
         'conversation_limit' => env('LARACLAW_MEMORY_LIMIT', 50),
         'search_limit' => env('LARACLAW_SEARCH_LIMIT', 10),
         'fts_enabled' => env('LARACLAW_FTS_ENABLED', true),
@@ -181,6 +182,12 @@ return [
             'verify_token' => env('WHATSAPP_VERIFY_TOKEN'),
             'app_secret' => env('WHATSAPP_APP_SECRET'),
             'api_version' => env('WHATSAPP_API_VERSION', 'v18.0'),
+        ],
+
+        'slack' => [
+            'enabled' => env('SLACK_ENABLED', false),
+            'bot_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),
+            'signing_secret' => env('SLACK_SIGNING_SECRET'),
         ],
 
         'cli' => [

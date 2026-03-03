@@ -48,6 +48,7 @@ class SendMessageJob implements ShouldQueue
             $gateway = match ($this->gateway) {
                 'telegram' => app(\App\Laraclaw\Gateways\TelegramGateway::class),
                 'discord' => app(\App\Laraclaw\Gateways\DiscordGateway::class),
+                'slack' => app(\App\Laraclaw\Gateways\SlackGateway::class),
                 'cli' => app(\App\Laraclaw\Gateways\CliGateway::class),
                 default => throw new \RuntimeException("Unknown gateway: {$this->gateway}"),
             };

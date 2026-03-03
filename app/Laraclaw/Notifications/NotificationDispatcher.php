@@ -3,6 +3,7 @@
 namespace App\Laraclaw\Notifications;
 
 use App\Laraclaw\Gateways\DiscordGateway;
+use App\Laraclaw\Gateways\SlackGateway;
 use App\Laraclaw\Gateways\TelegramGateway;
 use App\Laraclaw\Gateways\WhatsAppGateway;
 use App\Models\ChannelBinding;
@@ -53,12 +54,13 @@ class NotificationDispatcher
         return $gateway->sendMessage($conversation, $notification->message);
     }
 
-    protected function resolveGateway(string $gateway): TelegramGateway|DiscordGateway|WhatsAppGateway|null
+    protected function resolveGateway(string $gateway): TelegramGateway|DiscordGateway|WhatsAppGateway|SlackGateway|null
     {
         return match ($gateway) {
             'telegram' => app(TelegramGateway::class),
             'discord' => app(DiscordGateway::class),
             'whatsapp' => app(WhatsAppGateway::class),
+            'slack' => app(SlackGateway::class),
             default => null,
         };
     }
