@@ -21,7 +21,7 @@ class ApprovalManager
             'conversation_id' => $conversationId,
             'action' => $action,
             'payload' => $payload,
-            'status' => 'pending',
+            'status' => ApprovalRequest::STATUS_PENDING,
             'approval_token' => (string) Str::uuid(),
             'requester_gateway' => $requesterGateway,
             'requester_id' => $requesterId,
@@ -31,23 +31,21 @@ class ApprovalManager
 
     public function approve(ApprovalRequest $request, ?string $approverId = null, ?string $notes = null): ApprovalRequest
     {
-        $request->forceFill([
-            'status' => 'approved',
-            'approver_id' => $approverId,
-            'notes' => $notes,
-            'approved_at' => now(),
-        ])->save();
-
-        return $request->refresh();
+        return $this->resolveRequest($request, ApprovalRequest::STATUS_APPROVED, $approverId, $notes, 'approved_at');
     }
 
     public function reject(ApprovalRequest $request, ?string $approverId = null, ?string $notes = null): ApprovalRequest
     {
+        return $this->resolveRequest($request, ApprovalRequest::STATUS_REJECTED, $approverId, $notes, 'rejected_at');
+    }
+
+    protected function resolveRequest(ApprovalRequest $request, string $status, ?string $approverId, ?string $notes, string $timestampField): ApprovalRequest
+    {
         $request->forceFill([
-            'status' => 'rejected',
+            'status' => $status,
             'approver_id' => $approverId,
             'notes' => $notes,
-            'rejected_at' => now(),
+            $timestampField => now(),
         ])->save();
 
         return $request->refresh();
@@ -106,7 +104,7 @@ class ApprovalManager
     public function pending(int $limit = 20): array
     {
         return ApprovalRequest::query()
-            ->where('status', 'pending')
+            ->where('status', ApprovalRequest::STATUS_PENDING)
             ->orderByDesc('id')
             ->limit($limit)
             ->get()

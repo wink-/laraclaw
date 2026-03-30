@@ -54,11 +54,13 @@ class LaraclawApproveCommand extends Command
             return self::FAILURE;
         }
 
+        $notes = $this->option('notes') ?: null;
+
         if ($this->option('approve')) {
             $approvals->approve(
                 request: $request,
                 approverId: (string) $this->option('approver'),
-                notes: $this->option('notes') ? (string) $this->option('notes') : null,
+                notes: $notes,
             );
 
             $this->info("Approved request #{$request->id}.");
@@ -70,7 +72,7 @@ class LaraclawApproveCommand extends Command
             $approvals->reject(
                 request: $request,
                 approverId: (string) $this->option('approver'),
-                notes: $this->option('notes') ? (string) $this->option('notes') : null,
+                notes: $notes,
             );
 
             $this->info("Rejected request #{$request->id}.");

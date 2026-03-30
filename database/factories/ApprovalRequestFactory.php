@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Models\ApprovalRequest;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 
@@ -23,7 +24,7 @@ class ApprovalRequestFactory extends Factory
             'payload' => [
                 'command' => 'echo hello',
             ],
-            'status' => 'pending',
+            'status' => ApprovalRequest::STATUS_PENDING,
             'approval_token' => (string) Str::uuid(),
             'requester_gateway' => 'cli',
             'requester_id' => fake()->uuid(),
@@ -39,7 +40,7 @@ class ApprovalRequestFactory extends Factory
     public function approved(): static
     {
         return $this->state(fn () => [
-            'status' => 'approved',
+            'status' => ApprovalRequest::STATUS_APPROVED,
             'approved_at' => now(),
             'expires_at' => now()->addMinutes(30),
         ]);
@@ -48,7 +49,7 @@ class ApprovalRequestFactory extends Factory
     public function rejected(): static
     {
         return $this->state(fn () => [
-            'status' => 'rejected',
+            'status' => ApprovalRequest::STATUS_REJECTED,
             'rejected_at' => now(),
         ]);
     }

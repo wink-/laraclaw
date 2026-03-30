@@ -2,6 +2,7 @@
 
 namespace App\Laraclaw\Skills;
 
+use App\Laraclaw\Security\ValidatesUrlSafety;
 use App\Laraclaw\Skills\Contracts\SkillInterface;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Illuminate\Support\Facades\Http;
@@ -12,6 +13,7 @@ use Stringable;
 
 class WebFetchSkill implements SkillInterface, Tool
 {
+    use ValidatesUrlSafety;
     public function name(): string
     {
         return 'web_fetch';
@@ -48,13 +50,11 @@ class WebFetchSkill implements SkillInterface, Tool
 
             $body = (string) $response->body();
             $title = $this->extractTitle($body);
-            $text = $this->extractTextContent($body);
-
-            if ($text === '') {
-                $text = Str::limit($body, $maxChars, "\n... (content truncated)");
-            } else {
-                $text = Str::limit($text, $maxChars, "\n... (content truncated)");
-            }
+            $text = Str::limit(
+                $this->extractTextContent($body) ?: $body,
+                $maxChars,
+                "\n... (content truncated)"
+            );
 
             $output = "Fetched: {$url}\nStatus: {$response->status()}";
 
@@ -108,39 +108,4 @@ class WebFetchSkill implements SkillInterface, Tool
         return (string) Str::of(html_entity_decode($text, ENT_QUOTES | ENT_HTML5))->squish();
     }
 
-    protected function validateUrlSafety(string $url): ?string
-    {
-        if (! filter_var($url, FILTER_VALIDATE_URL)) {
-            return 'Error: invalid URL.';
-        }
-
-        $parts = parse_url($url);
-        $scheme = strtolower((string) ($parts['scheme'] ?? ''));
-        $host = strtolower((string) ($parts['host'] ?? ''));
-        $allowPrivateNetwork = (bool) config('laraclaw.security.allow_private_network_urls', false);
-        $allowLoopback = (bool) config('laraclaw.security.allow_loopback_urls', false);
-
-        if (! in_array($scheme, ['http', 'https'], true)) {
-            return 'Error: only http and https URLs are allowed.';
-        }
-
-        if ($host === '') {
-            return 'Error: invalid URL host.';
-        }
-
-        $isLoopbackHost = in_array($host, ['localhost', '127.0.0.1', '::1'], true);
-
-        if (! $allowLoopback && $isLoopbackHost) {
-            return 'Error: localhost and loopback URLs are not allowed.';
-        }
-
-        if (! $allowPrivateNetwork
-            && ! $isLoopbackHost
-            && filter_var($host, FILTER_VALIDATE_IP)
-            && ! filter_var($host, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
-            return 'Error: private or reserved IP addresses are not allowed.';
-        }
-
-        return null;
-    }
 }
