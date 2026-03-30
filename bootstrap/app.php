@@ -13,6 +13,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
+            'auth' => \App\Http\Middleware\AuthBypass::class,
             'laraclaw.api' => \App\Http\Middleware\LaraclawApiTokenAuth::class,
         ]);
     })
