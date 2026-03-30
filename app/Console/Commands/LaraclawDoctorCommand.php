@@ -125,6 +125,7 @@ class LaraclawDoctorCommand extends Command
             'anthropic' => ! empty(env('ANTHROPIC_API_KEY')),
             'openrouter' => ! empty(env('OPENROUTER_API_KEY')),
             'ollama' => $this->checkOllamaConnection(),
+            'zai', 'zai-anthropic' => ! empty(env('ZAI_API_KEY')),
             default => false,
         };
 

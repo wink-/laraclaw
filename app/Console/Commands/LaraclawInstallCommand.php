@@ -106,7 +106,7 @@ class LaraclawInstallCommand extends Command
     protected function configureAiProvider(string &$envContent): void
     {
         $provider = text(
-            label: 'AI Provider (openai, anthropic, ollama, openrouter)',
+            label: 'AI Provider (openai, anthropic, ollama, openrouter, zai)',
             default: 'openai',
             required: true
         );
@@ -125,6 +125,9 @@ class LaraclawInstallCommand extends Command
         } elseif ($provider === 'openrouter') {
             $this->setEnvVar($envContent, 'OPENROUTER_API_KEY', $apiKey);
             $this->setEnvVar($envContent, 'AI_PROVIDER', 'openrouter');
+        } elseif ($provider === 'zai') {
+            $this->setEnvVar($envContent, 'ZAI_API_KEY', $apiKey);
+            $this->setEnvVar($envContent, 'AI_PROVIDER', 'zai');
         } else {
             $this->setEnvVar($envContent, 'OPENAI_API_KEY', $apiKey);
             $this->setEnvVar($envContent, 'AI_PROVIDER', 'openai');

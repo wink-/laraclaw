@@ -132,6 +132,7 @@ class VoiceService
             'elevenlabs' => Lab::ElevenLabs,
             'openai' => Lab::OpenAI,
             'mistral' => Lab::Mistral,
+            'zai' => Lab::OpenAI,
             default => Lab::OpenAI,
         };
     }

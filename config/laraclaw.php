@@ -11,7 +11,7 @@ return [
     | You may also optionally override provider/model per agent key
     | through the ai.agents map (for example: builder, planner, reviewer).
     | Supported providers: openai, anthropic, gemini, ollama, groq, mistral,
-    | deepseek, xai, openrouter
+    | deepseek, xai, openrouter, zai, zai-anthropic
     |
     | Each provider requires its API key to be set in the environment:
     | - OpenAI: OPENAI_API_KEY
@@ -23,6 +23,8 @@ return [
     | - DeepSeek: DEEPSEEK_API_KEY
     | - xAI: XAI_API_KEY
     | - OpenRouter: OPENROUTER_API_KEY
+    | - ZAI (OpenAI-compatible): ZAI_API_KEY
+    | - ZAI (Anthropic-compatible): ZAI_API_KEY (same key, set AI_PROVIDER=zai-anthropic)
     |
     */
 

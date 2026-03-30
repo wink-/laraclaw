@@ -150,6 +150,8 @@ class FileStorageService
             'anthropic' => Lab::Anthropic,
             'openai' => Lab::OpenAI,
             'gemini' => Lab::Gemini,
+            'zai' => Lab::OpenAI,
+            'zai-anthropic' => Lab::Anthropic,
             default => Lab::OpenAI,
         };
     }

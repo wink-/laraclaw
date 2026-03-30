@@ -62,6 +62,8 @@ class CoreAgent implements Agent, Conversational, HasTools
         }
 
         // Map config provider to Lab enum
+        // ZAI uses OpenAI/Anthropic-compatible APIs, so we map to their Lab enums
+        // and dynamically swap the config to point to ZAI's endpoints
         $labProvider = match ($provider) {
             'openai' => Lab::OpenAI,
             'anthropic' => Lab::Anthropic,
@@ -72,8 +74,19 @@ class CoreAgent implements Agent, Conversational, HasTools
             'deepseek' => Lab::DeepSeek,
             'xai' => Lab::xAI,
             'openrouter' => Lab::OpenRouter,
+            'zai' => Lab::OpenAI,
+            'zai-anthropic' => Lab::Anthropic,
             default => Lab::OpenAI,
         };
+
+        // When using ZAI, override the provider config to use ZAI's key and URL
+        if (str_starts_with($provider, 'zai')) {
+            $zaiConfig = config('ai.providers.'.$provider);
+            if ($zaiConfig) {
+                $targetProvider = $provider === 'zai-anthropic' ? 'anthropic' : 'openai';
+                config(['ai.providers.'.$targetProvider => $zaiConfig]);
+            }
+        }
 
         // Set via attributes using reflection or just store for prompt usage
         $this->provider = $labProvider;
