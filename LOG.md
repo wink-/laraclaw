@@ -1,5 +1,37 @@
 # Laraclaw Implementation Log
 
+## Session: 2026-03-30
+
+### Iteration: Laravel 13 Upgrade
+- Upgraded framework from Laravel 12 to Laravel 13.
+
+### Iteration: Env-Based Auth Bypass
+- Added `AuthBypass` middleware that auto-logs in as first user when `AUTH_DISABLED=true`.
+- Registered as override for `auth` middleware alias in `bootstrap/app.php`.
+- Allows passwordless local development while preserving full auth in production.
+
+### Iteration: Chat UX — Compact Layout + Message Order + Local Timezone
+- Fixed message ordering bug: response was rendering above user message during streaming.
+- Removed `->reverse()->values()` that showed oldest-first; restored correct chronological flow.
+- Moved streaming assistant block after the message loop.
+- Consolidated datetime onto same line as role label (`USER Mar 30, 14:45`) to save vertical space.
+- Switched to compact `M j, H:i` datetime format.
+- Reduced message bubble padding from `py-3` to `py-2`.
+- Later reversed to newest-first (`->reverse()->values()`) per user preference — new messages at top, scroll down for history.
+- Set default timezone to `America/New_York` via `APP_TIMEZONE` env var in `config/app.php`.
+
+### Iteration: ZAI AI Provider Integration
+- Added ZAI as a supported AI provider with OpenAI-compatible (`https://api.z.ai/api/coding/paas/v4`) and Anthropic-compatible (`https://api.z.ai/api/anthropic`) endpoints.
+- Added `zai` and `zai-anthropic` entries in `config/ai.php` with driver mapping to `openai`/`anthropic`.
+- CoreAgent maps `'zai'` → `Lab::OpenAI`, `'zai-anthropic'` → `Lab::Anthropic` with runtime config swap.
+- Added ZAI key validation in doctor, health, and install commands.
+- Added ZAI cases to FileStorageService and VoiceService provider mappings.
+- Updated `config/laraclaw.php` supported providers documentation.
+- Env vars: `ZAI_API_KEY`, `ZAI_OPENAI_URL`, `ZAI_ANTHROPIC_URL`.
+
+### Iteration: Agent Skills Committed
+- Committed all agent skills across `.agents/`, `.claude/`, `.kilocode/`, `.pi/` directories and `skills-lock.json` for consistent dev environment parity.
+
 ## Session: 2026-03-03
 
 ### Iteration: HTTP Request + Web Fetch Skills

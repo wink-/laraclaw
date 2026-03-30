@@ -15,7 +15,7 @@
     <a href="#configuration">Configuration</a>
 </p>
 
-<p align="center"><sub>Last updated: 2026-03-03</sub></p>
+<p align="center"><sub>Last updated: 2026-03-30</sub></p>
 
 ---
 
@@ -36,7 +36,7 @@
 - 🧩 **Skill Marketplace** — Enable/disable registered skills from the dashboard
 - 📄 **Document Ingestion** — Upload and index documents into vector storage for retrieval
 - 🔐 **Security First** — User allowlists, autonomy levels, filesystem scoping, webhook verification
-- 🤖 **Multi-Provider AI** — OpenAI, Anthropic, Gemini, Ollama, Groq, Mistral, DeepSeek, xAI, Openrouter
+- 🤖 **Multi-Provider AI** — OpenAI, Anthropic, Gemini, Ollama, Groq, Mistral, DeepSeek, xAI, OpenRouter, ZAI
 - 📋 **AIEOS Support** — AI Entity Object Specification v1.1 for portable AI identities
 - 🚇 **Tunnel Support** — ngrok, Cloudflare Tunnel, and Tailscale for local development
 - 🧭 **Intent Routing** — Specialist prompt routing for builder, memory, scheduling, shopping, and entertainment intents
@@ -44,6 +44,10 @@
 
 ### Recent Delivery Highlights
 
+- ✅ **Laravel 13 Upgrade** — Framework upgraded to Laravel 13
+- ✅ **ZAI Provider** — ZAI AI provider with OpenAI-compatible and Anthropic-compatible endpoints
+- ✅ **Chat UX Refresh** — Compact layout, inline timestamps, newest-first ordering, local timezone support
+- ✅ **Auth Bypass** — `AUTH_DISABLED=true` env var for passwordless local development
 - ✅ **Phase 16 Open Brain** — Supabase-ready memory store with pgvector-aware semantic search and MCP-friendly retrieval endpoints
 - ✅ **Slack Integration** — Slack gateway plus unified API webhook and dedicated `/laraclaw/webhooks/slack` parity route
 - ✅ **Approval System MVP** — Supervised command execution now creates approval requests and supports explicit approve/reject workflows
@@ -56,7 +60,7 @@
 ## Requirements
 
 - PHP 8.4+
-- Laravel 12.x
+- Laravel 13.x
 - SQLite (default) / MySQL / PostgreSQL
 - Composer
 
@@ -100,7 +104,7 @@ This interactive command will:
 Add your AI provider credentials to `.env`:
 
 ```env
-# AI Provider (openai, anthropic, gemini, ollama, groq, mistral, deepseek, xai, openrouter)
+# AI Provider (openai, anthropic, gemini, ollama, groq, mistral, deepseek, xai, openrouter, zai, zai-anthropic)
 AI_PROVIDER=openai
 AI_MODEL=gpt-4o-mini
 
@@ -109,6 +113,7 @@ OPENAI_API_KEY=sk-...
 # ANTHROPIC_API_KEY=sk-ant-...
 # GEMINI_API_KEY=...
 # OPENROUTER_API_KEY=sk-or-...
+# ZAI_API_KEY=...
 
 # Telegram (optional)
 TELEGRAM_BOT_TOKEN=123456:ABC-DEF...
@@ -136,6 +141,12 @@ LARACLAW_MEMORY_AUTO_EXTRACT=true
 # Web tools network policy (set true for private VPS/Tailscale-only deployments)
 LARACLAW_ALLOW_PRIVATE_NETWORK_URLS=false
 LARACLAW_ALLOW_LOOPBACK_URLS=false
+
+# Local development: bypass auth (auto-login as first user)
+AUTH_DISABLED=false
+
+# Timezone (defaults to America/New_York)
+APP_TIMEZONE=America/New_York
 
 # Optional: route memory storage to Supabase
 # LARACLAW_MEMORY_CONNECTION=supabase

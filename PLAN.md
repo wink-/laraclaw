@@ -1,6 +1,6 @@
 # Laraclaw Development Plan
 
-_Last updated: 2026-03-03_
+_Last updated: 2026-03-30_
 
 ## 1. Project Overview
 **Laraclaw** is a Laravel-based implementation of OpenClaw, the open-source personal AI assistant platform. It aims to bring the powerful, local-first, and highly extensible AI assistant capabilities of OpenClaw to the Laravel ecosystem, leveraging Laravel's robust queue system, Eloquent ORM, and the new `laravel/ai` (Prism) integration.
@@ -207,8 +207,78 @@ database/
 - [x] **Approval System MVP** — Added approval request persistence, CLI approve/reject command, and supervised execute gating.
 - [x] **HTTP Request + Web Fetch Tools** — Added safe external API/page retrieval skills with URL guardrails and focused test coverage.
 - [x] **Trusted Private-Network Mode** — Added opt-in toggles so web tools can target Tailscale/private/loopback endpoints in single-user VPS/home-network deployments.
+- [x] **Laravel 13 Upgrade** — Upgraded framework to Laravel 13.
+- [x] **Auth Bypass** — `AUTH_DISABLED=true` env var for passwordless local development.
+- [x] **Chat UX** — Compact layout, inline datetime, newest-first ordering, local timezone (America/New_York default).
+- [x] **ZAI Provider** — Added ZAI OpenAI-compatible and Anthropic-compatible API endpoints as provider options.
 - **Next Target:** Add REST API v1 with token auth for conversations/messages/memories and MCP-aligned retrieval endpoints.
 - Stabilize and expand MVC module templates (additional app types beyond blog).
 - Harden module lifecycle operations (update/remove) with safety checks.
 - Keep generated apps operable through both chat tools and dashboard controls.
 - Keep all upcoming UI work aligned with Laravel Volt + Tailwind CSS 4 conventions.
+
+## 6. OpenClaw Parity Roadmap
+
+This roadmap tracks progress toward feature parity with OpenClaw (github.com/openclaw), adapted for the Laravel/Volt ecosystem. Each phase increases alignment with OpenClaw's core design while staying idiomatic to Laravel.
+
+### Phase 17: Web Chat Parity
+Goal: Bring the web dashboard chat up to OpenClaw WebChat feature parity.
+
+- [ ] **Voice Input/Output UI** — Add microphone button for voice recording and audio playback in chat (leveraging existing VoiceService TTS/STT).
+- [ ] **File Attachments** — Allow attaching files (images, PDFs, documents) to chat messages for analysis.
+- [ ] **Rich Markdown Rendering** — Render markdown, code blocks with syntax highlighting, and tables in assistant responses.
+- [ ] **Chat Settings Panel** — In-chat UI for switching provider/model, adjusting temperature, and toggling streaming without page reload.
+- [ ] **Conversation Export** — Per-conversation export to Markdown, JSON, and PDF from chat sidebar.
+
+### Phase 18: Expanded Gateway Support
+Goal: Match OpenClaw's broader platform reach.
+
+- [ ] **Google Chat Gateway** — Google Workspace chat integration via webhook.
+- [ ] **Signal Gateway** — Signal messaging via signal-cli.
+- [ ] **Microsoft Teams Gateway** — Teams bot via Bot Framework.
+- [ ] **IRC Gateway** — Basic IRC bot support.
+- [ ] **Matrix Gateway** — Matrix protocol via webhook bridge.
+
+### Phase 19: Skill Marketplace (ClawHub Parity)
+Goal: Build a Laravel-native skill marketplace inspired by ClawHub.
+
+- [ ] **Skill Registry API** — REST API for listing, installing, and updating skills from a remote registry.
+- [ ] **Skill Package Format** — Define a Composer-compatible skill package structure (composer.json + skill class + config).
+- [ ] **Community Skill Discovery** — Browse and install community-contributed skills from the dashboard.
+- [ ] **Skill Versioning** — Semantic versioning support with upgrade/rollback.
+- [ ] **Skill Sandbox** — Isolated execution environment for untrusted skills with resource limits.
+
+### Phase 20: MCP (Model Context Protocol) Integration
+Goal: Support MCP for standardized tool/memory access, similar to OpenClaw's mcporter bridge.
+
+- [ ] **MCP Server** — Expose Laraclaw skills and memory as MCP tools/resources.
+- [ ] **MCP Client** — Connect to external MCP servers for additional tool access.
+- [ ] **MCP Transport** — Support stdio and SSE transport layers.
+- [ ] **Tool Discovery** — Auto-discover and register MCP tools as Laraclaw skills.
+
+### Phase 21: Advanced Memory & Context
+Goal: Match OpenClaw's hybrid memory engine quality.
+
+- [ ] **BM25 Scoring** — Implement BM25 scoring for FTS5 results alongside vector cosine similarity.
+- [ ] **Memory Consolidation** — Periodic job to merge similar memories and reduce redundancy.
+- [ ] **Cross-User Memory Sharing** — Opt-in shared memory spaces for team/family assistants.
+- [ ] **Memory Timeline** — Dashboard UI showing memory evolution over time with search.
+- [ ] **Context Window Visualization** — Show how much context budget is used per conversation.
+
+### Phase 22: Settings & Configuration UI
+Goal: Replace env-file-only config with a proper dashboard settings panel.
+
+- [ ] **AI Provider Settings** — Configure provider, model, API keys, and per-agent overrides from the dashboard.
+- [ ] **Gateway Settings** — Enable/disable gateways and configure tokens/webhooks from the dashboard.
+- [ ] **Security Settings** — Manage autonomy levels, user allowlists, and filesystem scopes from the dashboard.
+- [ ] **Identity Editor** — Visual editor for IDENTITY.md, SOUL.md, and AIEOS persona files.
+- [ ] **Approval Queue UI** — Web-based approval queue for supervised actions (currently CLI-only).
+
+### Phase 23: Advanced Dashboard
+Goal: Full-featured admin dashboard matching OpenClaw's monitoring capabilities.
+
+- [ ] **Real-Time Metrics** — Livewire-powered live-updating metrics dashboard (no page refresh).
+- [ ] **Conversation Inspector** — Full conversation view with message details, token usage, and tool call logs.
+- [ ] **Agent Debug View** — Show intent routing decisions, tool invocations, and multi-agent collaboration steps.
+- [ ] **Scheduled Task Manager** — Full CRUD for scheduled tasks with run history and logs.
+- [ ] **Health Dashboard** — Comprehensive system health with gateway connectivity tests and AI provider ping.
