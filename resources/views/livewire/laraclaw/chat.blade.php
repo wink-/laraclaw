@@ -377,8 +377,11 @@ new class extends Component {
         <div class="flex-1 min-h-0 overflow-y-auto p-4 space-y-4" x-ref="messagesContainer">
             @if($isStreaming)
                 <div class="flex justify-start">
-                    <div class="max-w-[80%] bg-gray-700 rounded-xl px-4 py-3">
-                        <div class="text-xs text-gray-400 uppercase mb-1">assistant</div>
+                    <div class="max-w-[80%] bg-gray-700 rounded-xl px-4 py-2">
+                        <div class="flex items-center gap-2 text-xs text-gray-400 mb-1">
+                            <span class="uppercase">assistant</span>
+                            <span class="animate-pulse">typing...</span>
+                        </div>
                         <div class="whitespace-pre-wrap">
                             <span x-text="$wire.streamingContent"></span>
                             <span class="animate-pulse">|</span>
@@ -389,19 +392,17 @@ new class extends Component {
 
             @forelse($this->conversationMessages->reverse()->values() as $msg)
                 <div class="flex {{ $msg->role === 'user' ? 'justify-end' : 'justify-start' }}">
-                    <div class="max-w-[80%] {{ $msg->role === 'user' ? 'bg-indigo-600' : 'bg-gray-700' }} rounded-xl px-4 py-3">
-                        <div class="text-xs {{ $msg->role === 'user' ? 'text-indigo-200' : 'text-gray-400' }} uppercase mb-1">
-                            {{ $msg->role }}
+                    <div class="max-w-[80%] {{ $msg->role === 'user' ? 'bg-indigo-600' : 'bg-gray-700' }} rounded-xl px-4 py-2">
+                        <div class="flex items-center gap-2 text-xs {{ $msg->role === 'user' ? 'text-indigo-200' : 'text-gray-400' }} mb-1">
+                            <span class="uppercase">{{ $msg->role }}</span>
+                            <span>{{ $msg->created_at->format('M j, H:i') }}</span>
                             @if($msg->role === 'assistant' && filled($msg->metadata['response_mode'] ?? null))
-                                <span class="ml-2 px-1.5 py-0.5 rounded bg-gray-600 text-[10px] text-gray-200 normal-case tracking-normal">
+                                <span class="px-1.5 py-0.5 rounded bg-gray-600 text-[10px] text-gray-200 normal-case tracking-normal">
                                     {{ ($msg->metadata['response_mode'] ?? 'single') === 'multi' ? 'Multi-Agent' : 'Single-Agent' }}
                                 </span>
                             @endif
                         </div>
                         <div class="whitespace-pre-wrap">{{ $msg->content }}</div>
-                        <div class="text-xs {{ $msg->role === 'user' ? 'text-indigo-200' : 'text-gray-500' }} mt-2">
-                            {{ $msg->created_at->format('M j, g:i A') }}
-                        </div>
                     </div>
                 </div>
             @empty
