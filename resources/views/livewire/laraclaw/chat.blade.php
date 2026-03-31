@@ -4,19 +4,26 @@ use App\Laraclaw\Facades\Laraclaw;
 use App\Models\Conversation;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Rule;
 use Livewire\Attributes\Session;
 use Livewire\Volt\Component;
+use Livewire\WithFileUploads;
 
 new class extends Component {
+    use WithFileUploads;
     #[Session]
     public ?int $conversationId = null;
 
-    #[Rule('required|string|max:4000')]
+    #[Rule('required_without:attachments|string|max:4000')]
     public string $message = '';
+
+    #[Rule('array|max:3')]
+    #[Rule('attachments.*|file|max:10240')]
+    public array $attachments = [];
 
     public bool $isStreaming = false;
 
@@ -26,11 +33,91 @@ new class extends Component {
 
     public bool $useMultiAgent = false;
 
+    #[Session]
+    public string $aiProvider = '';
+
+    #[Session]
+    public string $aiModel = '';
+
+    #[Session]
+    public float $aiTemperature = 0.7;
+
+    #[Session]
+    public int $aiMaxTokens = 4096;
+
+    public bool $showSettings = false;
+
     public function mount(): void
     {
         if (! $this->conversationId) {
             $this->startNewConversation();
         }
+
+        $this->aiProvider = $this->aiProvider ?: config('laraclaw.ai.provider', 'openai');
+        $this->aiModel = $this->aiModel ?: config('laraclaw.ai.model', 'gpt-4o-mini');
+        $this->aiTemperature = $this->aiTemperature ?: (float) config('laraclaw.ai.temperature', 0.7);
+        $this->aiMaxTokens = $this->aiMaxTokens ?: (int) config('laraclaw.ai.max_tokens', 4096);
+    }
+
+    public function getAvailableProviders(): array
+    {
+        return [
+            ['value' => 'openai', 'label' => 'OpenAI'],
+            ['value' => 'anthropic', 'label' => 'Anthropic'],
+            ['value' => 'gemini', 'label' => 'Gemini'],
+            ['value' => 'ollama', 'label' => 'Ollama'],
+            ['value' => 'groq', 'label' => 'Groq'],
+            ['value' => 'mistral', 'label' => 'Mistral'],
+            ['value' => 'deepseek', 'label' => 'DeepSeek'],
+            ['value' => 'xai', 'label' => 'xAI'],
+            ['value' => 'openrouter', 'label' => 'OpenRouter'],
+            ['value' => 'zai', 'label' => 'ZAI (OpenAI)'],
+            ['value' => 'zai-anthropic', 'label' => 'ZAI (Anthropic)'],
+        ];
+    }
+
+    public function getAvailableModels(): array
+    {
+        return match ($this->aiProvider) {
+            'openai' => [
+                ['value' => 'gpt-4o-mini', 'label' => 'GPT-4o Mini'],
+                ['value' => 'gpt-4o', 'label' => 'GPT-4o'],
+                ['value' => 'o1-mini', 'label' => 'o1 Mini'],
+                ['value' => 'o3-mini', 'label' => 'o3 Mini'],
+            ],
+            'anthropic' => [
+                ['value' => 'claude-sonnet-4-20250514', 'label' => 'Claude Sonnet 4'],
+                ['value' => 'claude-3-5-haiku-20241022', 'label' => 'Claude 3.5 Haiku'],
+            ],
+            'gemini' => [
+                ['value' => 'gemini-2.0-flash', 'label' => 'Gemini 2.0 Flash'],
+                ['value' => 'gemini-1.5-pro', 'label' => 'Gemini 1.5 Pro'],
+            ],
+            'groq' => [
+                ['value' => 'llama-3.3-70b-versatile', 'label' => 'Llama 3.3 70B'],
+                ['value' => 'mixtral-8x7b-32768', 'label' => 'Mixtral 8x7B'],
+            ],
+            'mistral' => [
+                ['value' => 'mistral-large-latest', 'label' => 'Mistral Large'],
+                ['value' => 'mistral-small-latest', 'label' => 'Mistral Small'],
+            ],
+            'deepseek' => [
+                ['value' => 'deepseek-chat', 'label' => 'DeepSeek Chat'],
+                ['value' => 'deepseek-reasoner', 'label' => 'DeepSeek Reasoner'],
+            ],
+            'zai' => [
+                ['value' => 'glm-4-flash', 'label' => 'GLM-4 Flash'],
+                ['value' => 'glm-4-plus', 'label' => 'GLM-4 Plus'],
+                ['value' => 'glm-4-air', 'label' => 'GLM-4 Air'],
+            ],
+            'zai-anthropic' => [
+                ['value' => 'claude-sonnet-4-20250514', 'label' => 'Claude Sonnet 4'],
+                ['value' => 'claude-3-5-haiku-20241022', 'label' => 'Claude 3.5 Haiku'],
+            ],
+            default => [
+                ['value' => $this->aiModel, 'label' => $this->aiModel],
+            ],
+        };
     }
 
     #[Computed]
@@ -58,24 +145,44 @@ new class extends Component {
 
         $isFirstMessage = $conversation->messages()->count() === 0;
 
+        // Build message text (include attachment names if present)
+        $attachmentNames = collect($this->attachments)->map(fn ($f) => $f->getClientOriginalName())->implode(', ');
+        $userMessage = $this->message;
+        if ($attachmentNames !== '') {
+            $userMessage = trim("[Attached: {$attachmentNames}]\n\n{$userMessage}");
+        }
+
         if ($isFirstMessage) {
             $conversation->update([
-                'title' => mb_substr($this->message, 0, 50).(mb_strlen($this->message) > 50 ? '...' : ''),
+                'title' => mb_substr($userMessage, 0, 50).(mb_strlen($userMessage) > 50 ? '...' : ''),
             ]);
         }
 
-        $userMessage = $this->message;
+        // Store attachment metadata
+        $attachmentMeta = collect($this->attachments)->map(fn ($f) => [
+            'name' => $f->getClientOriginalName(),
+            'size' => $f->getSize(),
+            'mime' => $f->getMimeType(),
+        ])->all();
+
         $this->message = '';
+        $this->attachments = [];
         $this->isStreaming = true;
         $this->streamingContent = '';
 
         if ($this->streaming && ! $this->useMultiAgent) {
-            $this->dispatch('start-streaming', conversationId: $this->conversationId, message: $userMessage);
+            $this->dispatch('start-streaming', conversationId: $this->conversationId, message: $userMessage, attachments: $attachmentMeta);
 
             return;
         }
 
         $this->getAIResponse($userMessage);
+    }
+
+    public function removeAttachment(int $index): void
+    {
+        unset($this->attachments[$index]);
+        $this->attachments = array_values($this->attachments);
     }
 
     protected function getAIResponse(string $userMessage): void
@@ -157,7 +264,60 @@ new class extends Component {
     {
         return [
             'conversations' => $this->conversations(),
+            'providers' => $this->getAvailableProviders(),
+            'models' => $this->getAvailableModels(),
         ];
+    }
+
+    public function resetSettings(): void
+    {
+        $this->aiProvider = config('laraclaw.ai.provider', 'openai');
+        $this->aiModel = config('laraclaw.ai.model', 'gpt-4o-mini');
+        $this->aiTemperature = (float) config('laraclaw.ai.temperature', 0.7);
+        $this->aiMaxTokens = (int) config('laraclaw.ai.max_tokens', 4096);
+        $this->streaming = true;
+        $this->useMultiAgent = false;
+    }
+
+    public function exportMarkdown()
+    {
+        $conversation = $this->conversation;
+        if (! $conversation) {
+            return;
+        }
+
+        $lines = ["# {$conversation->title}", ''];
+        foreach ($conversation->messages as $msg) {
+            $lines[] = "**{$msg->role}** ({$msg->created_at->format('Y-m-d H:i')})";
+            $lines[] = $msg->content;
+            $lines[] = '';
+        }
+
+        return response()->streamDownload(function () use ($lines) {
+            echo implode("\n", $lines);
+        }, Str::slug($conversation->title).'.md', ['Content-Type' => 'text/markdown']);
+    }
+
+    public function exportJson()
+    {
+        $conversation = $this->conversation;
+        if (! $conversation) {
+            return;
+        }
+
+        $data = [
+            'title' => $conversation->title,
+            'created_at' => $conversation->created_at->toIso8601String(),
+            'messages' => $conversation->messages->map(fn ($msg) => [
+                'role' => $msg->role,
+                'content' => $msg->content,
+                'created_at' => $msg->created_at->toIso8601String(),
+            ]),
+        ];
+
+        return response()->streamDownload(function () use ($data) {
+            echo json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+        }, Str::slug($conversation->title).'.json', ['Content-Type' => 'application/json']);
     }
 
     public function rendering(View $view): void
@@ -171,6 +331,11 @@ new class extends Component {
 <script>
     window.chatComponent = () => ({
         showShortcuts: false,
+
+        renderMd(text) {
+            if (!text) return '';
+            try { return marked.parse(text); } catch { return text; }
+        },
 
         init() {
             // Focus input on '/' key
@@ -198,6 +363,10 @@ new class extends Component {
                         body: JSON.stringify({
                             conversation_id: conversationId,
                             message: message,
+                            provider: this.$wire.aiProvider,
+                            model: this.$wire.aiModel,
+                            temperature: this.$wire.aiTemperature,
+                            max_tokens: this.$wire.aiMaxTokens,
                         }),
                     });
 
@@ -273,6 +442,70 @@ new class extends Component {
             });
         }
     });
+
+    window.voiceRecorder = ($wire) => ({
+        recording: false,
+        mediaRecorder: null,
+        chunks: [],
+
+        async toggle() {
+            if (this.recording) {
+                this.stop();
+            } else {
+                await this.start();
+            }
+        },
+
+        async start() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                this.mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm;codecs=opus' });
+                this.chunks = [];
+
+                this.mediaRecorder.ondataavailable = (e) => {
+                    if (e.data.size > 0) this.chunks.push(e.data);
+                };
+
+                this.mediaRecorder.onstop = async () => {
+                    stream.getTracks().forEach(t => t.stop());
+                    const blob = new Blob(this.chunks, { type: 'audio/webm' });
+                    const formData = new FormData();
+                    formData.append('audio', blob, 'recording.webm');
+
+                    try {
+                        const resp = await fetch('/laraclaw/voice/transcribe', {
+                            method: 'POST',
+                            headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'Accept': 'application/json' },
+                            body: formData,
+                        });
+                        const data = await resp.json();
+                        if (data.text) {
+                            $wire.message = ($wire.message ? $wire.message + ' ' : '') + data.text;
+                        }
+                    } catch (err) {
+                        console.error('Transcription failed:', err);
+                    }
+                };
+
+                this.mediaRecorder.start();
+                this.recording = true;
+            } catch (err) {
+                console.error('Microphone access denied:', err);
+            }
+        },
+
+        stop() {
+            if (this.mediaRecorder && this.recording) {
+                this.mediaRecorder.stop();
+                this.recording = false;
+            }
+        },
+    });
+
+    window.playTTS = async (messageId) => {
+        const audio = new Audio(`/laraclaw/voice/speak/${messageId}`);
+        audio.play().catch(err => console.error('TTS playback failed:', err));
+    };
 </script>
 @endpush
     <!-- Sidebar -->
@@ -306,44 +539,96 @@ new class extends Component {
             @endforeach
         </div>
 
-        <!-- Options -->
+        <!-- Export & Options -->
         <div class="sticky bottom-0 z-10 p-4 border-t border-gray-700 bg-gray-800 space-y-2">
-            <label class="flex items-center gap-2 text-sm cursor-pointer">
-                <input type="checkbox" wire:model="streaming" class="rounded bg-gray-700 border-gray-600 text-indigo-600 focus:ring-indigo-500">
-                <span>Enable streaming</span>
-            </label>
-            <label class="flex items-center gap-2 text-sm cursor-pointer">
-                <input type="checkbox" wire:model="useMultiAgent" class="rounded bg-gray-700 border-gray-600 text-indigo-600 focus:ring-indigo-500">
-                <span>Use multi-agent mode</span>
-            </label>
-            @if($useMultiAgent)
-                <p class="text-xs text-gray-500">Multi-agent mode sends non-streaming responses for this message.</p>
+            @if($conversation)
+            <div class="relative" x-data="{ open: false }">
+                <button @click="open = !open" class="w-full px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm font-medium transition flex items-center justify-between">
+                    <span class="flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                        Export
+                    </span>
+                    <svg class="w-4 h-4 transition" :class="open ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
+                </button>
+                <div x-show="open" @click.away="open = false" x-transition class="absolute bottom-full left-0 right-0 mb-1 bg-gray-700 rounded-lg border border-gray-600 overflow-hidden shadow-lg">
+                    <button wire:click="exportMarkdown" @click="open = false" class="w-full text-left px-3 py-2 text-sm hover:bg-gray-600 transition">Markdown (.md)</button>
+                    <button wire:click="exportJson" @click="open = false" class="w-full text-left px-3 py-2 text-sm hover:bg-gray-600 transition">JSON (.json)</button>
+                    <button @click="window.print(); open = false" class="w-full text-left px-3 py-2 text-sm hover:bg-gray-600 transition">Print / PDF</button>
+                </div>
+            </div>
             @endif
+            <button wire:click="$toggle('showSettings')" class="w-full px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm font-medium transition flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                </svg>
+                Settings
+            </button>
         </div>
     </div>
+
+    <!-- Chat Content + Settings Wrapper -->
+    <div class="flex-1 flex min-h-0 overflow-hidden">
 
     <!-- Main Chat Area -->
     <div class="flex-1 flex flex-col min-h-0 overflow-hidden">
         <!-- Input Area -->
         <div class="sticky top-0 z-10 p-4 bg-gray-800 border-b border-gray-700">
             <form wire:submit="sendMessage" class="flex gap-3">
-                <textarea
-                    wire:model="message"
-                    x-ref="messageInput"
-                    placeholder="Type your message... (Shift+Enter for newline)"
-                    class="flex-1 bg-gray-700 border border-gray-600 rounded-xl px-4 py-3 resize-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent placeholder-gray-400"
-                    rows="1"
-                    x-data
-                    x-init="
-                        $el.style.height = 'auto';
-                        $el.addEventListener('input', function() {
-                            this.style.height = 'auto';
-                            this.style.height = Math.min(this.scrollHeight, 150) + 'px';
-                        });
-                    "
-                    @keydown.enter.prevent="$event.shiftKey ? null : $wire.sendMessage()"
-                    {{ $isStreaming ? 'disabled' : '' }}
-                ></textarea>
+                <div class="flex-1 flex flex-col gap-2">
+                    <!-- Attachment preview bar -->
+                    @if(count($attachments) > 0)
+                        <div class="flex flex-wrap gap-2">
+                            @foreach($attachments as $i => $file)
+                                <div class="flex items-center gap-1.5 bg-gray-700 rounded-lg px-2.5 py-1.5 text-xs">
+                                    <svg class="w-3.5 h-3.5 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path>
+                                    </svg>
+                                    <span class="truncate max-w-[120px]">{{ $file->getClientOriginalName() }}</span>
+                                    <button type="button" wire:click="removeAttachment({{ $i }})" class="text-gray-400 hover:text-red-400 shrink-0">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                            @endforeach
+                        </div>
+                    @endif
+                    <div class="flex gap-2 items-end">
+                        <label class="cursor-pointer p-2 text-gray-400 hover:text-gray-200 transition {{ $isStreaming ? 'pointer-events-none opacity-50' : '' }}">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path>
+                            </svg>
+                            <input type="file" wire:model="attachments" multiple class="hidden" {{ $isStreaming ? 'disabled' : '' }}>
+                        </label>
+                        <button type="button" x-data="window.voiceRecorder($wire)" @click="toggle()" :class="recording ? 'text-red-400 animate-pulse' : 'text-gray-400 hover:text-gray-200'" class="p-2 transition {{ $isStreaming ? 'pointer-events-none opacity-50' : '' }}" :title="recording ? 'Stop recording' : 'Voice input'">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path>
+                            </svg>
+                        </button>
+                        <textarea
+                            wire:model="message"
+                            x-ref="messageInput"
+                            placeholder="Type your message... (Shift+Enter for newline)"
+                            class="flex-1 bg-gray-700 border border-gray-600 rounded-xl px-4 py-3 resize-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent placeholder-gray-400"
+                            rows="1"
+                            x-data
+                            x-init="
+                                $el.style.height = 'auto';
+                                $el.addEventListener('input', function() {
+                                    this.style.height = 'auto';
+                                    this.style.height = Math.min(this.scrollHeight, 150) + 'px';
+                                });
+                            "
+                            @keydown.enter.prevent="$event.shiftKey ? null : $wire.sendMessage()"
+                            {{ $isStreaming ? 'disabled' : '' }}
+                        ></textarea>
+                    </div>
+                </div>
                 <button
                     type="submit"
                     class="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl font-medium transition flex items-center gap-2"
@@ -382,10 +667,8 @@ new class extends Component {
                             <span class="uppercase">assistant</span>
                             <span class="animate-pulse">typing...</span>
                         </div>
-                        <div class="whitespace-pre-wrap">
-                            <span x-text="$wire.streamingContent"></span>
-                            <span class="animate-pulse">|</span>
-                        </div>
+                        <div class="prose-chat text-sm text-gray-200" x-html="renderMd($wire.streamingContent)"></div>
+                            <span class="animate-pulse text-gray-400">|</span>
                     </div>
                 </div>
             @endif
@@ -401,8 +684,19 @@ new class extends Component {
                                     {{ ($msg->metadata['response_mode'] ?? 'single') === 'multi' ? 'Multi-Agent' : 'Single-Agent' }}
                                 </span>
                             @endif
+                            @if($msg->role === 'assistant')
+                                <button @click="window.playTTS({{ $msg->id }})" class="ml-auto text-gray-400 hover:text-indigo-400 transition" title="Read aloud">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path>
+                                    </svg>
+                                </button>
+                            @endif
                         </div>
-                        <div class="whitespace-pre-wrap">{{ $msg->content }}</div>
+                        @if($msg->role === 'assistant')
+                            <div class="prose-chat" x-html="renderMd({{ Js::from($msg->content) }})"></div>
+                        @else
+                            <div class="whitespace-pre-wrap">{{ $msg->content }}</div>
+                        @endif
                     </div>
                 </div>
             @empty
@@ -419,6 +713,82 @@ new class extends Component {
 
         </div>
     </div>
+
+    <!-- Settings Panel -->
+    <div x-show="$wire.showSettings" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="translate-x-full" x-transition:enter-end="translate-x-0" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="translate-x-0" x-transition:leave-end="translate-x-full" class="w-80 min-h-0 bg-gray-800 border-l border-gray-700 flex flex-col overflow-y-auto">
+        <div class="sticky top-0 z-10 p-4 border-b border-gray-700 bg-gray-800 flex justify-between items-center">
+            <h3 class="font-semibold text-gray-100">Chat Settings</h3>
+            <button wire:click="$toggle('showSettings')" class="text-gray-400 hover:text-gray-300 transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+
+        <div class="p-4 space-y-5">
+            <!-- Provider -->
+            <div>
+                <label class="block text-xs font-medium text-gray-400 uppercase mb-1.5">AI Provider</label>
+                <select wire:model.live="aiProvider" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                    @foreach($providers as $p)
+                        <option value="{{ $p['value'] }}">{{ $p['label'] }}</option>
+                    @endforeach
+                </select>
+            </div>
+
+            <!-- Model -->
+            <div>
+                <label class="block text-xs font-medium text-gray-400 uppercase mb-1.5">Model</label>
+                <select wire:model="aiModel" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                    @foreach($models as $m)
+                        <option value="{{ $m['value'] }}">{{ $m['label'] }}</option>
+                    @endforeach
+                </select>
+            </div>
+
+            <!-- Temperature -->
+            <div>
+                <label class="block text-xs font-medium text-gray-400 uppercase mb-1.5">Temperature: <span x-text="Number($wire.aiTemperature).toFixed(1)"></span></label>
+                <input type="range" wire:model.live="aiTemperature" min="0" max="2" step="0.1" class="w-full accent-indigo-600">
+                <div class="flex justify-between text-xs text-gray-500 mt-1">
+                    <span>Precise</span>
+                    <span>Creative</span>
+                </div>
+            </div>
+
+            <!-- Max Tokens -->
+            <div>
+                <label class="block text-xs font-medium text-gray-400 uppercase mb-1.5">Max Tokens</label>
+                <input type="number" wire:model="aiMaxTokens" min="256" max="128000" step="256" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+            </div>
+
+            <hr class="border-gray-700">
+
+            <!-- Streaming -->
+            <label class="flex items-center gap-2 text-sm cursor-pointer">
+                <input type="checkbox" wire:model="streaming" class="rounded bg-gray-700 border-gray-600 text-indigo-600 focus:ring-indigo-500">
+                <span>Enable streaming</span>
+            </label>
+
+            <!-- Multi-Agent -->
+            <label class="flex items-center gap-2 text-sm cursor-pointer">
+                <input type="checkbox" wire:model="useMultiAgent" class="rounded bg-gray-700 border-gray-600 text-indigo-600 focus:ring-indigo-500">
+                <span>Use multi-agent mode</span>
+            </label>
+            @if($useMultiAgent)
+                <p class="text-xs text-gray-500">Multi-agent mode sends non-streaming responses for this message.</p>
+            @endif
+
+            <hr class="border-gray-700">
+
+            <!-- Reset -->
+            <button wire:click="resetSettings" class="w-full px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm font-medium transition">
+                Reset to Defaults
+            </button>
+        </div>
+    </div>
+
+    </div><!-- end Chat Content + Settings Wrapper -->
 
     <!-- Keyboard Shortcuts Modal -->
     <div x-show="showShortcuts" x-cloak class="fixed inset-0 bg-black/50 flex items-center justify-center z-50" @click.self="showShortcuts = false" @keydown.escape.window="showShortcuts = false">

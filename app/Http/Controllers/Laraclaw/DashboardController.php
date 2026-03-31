@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Jobs\ExtractMemoriesJob;
 use App\Laraclaw\Agents\CoreAgent;
 use App\Laraclaw\Agents\IntentRouter;
+use App\Laraclaw\Facades\Laraclaw;
 use App\Laraclaw\Facades\Laraclaw as LaraclawFacade;
 use App\Laraclaw\Monitoring\MetricsCollector;
 use App\Laraclaw\Monitoring\TokenUsageTracker;
@@ -134,7 +135,7 @@ class DashboardController extends Controller
 
         // Get response from Laraclaw
         try {
-            $response = \App\Laraclaw\Facades\Laraclaw::chat($conversation, $request->message);
+            $response = Laraclaw::chat($conversation, $request->message);
 
             // Record metrics
             $this->metrics->increment('messages_received');
@@ -206,6 +207,10 @@ class DashboardController extends Controller
         $request->validate([
             'conversation_id' => 'required|exists:conversations,id',
             'message' => 'required|string|max:4000',
+            'provider' => 'nullable|string',
+            'model' => 'nullable|string',
+            'temperature' => 'nullable|numeric|min:0|max:2',
+            'max_tokens' => 'nullable|integer|min:256|max:128000',
         ]);
 
         $conversation = Conversation::findOrFail($request->conversation_id);
@@ -218,11 +223,25 @@ class DashboardController extends Controller
 
         $agent = $this->prepareStreamingAgent($conversation, $request->message);
 
+        // Apply per-request provider/model overrides from chat settings
+        $streamProvider = null;
+        $streamModel = null;
+
+        if ($request->filled('provider')) {
+            $agent->applyProviderOverride($request->string('provider'));
+            $streamProvider = $agent->provider();
+        }
+
+        if ($request->filled('model')) {
+            $agent->applyModelOverride($request->string('model'));
+            $streamModel = $agent->model();
+        }
+
         // Record metrics
         $this->metrics->increment('messages_received');
 
         // Return Vercel AI SDK compatible stream
-        return $agent->stream($request->message)
+        return $agent->stream($request->message, provider: $streamProvider, model: $streamModel)
             ->usingVercelDataProtocol()
             ->then(function ($response) use ($conversation, $request) {
                 // Store the complete response

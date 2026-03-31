@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\DiscordWebhookController;
 use App\Http\Controllers\Laraclaw\DashboardController;
+use App\Http\Controllers\Laraclaw\VoiceController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SlackWebhookController;
 use App\Http\Controllers\TelegramWebhookController;
@@ -24,6 +25,13 @@ Route::middleware('throttle:laraclaw-webhooks')->prefix('laraclaw/webhooks')->gr
 Route::post('laraclaw/chat/stream-vercel', [DashboardController::class, 'streamVercel'])
     ->middleware('throttle:laraclaw-api')
     ->name('laraclaw.chat.stream.vercel');
+
+// Voice endpoints
+Route::post('laraclaw/voice/transcribe', [VoiceController::class, 'transcribe'])
+    ->middleware('throttle:laraclaw-api')
+    ->name('laraclaw.voice.transcribe');
+Route::get('laraclaw/voice/speak/{message}', [VoiceController::class, 'speak'])
+    ->name('laraclaw.voice.speak');
 
 // Authenticated Routes
 Route::middleware('auth')->group(function () {
