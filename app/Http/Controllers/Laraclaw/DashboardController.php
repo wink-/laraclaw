@@ -237,19 +237,25 @@ class DashboardController extends Controller
             $streamModel = $agent->model();
         }
 
+        // Compute intent for metadata (lightweight pattern matching)
+        $intent = config('laraclaw.intent_routing.enabled', true)
+            ? app(IntentRouter::class)->route($request->message)
+            : ['intent' => 'general'];
+
         // Record metrics
         $this->metrics->increment('messages_received');
 
         // Return Vercel AI SDK compatible stream
         return $agent->stream($request->message, provider: $streamProvider, model: $streamModel)
             ->usingVercelDataProtocol()
-            ->then(function ($response) use ($conversation, $request) {
+            ->then(function ($response) use ($conversation, $request, $intent) {
                 // Store the complete response
                 $assistantMessage = $conversation->messages()->create([
                     'role' => 'assistant',
                     'content' => (string) $response,
                     'metadata' => [
                         'response_mode' => 'single',
+                        'intent' => $intent['intent'] ?? 'general',
                     ],
                 ]);
 
