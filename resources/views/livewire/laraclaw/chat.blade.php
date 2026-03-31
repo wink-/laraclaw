@@ -602,7 +602,7 @@ new class extends Component {
 
         <!-- Export & Options -->
         <div class="sticky bottom-0 z-10 p-4 border-t border-gray-700 bg-gray-800 space-y-2">
-            @if($conversation)
+            @if($conversationId)
             <div class="relative" x-data="{ open: false }">
                 <button @click="open = !open" class="w-full px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm font-medium transition flex items-center justify-between">
                     <span class="flex items-center gap-2">
@@ -763,7 +763,7 @@ new class extends Component {
             @forelse($this->conversationMessages->reverse()->values() as $msg)
                 <div class="flex {{ $msg->role === 'user' ? 'justify-end' : 'justify-start' }}">
                     <div class="max-w-[80%] {{ $msg->role === 'user' ? 'bg-indigo-600' : 'bg-gray-700' }} rounded-xl px-4 py-2">
-                        <div class="flex items-center gap-2 text-xs {{ $msg->role === 'user' ? 'text-indigo-200' : 'text-gray-400' }} mb-1">
+                        <div class="flex items-center gap-2 text-xs {{ $msg->role === 'user' ? 'text-indigo-200' : 'text-gray-400' }}">
                             <span class="uppercase">{{ $msg->role }}</span>
                             <span>{{ $msg->created_at->format('M j, H:i') }}</span>
                             @if($msg->role === 'assistant' && filled($msg->metadata['response_mode'] ?? null))
