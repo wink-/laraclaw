@@ -29,6 +29,10 @@ new class extends Component {
 
     public string $streamingContent = '';
 
+    public array $streamTools = [];
+
+    public string $streamIntent = '';
+
     public bool $streaming = true;
 
     public bool $useMultiAgent = false;
@@ -169,6 +173,14 @@ new class extends Component {
         $this->attachments = [];
         $this->isStreaming = true;
         $this->streamingContent = '';
+        $this->streamTools = [];
+        $this->streamIntent = '';
+
+        // Compute intent for display (lightweight pattern matching, no AI call)
+        if (config('laraclaw.intent_routing.enabled', true)) {
+            $intentResult = app(\App\Laraclaw\Agents\IntentRouter::class)->route($userMessage);
+            $this->streamIntent = ucfirst($intentResult['intent'] ?? 'general');
+        }
 
         if ($this->streaming && ! $this->useMultiAgent) {
             $this->dispatch('start-streaming', conversationId: $this->conversationId, message: $userMessage, attachments: $attachmentMeta);
@@ -207,6 +219,8 @@ new class extends Component {
     {
         $this->isStreaming = false;
         $this->streamingContent = '';
+        $this->streamTools = [];
+        $this->streamIntent = '';
     }
 
     public function handleStreamingError(string $error): void
@@ -220,12 +234,35 @@ new class extends Component {
 
         $this->isStreaming = false;
         $this->streamingContent = '';
+        $this->streamTools = [];
+        $this->streamIntent = '';
     }
 
     #[On('streaming-chunk')]
     public function handleStreamingChunk(string $chunk): void
     {
         $this->streamingContent .= $chunk;
+    }
+
+    public function formatToolName(string $name): string
+    {
+        return match ($name) {
+            'web_search' => 'Searching the web...',
+            'calculator' => 'Running calculation...',
+            'memory' => 'Accessing memory...',
+            'time' => 'Checking time...',
+            'calendar' => 'Checking calendar...',
+            'app_builder' => 'Building app module...',
+            'file_system' => 'Reading files...',
+            'shopping_list' => 'Managing shopping list...',
+            'email' => 'Handling email...',
+            'notification' => 'Sending notification...',
+            'http_request' => 'Making HTTP request...',
+            'web_fetch' => 'Fetching web content...',
+            'scheduler' => 'Scheduling task...',
+            'execute' => 'Executing command...',
+            default => Str::headline(str_replace(['_', 'Skill'], [' ', ''], $name)),
+        };
     }
 
     public function startNewConversation(): void
@@ -385,32 +422,56 @@ new class extends Component {
                     let buffer = '';
 
                     const processLine = (line) => {
-                        const normalizedLine = line.trim();
-                        if (normalizedLine === '') {
+                        const trimmed = line.trim();
+                        if (!trimmed || trimmed === 'data: [DONE]') return;
+
+                        const payload = trimmed.startsWith('data:')
+                            ? trimmed.substring(5).trimStart()
+                            : trimmed;
+
+                        if (payload === '[DONE]') return;
+
+                        // Fallback: old 0: prefix format for text deltas
+                        if (payload.startsWith('0:')) {
+                            try {
+                                const text = JSON.parse(payload.substring(2));
+                                if (typeof text === 'string') {
+                                    fullContent += text;
+                                    this.$wire.streamingContent = fullContent;
+                                }
+                            } catch (e) {}
                             return;
                         }
 
-                        const dataLine = normalizedLine.startsWith('data:')
-                            ? normalizedLine.substring(5).trimStart()
-                            : normalizedLine;
+                        // Parse JSON event (Vercel UI Message Stream Protocol)
+                        let event;
+                        try { event = JSON.parse(payload); } catch { return; }
+                        if (!event.type) return;
 
-                        if (!dataLine.startsWith('0:')) {
-                            return;
-                        }
-
-                        const payload = dataLine.substring(2);
-                        if (payload === '') {
-                            return;
-                        }
-
-                        try {
-                            const text = JSON.parse(payload);
-                            if (typeof text === 'string') {
-                                fullContent += text;
-                                this.$wire.streamingContent = fullContent;
+                        switch (event.type) {
+                            case 'text-delta':
+                                if (typeof event.delta === 'string') {
+                                    fullContent += event.delta;
+                                    this.$wire.streamingContent = fullContent;
+                                }
+                                break;
+                            case 'tool-input-available':
+                                this.$wire.streamTools = [...this.$wire.streamTools, {
+                                    id: event.toolCallId,
+                                    name: event.toolName || 'unknown',
+                                    status: 'running',
+                                }];
+                                break;
+                            case 'tool-output-available': {
+                                const tools = [...this.$wire.streamTools];
+                                const tool = tools.find(t => t.id === event.toolCallId);
+                                if (tool) { tool.status = 'completed'; }
+                                this.$wire.streamTools = tools;
+                                break;
                             }
-                        } catch (error) {
-                            console.error('Failed to parse streaming chunk:', error, dataLine);
+                            case 'error':
+                                console.error('Stream error:', event.errorText);
+                                break;
                         }
                     };
 
@@ -665,10 +726,36 @@ new class extends Component {
                     <div class="max-w-[80%] bg-gray-700 rounded-xl px-4 py-2">
                         <div class="flex items-center gap-2 text-xs text-gray-400 mb-1">
                             <span class="uppercase">assistant</span>
-                            <span class="animate-pulse">typing...</span>
+                            <span class="animate-pulse">{{ $streamingContent ? 'responding...' : 'thinking...' }}</span>
+                            @if($streamIntent)
+                                <span class="px-1.5 py-0.5 rounded bg-indigo-900/50 text-indigo-300 text-[10px] normal-case tracking-normal">
+                                    {{ $streamIntent }}
+                                </span>
+                            @endif
                         </div>
+                        @if(count($streamTools) > 0)
+                            <div class="mb-2 space-y-1">
+                                @foreach($streamTools as $tool)
+                                    <div class="flex items-center gap-2 text-xs py-1 px-2 rounded {{ $tool['status'] === 'running' ? 'bg-gray-600/50' : 'bg-gray-600/30' }}">
+                                        @if($tool['status'] === 'running')
+                                            <svg class="w-3 h-3 animate-spin text-indigo-400 shrink-0" viewBox="0 0 24 24">
+                                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle>
+                                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                                            </svg>
+                                        @else
+                                            <svg class="w-3 h-3 text-green-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                            </svg>
+                                        @endif
+                                        <span class="text-gray-300">{{ $this->formatToolName($tool['name']) }}</span>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @endif
                         <div class="prose-chat text-sm text-gray-200" x-html="renderMd($wire.streamingContent)"></div>
+                        @if(empty($streamingContent) && count($streamTools) === 0)
                             <span class="animate-pulse text-gray-400">|</span>
+                        @endif
                     </div>
                 </div>
             @endif
@@ -682,6 +769,16 @@ new class extends Component {
                             @if($msg->role === 'assistant' && filled($msg->metadata['response_mode'] ?? null))
                                 <span class="px-1.5 py-0.5 rounded bg-gray-600 text-[10px] text-gray-200 normal-case tracking-normal">
                                     {{ ($msg->metadata['response_mode'] ?? 'single') === 'multi' ? 'Multi-Agent' : 'Single-Agent' }}
+                                </span>
+                            @endif
+                            @if($msg->role === 'assistant' && filled($msg->metadata['intent'] ?? null))
+                                <span class="px-1.5 py-0.5 rounded bg-indigo-900/50 text-indigo-300 text-[10px] normal-case tracking-normal">
+                                    {{ ucfirst($msg->metadata['intent']) }}
+                                </span>
+                            @endif
+                            @if($msg->role === 'assistant' && filled($msg->metadata['usage'] ?? null))
+                                <span class="px-1.5 py-0.5 rounded bg-gray-600 text-[10px] text-gray-200 normal-case tracking-normal">
+                                    {{ number_format(($msg->metadata['usage']['prompt_tokens'] ?? 0) + ($msg->metadata['usage']['completion_tokens'] ?? 0)) }} tokens
                                 </span>
                             @endif
                             @if($msg->role === 'assistant')
