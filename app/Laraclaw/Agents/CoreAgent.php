@@ -94,6 +94,45 @@ class CoreAgent implements Agent, Conversational, HasTools
     }
 
     /**
+     * Apply a per-request provider override (e.g. from chat settings).
+     */
+    public function applyProviderOverride(string $provider): void
+    {
+        $labProvider = match ($provider) {
+            'openai' => Lab::OpenAI,
+            'anthropic' => Lab::Anthropic,
+            'gemini' => Lab::Gemini,
+            'ollama' => Lab::Ollama,
+            'groq' => Lab::Groq,
+            'mistral' => Lab::Mistral,
+            'deepseek' => Lab::DeepSeek,
+            'xai' => Lab::xAI,
+            'openrouter' => Lab::OpenRouter,
+            'zai' => Lab::OpenAI,
+            'zai-anthropic' => Lab::Anthropic,
+            default => Lab::OpenAI,
+        };
+
+        if (str_starts_with($provider, 'zai')) {
+            $zaiConfig = config('ai.providers.'.$provider);
+            if ($zaiConfig) {
+                $targetProvider = $provider === 'zai-anthropic' ? 'anthropic' : 'openai';
+                config(['ai.providers.'.$targetProvider => $zaiConfig]);
+            }
+        }
+
+        $this->provider = $labProvider;
+    }
+
+    /**
+     * Apply a per-request model override (e.g. from chat settings).
+     */
+    public function applyModelOverride(string $model): void
+    {
+        $this->model = $model;
+    }
+
+    /**
      * Get the configured provider. (Used by Promptable trait)
      */
     public function provider(): Lab

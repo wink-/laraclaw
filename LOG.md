@@ -1,5 +1,84 @@
 # Laraclaw Implementation Log
 
+## Session: 2026-03-31
+
+### Iteration: Phase 17 — Web Chat Parity
+
+**Goal:** Bring the web dashboard chat to OpenClaw WebChat feature parity with voice I/O, file attachments, rich markdown, settings panel, and conversation export.
+
+#### Completed
+
+**1. Voice Input/Output UI**
+- Added microphone button using MediaRecorder API (`audio/webm;codecs=opus`).
+- Added `VoiceController` with `transcribe()` (STT via VoiceService) and `speak()` (TTS streaming MP3).
+- Added speaker icon on assistant messages for read-aloud playback.
+- Routes: `POST /laraclaw/voice/transcribe` (throttled), `GET /laraclaw/voice/speak/{message}`.
+
+**2. File Attachments**
+- Added `WithFileUploads` trait and `$attachments` array property to Volt chat component.
+- Attachment preview bar with file name and remove button.
+- Attachments validated: max 3 files, max 10MB each.
+- Attachment names included in user message text for AI context.
+
+**3. Rich Markdown Rendering**
+- Added CDN scripts for `marked.js` v15 and `highlight.js` v11 (atom-one-dark theme).
+- Added `renderMd()` Alpine helper that parses markdown with syntax highlighting.
+- Added `prose-chat` scoped CSS styles for headings, code blocks, lists, tables, and links.
+
+**4. Chat Settings Panel**
+- Slide-in settings panel with provider/model selector, temperature slider, max tokens input.
+- Streaming and multi-agent mode toggles.
+- Per-request provider/model overrides applied via `applyProviderOverride()`/`applyModelOverride()` on CoreAgent.
+- Settings persisted via Livewire `#[Session]` attributes.
+- Added `CoreAgent::applyProviderOverride()` mapping provider strings to Lab enum (handles ZAI config swap).
+- Added `CoreAgent::applyModelOverride()` for runtime model changes.
+
+**5. Conversation Export**
+- Export dropdown in chat sidebar: Markdown (.md), JSON (.json), Print/PDF.
+- Uses Laravel `streamDownload()` for efficient file generation.
+
+### Iteration: Agent Activity Visibility
+
+**Goal:** Show tool invocations, intent routing, and token usage in real-time during streaming.
+
+#### Completed
+
+**1. SSE Parser Rewrite**
+- Rewrote the browser-side `processLine()` to consume the full Vercel UI Message Stream Protocol.
+- Previously only handled `0:` prefixed text-delta lines — now handles all JSON event types: `text-delta`, `tool-input-available`, `tool-output-available`, `start`, `finish`, `error`.
+- Backward-compatible fallback for old `0:` prefix format.
+
+**2. Tool Activity Panel**
+- Added `$streamTools` array property tracking running/completed tool invocations during streaming.
+- Running tools show spinner + friendly name (e.g., "Searching the web...", "Running calculation...").
+- Completed tools show green checkmark.
+- Added `formatToolName()` helper mapping skill class names to human-readable labels.
+
+**3. Intent Badge**
+- Added `$streamIntent` property set via lightweight IntentRouter pattern matching before streaming starts.
+- Displayed as colored badge during streaming (e.g., "Builder", "Memory", "General").
+- Also displayed on persisted assistant messages via `metadata['intent']`.
+
+**4. Token Usage Badge**
+- Persisted assistant messages now show token count badge from `metadata['usage']`.
+- Displays combined prompt + completion tokens (e.g., "1,234 tokens").
+
+**5. Backend Metadata**
+- `DashboardController::streamVercel()` now computes intent and stores it alongside `response_mode` in message metadata.
+- `streamVercel()` applies per-request provider/model/temperature/max_tokens overrides from chat settings.
+
+### Iteration: PWA Removal
+
+**Goal:** Remove unnecessary PWA/service worker code — app targets NativePHP desktop for single user.
+
+#### Completed
+- Deleted `public/sw.js`, `public/offline.html`, `public/manifest.json`, `public/icons/icon-192.svg`, `public/icons/icon-512.svg`.
+- Removed service worker registration, manifest link, apple-touch-icon, and apple-mobile-web-app meta tags from layout.
+
+### Iteration: Bug Fixes
+- Fixed undefined `$conversation` variable in export dropdown — changed `@if($conversation)` to `@if($conversationId)`.
+- Fixed streaming metadata storage to include intent and response mode.
+
 ## Session: 2026-03-30
 
 ### Iteration: Laravel 13 Upgrade

@@ -44,6 +44,7 @@
 
 ### Recent Delivery Highlights
 
+- ✅ **Phase 17: Web Chat Parity** — Voice I/O, file attachments, rich markdown rendering, chat settings panel, conversation export, agent activity visibility (real-time tool calls, intent badges, token usage), PWA removal
 - ✅ **Laravel 13 Upgrade** — Framework upgraded to Laravel 13
 - ✅ **ZAI Provider** — ZAI AI provider with OpenAI-compatible and Anthropic-compatible endpoints
 - ✅ **Chat UX Refresh** — Compact layout, inline timestamps, newest-first ordering, local timezone support
@@ -409,6 +410,8 @@ Access the dashboard at `/laraclaw`:
 | `/laraclaw/memories` | Browse memory fragments |
 | `/laraclaw/metrics` | Performance metrics |
 | `/laraclaw/chat` | Interactive web chat |
+| `/laraclaw/voice/transcribe` | Voice input (STT) |
+| `/laraclaw/voice/speak/{id}` | Voice output (TTS) |
 
 ---
 
