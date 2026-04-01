@@ -211,7 +211,9 @@ database/
 - [x] **Auth Bypass** — `AUTH_DISABLED=true` env var for passwordless local development.
 - [x] **Chat UX** — Compact layout, inline datetime, newest-first ordering, local timezone (America/New_York default).
 - [x] **ZAI Provider** — Added ZAI OpenAI-compatible and Anthropic-compatible API endpoints as provider options.
-- **Next Target:** Add REST API v1 with token auth for conversations/messages/memories and MCP-aligned retrieval endpoints.
+- [x] **Phase 17: Web Chat Parity** — Voice I/O, file attachments, rich markdown, settings panel, conversation export, agent activity visibility, PWA removal.
+- **Next Target:** Phase 18 — Expanded Gateway Support (Google Chat, Signal, Teams, IRC, Matrix).
+- Extend standalone project builder — chat → intent → specialist agent → project generation pipeline.
 - Stabilize and expand MVC module templates (additional app types beyond blog).
 - Harden module lifecycle operations (update/remove) with safety checks.
 - Keep generated apps operable through both chat tools and dashboard controls.
@@ -221,14 +223,16 @@ database/
 
 This roadmap tracks progress toward feature parity with OpenClaw (github.com/openclaw), adapted for the Laravel/Volt ecosystem. Each phase increases alignment with OpenClaw's core design while staying idiomatic to Laravel.
 
-### Phase 17: Web Chat Parity
+### Phase 17: Web Chat Parity ✅ COMPLETE
 Goal: Bring the web dashboard chat up to OpenClaw WebChat feature parity.
 
-- [ ] **Voice Input/Output UI** — Add microphone button for voice recording and audio playback in chat (leveraging existing VoiceService TTS/STT).
-- [ ] **File Attachments** — Allow attaching files (images, PDFs, documents) to chat messages for analysis.
-- [ ] **Rich Markdown Rendering** — Render markdown, code blocks with syntax highlighting, and tables in assistant responses.
-- [ ] **Chat Settings Panel** — In-chat UI for switching provider/model, adjusting temperature, and toggling streaming without page reload.
-- [ ] **Conversation Export** — Per-conversation export to Markdown, JSON, and PDF from chat sidebar.
+- [x] **Voice Input/Output UI** — Microphone button for voice recording, speaker icon for TTS playback, VoiceController with STT/TTS endpoints.
+- [x] **File Attachments** — Attach up to 3 files per message with preview bar and remove controls.
+- [x] **Rich Markdown Rendering** — marked.js + highlight.js with atom-one-dark theme for code blocks, tables, and formatting.
+- [x] **Chat Settings Panel** — Slide-in panel for provider/model switching, temperature slider, max tokens, streaming/multi-agent toggles with per-request overrides.
+- [x] **Conversation Export** — Markdown, JSON, and Print/PDF export from chat sidebar dropdown.
+- [x] **Agent Activity Visibility** — Real-time tool invocation panel (spinner/checkmark), intent badge, token usage badge. SSE parser rewritten for full Vercel AI SDK protocol.
+- [x] **PWA Removal** — Removed service worker, manifest, offline page (unnecessary for NativePHP desktop target).
 
 ### Phase 18: Expanded Gateway Support
 Goal: Match OpenClaw's broader platform reach.
