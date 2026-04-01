@@ -5,12 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="theme-color" content="#1a202c">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Laraclaw">
-    <meta name="mobile-web-app-capable" content="yes">
-    <link rel="manifest" href="/manifest.json">
-    <link rel="apple-touch-icon" href="/icons/icon-192.svg">
     <title>@yield('title', 'Laraclaw') - Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -131,19 +125,5 @@
     </div>
 
     @livewireScripts
-    @production
-    <script>
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/sw.js').catch(() => {});
-        }
-    </script>
-    @else
-    <script>
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.getRegistrations().then(rs => rs.forEach(r => r.unregister()));
-            caches.keys().then(ks => ks.forEach(k => caches.delete(k)));
-        }
-    </script>
-    @endproduction
 </body>
 </html>
