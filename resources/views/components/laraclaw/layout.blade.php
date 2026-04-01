@@ -131,10 +131,19 @@
     </div>
 
     @livewireScripts
+    @production
     <script>
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('/sw.js').catch(() => {});
         }
     </script>
+    @else
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(rs => rs.forEach(r => r.unregister()));
+            caches.keys().then(ks => ks.forEach(k => caches.delete(k)));
+        }
+    </script>
+    @endproduction
 </body>
 </html>
