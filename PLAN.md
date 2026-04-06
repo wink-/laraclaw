@@ -1,6 +1,6 @@
 # Laraclaw Development Plan
 
-_Last updated: 2026-03-30_
+_Last updated: 2026-04-06__
 
 ## 1. Project Overview
 **Laraclaw** is a Laravel-based implementation of OpenClaw, the open-source personal AI assistant platform. It aims to bring the powerful, local-first, and highly extensible AI assistant capabilities of OpenClaw to the Laravel ecosystem, leveraging Laravel's robust queue system, Eloquent ORM, and the new `laravel/ai` (Prism) integration.
@@ -218,6 +218,7 @@ database/
 - Harden module lifecycle operations (update/remove) with safety checks.
 - Keep generated apps operable through both chat tools and dashboard controls.
 - Keep all upcoming UI work aligned with Laravel Volt + Tailwind CSS 4 conventions.
+- Removed Tailwind CDN dependency — all CSS compiled via Vite + `@tailwindcss/vite` plugin.
 
 ## 6. OpenClaw Parity Roadmap
 

@@ -6,21 +6,6 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="theme-color" content="#1a202c">
     <title>@yield('title', 'Laraclaw') - Dashboard</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        gray: {
-                            750: '#2d3748',
-                            850: '#1a202c',
-                        }
-                    }
-                }
-            }
-        }
-    </script>
     @livewireStyles
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/atom-one-dark.min.css">
@@ -98,6 +83,23 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"></path>
                     </svg>
                     Memories
+                </a>
+
+                <div class="my-3 border-t border-gray-700"></div>
+                <p class="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Tools</p>
+
+                <a href="{{ route('laraclaw.documents.live') }}" class="{{ request()->routeIs('laraclaw.documents.live') ? 'bg-gray-700 text-white' : 'text-gray-400 hover:bg-gray-700/50 hover:text-white' }} flex items-center gap-3 px-3 py-2 rounded-lg transition">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    Documents
+                </a>
+
+                <a href="{{ route('laraclaw.app-builder.live') }}" class="{{ request()->routeIs('laraclaw.app-builder.live') ? 'bg-gray-700 text-white' : 'text-gray-400 hover:bg-gray-700/50 hover:text-white' }} flex items-center gap-3 px-3 py-2 rounded-lg transition">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 01-1-1V3a1 1 0 00-1 1H1m16 1a1 1 0 011 1v3m-3 3h6l4 4m0 0l-2 2 0 01-2 2v6a1 1 0 012-2 1h3a1 1 0 011-1 1h3"></path>
+                    </svg>
+                    App Builder
                 </a>
             </nav>
 

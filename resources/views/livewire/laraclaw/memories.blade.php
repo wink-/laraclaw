@@ -8,7 +8,8 @@ use Livewire\Attributes\Url;
 use Livewire\Volt\Component;
 use Livewire\WithPagination;
 
-new class extends Component {
+new class extends Component
+{
     use WithPagination;
 
     #[Url]
@@ -92,47 +93,63 @@ new class extends Component {
     </div>
 
     <!-- Memories Grid -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        @forelse($this->memories as $memory)
-            <div class="bg-gray-800 rounded-xl border border-gray-700 p-4 group">
-                <div class="flex justify-between items-start mb-2">
-                    <div class="flex items-center gap-2">
-                        @if($memory->key)
-                            <span class="px-2 py-1 text-xs rounded-full bg-indigo-600/20 text-indigo-400">
-                                {{ $memory->key }}
-                            </span>
-                        @endif
-                        @if($memory->category)
-                            <span class="px-2 py-1 text-xs rounded-full bg-gray-700 text-gray-300">
-                                {{ $memory->category }}
-                            </span>
-                        @endif
+    @if($this->memories->count() > 0)
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            @foreach($this->memories as $memory)
+                <div class="bg-gray-800 rounded-xl border border-gray-700 p-4 group" wire:key="memory-{{ $memory->id }}">
+                    <div class="flex justify-between items-start mb-2">
+                        <div class="flex items-center gap-2">
+                            @if($memory->key)
+                                <span class="px-2 py-1 text-xs rounded-full bg-indigo-600/20 text-indigo-400">
+                                    {{ $memory->key }}
+                                </span>
+                            @endif
+                            @if($memory->category)
+                                <span class="px-2 py-1 text-xs rounded-full bg-gray-700 text-gray-300">
+                                    {{ $memory->category }}
+                                </span>
+                            @endif
+                        </div>
+                        <button
+                            wire:click="delete({{ $memory->id }})"
+                            wire:confirm="Delete this memory?"
+                            class="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-400 transition"
+                        >
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </button>
                     </div>
-                    <button
-                        wire:click="delete({{ $memory->id }})"
-                        wire:confirm="Delete this memory?"
-                        class="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-400 transition"
-                    >
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                        </svg>
-                    </button>
+                    <p class="text-gray-300 text-sm line-clamp-3">{{ $memory->content }}</p>
+                    <div class="mt-3 text-xs text-gray-500">
+                        {{ $memory->created_at->diffForHumans() }}
+                    </div>
                 </div>
-                <p class="text-gray-300 text-sm line-clamp-3">{{ $memory->content }}</p>
-                <div class="mt-3 text-xs text-gray-500">
-                    {{ $memory->created_at->diffForHumans() }}
-                </div>
-            </div>
-        @empty
-            <div class="col-span-full text-center py-12 text-gray-500">
-                @if($search)
-                    No memories match your search.
-                @else
-                    No memories stored yet.
-                @endif
-            </div>
-        @endforelse
-    </div>
+            @endforeach
+        </div>
+    @else
+        <div class="text-center py-20">
+            @if($search || $category)
+                <svg class="w-16 h-16 mx-auto mb-4 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+                <h3 class="text-lg font-medium text-gray-400">No matches found</h3>
+                <p class="mt-2 text-gray-500">Try adjusting your search or category filter.</p>
+            @else
+                <svg class="w-20 h-20 mx-auto mb-4 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"></path>
+                </svg>
+                <h3 class="text-lg font-medium text-gray-400">No memories stored yet</h3>
+                <p class="mt-2 text-gray-500 max-w-md mx-auto">
+                    Memories are automatically stored when you ask the assistant to remember something.
+                    Try saying <span class="text-indigo-400">"Remember that my favorite color is blue"</span> in a chat.
+                </p>
+                <a href="{{ route('laraclaw.chat.live') }}" class="inline-block mt-4 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-lg text-sm font-medium transition">
+                    Start a Chat
+                </a>
+            @endif
+        </div>
+    @endif
 
     <!-- Pagination -->
     @if($this->memories->hasPages())

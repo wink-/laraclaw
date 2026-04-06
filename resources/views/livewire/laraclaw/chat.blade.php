@@ -1,5 +1,6 @@
 <?php
 
+use App\Laraclaw\Agents\IntentRouter;
 use App\Laraclaw\Facades\Laraclaw;
 use App\Models\Conversation;
 use Illuminate\Support\Collection;
@@ -13,16 +14,18 @@ use Livewire\Attributes\Session;
 use Livewire\Volt\Component;
 use Livewire\WithFileUploads;
 
-new class extends Component {
+new class extends Component
+{
     use WithFileUploads;
+
     #[Session]
     public ?int $conversationId = null;
 
     #[Rule('required_without:attachments|string|max:4000')]
     public string $message = '';
 
-    #[Rule('array|max:3')]
-    #[Rule('attachments.*|file|max:10240')]
+    #[Rule(['array', 'max:3'])]
+    #[Rule(['attachments.*' => ['file', 'max:10240']])]
     public array $attachments = [];
 
     public bool $isStreaming = false;
@@ -156,10 +159,18 @@ new class extends Component {
             $userMessage = trim("[Attached: {$attachmentNames}]\n\n{$userMessage}");
         }
 
-        if ($isFirstMessage) {
-            $conversation->update([
-                'title' => mb_substr($userMessage, 0, 50).(mb_strlen($userMessage) > 50 ? '...' : ''),
-            ]);
+        if ($isFirstMessage || $conversation->title === 'New Chat') {
+            $cleanMessage = preg_replace('/^\[Attached:[^\]]*\]\s*/', '', $userMessage);
+            $cleanMessage = trim($cleanMessage);
+            if ($cleanMessage !== '') {
+                $title = mb_substr($cleanMessage, 0, 60);
+                if (mb_strlen($cleanMessage) > 60) {
+                    $breakAt = mb_strrpos($title, ' ');
+                    $title = $breakAt > 20 ? mb_substr($title, 0, $breakAt) : $title;
+                    $title .= '...';
+                }
+                $conversation->update(['title' => $title]);
+            }
         }
 
         // Store attachment metadata
@@ -178,7 +189,7 @@ new class extends Component {
 
         // Compute intent for display (lightweight pattern matching, no AI call)
         if (config('laraclaw.intent_routing.enabled', true)) {
-            $intentResult = app(\App\Laraclaw\Agents\IntentRouter::class)->route($userMessage);
+            $intentResult = app(IntentRouter::class)->route($userMessage);
             $this->streamIntent = ucfirst($intentResult['intent'] ?? 'general');
         }
 
@@ -205,7 +216,7 @@ new class extends Component {
             Laraclaw::chat($conversation, $userMessage, $this->useMultiAgent);
 
             $this->isStreaming = false;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->conversation->messages()->create([
                 'role' => 'assistant',
                 'content' => 'Sorry, an error occurred: '.$e->getMessage(),

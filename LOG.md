@@ -1,5 +1,32 @@
 # Laraclaw Implementation Log
 
+## Session: 2026-04-06
+
+### Iteration: Remove Tailwind CDN — Local Asset Compilation
+
+**Goal:** Remove the Tailwind CDN runtime dependency and compile all CSS locally via the existing Vite pipeline.
+
+#### Completed
+
+**1. Vite Plugin Registration**
+- Added `@tailwindcss/vite` plugin to `vite.config.js` (was installed in `package.json` but never registered).
+- Plugin processes `@import "tailwindcss"` in `resources/css/app.css` at build time.
+
+**2. CDN Removal from Laraclaw Layout**
+- Removed `<script src="https://cdn.tailwindcss.com"></script>` and inline `tailwind.config` block from `resources/views/components/laraclaw/layout.blade.php`.
+- The layout already loaded `@vite(['resources/css/app.css', 'resources/js/app.js'])` which now provides all Tailwind utilities via the compiled build.
+- Verified custom colors (`gray-750`, `gray-850`) from the removed inline config were not used anywhere — no migration needed.
+
+**3. Asset Rebuild**
+- Ran `npm run build` — CSS output grew from ~23KB to ~69KB (expected, now includes all Tailwind utilities used across laraclaw Blade templates instead of runtime CDN compilation).
+
+#### Files Modified
+- `vite.config.js` — Added `@tailwindcss/vite` plugin import and registration.
+- `resources/views/components/laraclaw/layout.blade.php` — Removed CDN `<script>` and inline `tailwind.config`.
+
+#### Outcome
+- All Laraclaw pages now use compiled Tailwind CSS via Vite — no CDN dependency, faster page loads, consistent with the main app layouts.
+
 ## Session: 2026-03-31
 
 ### Iteration: Phase 17 — Web Chat Parity

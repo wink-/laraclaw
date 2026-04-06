@@ -8,7 +8,8 @@ use Livewire\Volt\Component;
 use Livewire\WithPagination;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
-new class extends Component {
+new class extends Component
+{
     use WithPagination;
 
     #[Url]
@@ -16,6 +17,15 @@ new class extends Component {
 
     #[Url]
     public string $gateway = '';
+
+    #[Url]
+    public bool $hideEmpty = false;
+
+    public array $selectedIds = [];
+
+    public bool $selectAll = false;
+
+    public ?string $bulkStatus = null;
 
     public function updatedSearch(): void
     {
@@ -27,6 +37,20 @@ new class extends Component {
         $this->resetPage();
     }
 
+    public function updatedHideEmpty(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedSelectAll(): void
+    {
+        if ($this->selectAll) {
+            $this->selectedIds = $this->conversations()->pluck('id')->map(fn ($id) => (string) $id)->all();
+        } else {
+            $this->selectedIds = [];
+        }
+    }
+
     #[Computed]
     public function conversations()
     {
@@ -34,13 +58,46 @@ new class extends Component {
             ->withCount('messages')
             ->when($this->search, fn ($q) => $q->where('title', 'like', "%{$this->search}%"))
             ->when($this->gateway, fn ($q) => $q->where('gateway', $this->gateway))
+            ->when($this->hideEmpty, fn ($q) => $q->whereHas('messages'))
             ->latest()
             ->paginate(15);
+    }
+
+    #[Computed]
+    public function emptyCount(): int
+    {
+        return Conversation::whereDoesntHave('messages')
+            ->where('created_at', '<', now()->subHour())
+            ->count();
     }
 
     public function delete(int $id): void
     {
         Conversation::destroy($id);
+    }
+
+    public function deleteSelected(): void
+    {
+        if (! empty($this->selectedIds)) {
+            $count = count($this->selectedIds);
+            Conversation::destroy($this->selectedIds);
+            $this->selectedIds = [];
+            $this->selectAll = false;
+            $this->bulkStatus = "Deleted {$count} conversations.";
+        }
+    }
+
+    public function pruneEmpty(): void
+    {
+        $count = Conversation::whereDoesntHave('messages')
+            ->where('created_at', '<', now()->subHour())
+            ->count();
+
+        Conversation::whereDoesntHave('messages')
+            ->where('created_at', '<', now()->subHour())
+            ->delete();
+
+        $this->bulkStatus = "Pruned {$count} empty conversations.";
     }
 
     public function exportMarkdown(int $id): StreamedResponse
@@ -100,18 +157,52 @@ new class extends Component {
 }; ?>
 
 <div class="space-y-6">
-    <!-- Header -->
     <div class="flex justify-between items-center">
         <div>
             <h1 class="text-2xl font-bold text-gray-100">Conversations</h1>
             <p class="text-gray-400">Browse and manage conversation history</p>
         </div>
-        <a href="{{ route('laraclaw.chat.live') }}" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-lg font-medium transition">
-            New Chat
-        </a>
+        <div class="flex items-center gap-3">
+            @if($this->emptyCount > 0)
+                <button
+                    wire:click="pruneEmpty"
+                    wire:confirm="Remove {{ $this->emptyCount }} empty conversations older than 1 hour?"
+                    class="px-3 py-2 text-sm bg-yellow-600/20 text-yellow-300 hover:bg-yellow-600/30 rounded-lg transition"
+                >
+                    Prune {{ $this->emptyCount }} empty
+                </button>
+            @endif
+            <a href="{{ route('laraclaw.chat.live') }}" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-lg font-medium transition">
+                New Chat
+            </a>
+        </div>
     </div>
 
-    <!-- Filters -->
+    @if($bulkStatus)
+        <div class="px-4 py-2 bg-green-600/20 text-green-300 rounded-lg text-sm">
+            {{ $bulkStatus }}
+        </div>
+    @endif
+
+    @if(count($selectedIds) > 0)
+        <div class="flex items-center gap-3 px-4 py-3 bg-indigo-600/20 rounded-lg">
+            <span class="text-sm text-indigo-300">{{ count($selectedIds) }} selected</span>
+            <button
+                wire:click="deleteSelected"
+                wire:confirm="Delete {{ count($selectedIds) }} selected conversations?"
+                class="px-3 py-1.5 text-sm bg-red-600/20 text-red-300 hover:bg-red-600/30 rounded-lg transition"
+            >
+                Delete Selected
+            </button>
+            <button
+                wire:click="$set('selectedIds', [])"
+                class="px-3 py-1.5 text-sm bg-gray-700 text-gray-300 hover:bg-gray-600 rounded-lg transition"
+            >
+                Clear Selection
+            </button>
+        </div>
+    @endif
+
     <div class="flex gap-4">
         <div class="flex-1">
             <input
@@ -131,13 +222,19 @@ new class extends Component {
             <option value="discord">Discord</option>
             <option value="cli">CLI</option>
         </select>
+        <label class="flex items-center gap-2 px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg cursor-pointer text-sm text-gray-400 hover:text-gray-200 transition">
+            <input type="checkbox" wire:model.live="hideEmpty" class="rounded bg-gray-700 border-gray-600 text-indigo-600 focus:ring-indigo-500">
+            Hide empty
+        </label>
     </div>
 
-    <!-- Conversations List -->
     <div class="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden">
         <table class="w-full">
             <thead class="bg-gray-700/50">
                 <tr>
+                    <th class="px-4 py-3 w-10">
+                        <input type="checkbox" wire:model.live="selectAll" class="rounded bg-gray-700 border-gray-600 text-indigo-600 focus:ring-indigo-500">
+                    </th>
                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Title</th>
                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Gateway</th>
                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Messages</th>
@@ -147,9 +244,19 @@ new class extends Component {
             </thead>
             <tbody class="divide-y divide-gray-700">
                 @forelse($this->conversations as $conversation)
-                    <tr class="hover:bg-gray-700/30 transition">
+                    <tr class="hover:bg-gray-700/30 transition {{ in_array((string) $conversation->id, $selectedIds) ? 'bg-indigo-600/10' : '' }}">
                         <td class="px-4 py-3">
-                            <span class="text-gray-200">{{ $conversation->title }}</span>
+                            <input
+                                type="checkbox"
+                                value="{{ $conversation->id }}"
+                                wire:model.live="selectedIds"
+                                class="rounded bg-gray-700 border-gray-600 text-indigo-600 focus:ring-indigo-500"
+                            >
+                        </td>
+                        <td class="px-4 py-3">
+                            <span class="text-gray-200 {{ $conversation->title === 'New Chat' && $conversation->messages_count === 0 ? 'italic text-gray-500' : '' }}">
+                                {{ $conversation->title }}
+                            </span>
                         </td>
                         <td class="px-4 py-3">
                             <span class="px-2 py-1 text-xs rounded-full bg-gray-700 text-gray-300 capitalize">
@@ -164,7 +271,6 @@ new class extends Component {
                         </td>
                         <td class="px-4 py-3 text-right">
                             <div class="flex justify-end gap-2">
-                                <!-- Export Dropdown -->
                                 <div class="relative" x-data="{ open: false }">
                                     <button @click="open = !open" class="text-gray-400 hover:text-indigo-400 transition">
                                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -180,7 +286,6 @@ new class extends Component {
                                         </button>
                                     </div>
                                 </div>
-                                <!-- Delete -->
                                 <button
                                     wire:click="delete({{ $conversation->id }})"
                                     wire:confirm="Are you sure you want to delete this conversation?"
@@ -195,11 +300,19 @@ new class extends Component {
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="5" class="px-4 py-8 text-center text-gray-500">
+                        <td colspan="6" class="px-4 py-16 text-center">
                             @if($search || $gateway)
-                                No conversations match your filters.
+                                <svg class="w-16 h-16 mx-auto mb-4 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                                </svg>
+                                <h3 class="text-lg font-medium text-gray-400">No matches found</h3>
+                                <p class="mt-2 text-gray-500">Try adjusting your search or filter criteria.</p>
                             @else
-                                No conversations yet. Start a <a href="{{ route('laraclaw.chat.live') }}" class="text-indigo-400 hover:underline">new chat</a>.
+                                <svg class="w-16 h-16 mx-auto mb-4 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                                </svg>
+                                <h3 class="text-lg font-medium text-gray-400">No conversations yet</h3>
+                                <p class="mt-2 text-gray-500">Start a <a href="{{ route('laraclaw.chat.live') }}" class="text-indigo-400 hover:underline">new chat</a> to begin.</p>
                             @endif
                         </td>
                     </tr>
@@ -207,7 +320,6 @@ new class extends Component {
             </tbody>
         </table>
 
-        <!-- Pagination -->
         @if($this->conversations->hasPages())
             <div class="px-4 py-3 border-t border-gray-700">
                 {{ $this->conversations->links() }}

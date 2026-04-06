@@ -15,7 +15,7 @@
     <a href="#configuration">Configuration</a>
 </p>
 
-<p align="center"><sub>Last updated: 2026-03-30</sub></p>
+<p align="center"><sub>Last updated: 2026-04-06</sub></p>
 
 ---
 
@@ -30,11 +30,12 @@
 - 📝 **Automatic Memory Extraction** — Reminder/preference/watch-intent messages can be auto-saved into memory fragments after replies
 - 🔧 **14 Built-in Skills** — Time, Calculator, Web Search, HTTP Request, Web Fetch, App Builder, Memory, Shopping List, File System, Execute, Email, Calendar, Scheduler, Notifications
 - 💬 **Multi-Platform Gateways** — CLI, Telegram, Discord, WhatsApp, and Slack support
-- 🌐 **Web Dashboard** — Monitor conversations, metrics, and chat directly from your browser
+- 🌐 **Web Dashboard** — Tabbed dashboard with real-time polling, skill marketplace with toggle switches, and dedicated tool pages
 - 🎨 **Modern UI Stack** — Laravel Volt single-file components with Tailwind CSS 4 conventions for dashboard and chat UI
 - 🤝 **Multi-Agent Mode** — Per-message planner/executor/reviewer orchestration for complex tasks
-- 🧩 **Skill Marketplace** — Enable/disable registered skills from the dashboard
-- 📄 **Document Ingestion** — Upload and index documents into vector storage for retrieval
+- 🧩 **Skill Marketplace** — Enable/disable registered skills from the dashboard with toggle switches
+- 📄 **Document Ingestion** — Dedicated Documents page for uploading and indexing documents into vector storage
+- 🏗️ **App Builder** — Dedicated App Builder page for creating and managing Laravel MVC modules
 - 🔐 **Security First** — User allowlists, autonomy levels, filesystem scoping, webhook verification
 - 🤖 **Multi-Provider AI** — OpenAI, Anthropic, Gemini, Ollama, Groq, Mistral, DeepSeek, xAI, OpenRouter, ZAI
 - 📋 **AIEOS Support** — AI Entity Object Specification v1.1 for portable AI identities
@@ -44,17 +45,16 @@
 
 ### Recent Delivery Highlights
 
+- ✅ **Dashboard UX Overhaul** — Tabbed dashboard (Overview/Analytics/Infrastructure/Management), real-time polling via wire:poll, skill marketplace with toggle switches, extracted Documents & App Builder into dedicated pages
+- ✅ **Conversations Management** — Bulk selection/deletion, prune empty conversations, hide-empty toggle, smart auto-titling (strips attachment prefixes, 60-char word-boundary truncation)
+- ✅ **Improved Empty States** — Contextual guidance text, icons, and CTA links on Conversations, Memories, Documents, and App Builder pages
 - ✅ **Phase 17: Web Chat Parity** — Voice I/O, file attachments, rich markdown rendering, chat settings panel, conversation export, agent activity visibility (real-time tool calls, intent badges, token usage), PWA removal
 - ✅ **Laravel 13 Upgrade** — Framework upgraded to Laravel 13
-- ✅ **ZAI Provider** — ZAI AI provider with OpenAI-compatible and Anthropic-compatible endpoints
-- ✅ **Chat UX Refresh** — Compact layout, inline timestamps, newest-first ordering, local timezone support
-- ✅ **Auth Bypass** — `AUTH_DISABLED=true` env var for passwordless local development
-- ✅ **Phase 16 Open Brain** — Supabase-ready memory store with pgvector-aware semantic search and MCP-friendly retrieval endpoints
-- ✅ **Slack Integration** — Slack gateway plus unified API webhook and dedicated `/laraclaw/webhooks/slack` parity route
-- ✅ **Approval System MVP** — Supervised command execution now creates approval requests and supports explicit approve/reject workflows
-- ✅ **External Retrieval Tools** — Added `HttpRequestSkill` and `WebFetchSkill` with URL safety rails for public API/page retrieval
-- ✅ **HEARTBEAT Engine** — Natural-language periodic task execution for proactive assistant behavior
-- ✅ **Cost Analytics** — Token usage + provider cost tracking surfaced in dashboard analytics
+- ✅ **Dashboard UX Overhaul** — Tabbed dashboard (Overview/analytics/infrastructure/management) with wire:poll auto-refresh, real-time stats
+ skill marketplace with toggle switches, and dedicated Documents/app-builder pages
+- ✅ **Improved Empty states** — Better empty states with guidance text and CTAs on Conversations, memories, and chat pages
+- ✅ **Auto-Title improvement** — Smart title generation from user messages content, strips attachment prefix, word-boundary truncation, re-titles "New Chat" conversations
+- ✅ **Laravel 13 Upgrade** — Framework upgraded to Laravel 13
 
 ---
 
@@ -73,6 +73,7 @@
 
 ### Tailwind 4 Configuration (CSS-First)
 
+- Tailwind is compiled locally via Vite + `@tailwindcss/vite` plugin — no CDN runtime dependency.
 - Tailwind is configured in `resources/css/app.css` using `@import`, `@source`, `@theme`, and `@plugin` directives.
 - Add new template scan paths via `@source` entries in `app.css` (instead of a JS config file).
 - Keep shared design tokens (e.g. fonts) in the `@theme` block in `app.css`.
@@ -400,18 +401,28 @@ Voice notes are transcribed via STT and processed as normal chat messages.
 
 ## Dashboard
 
-Access the dashboard at `/laraclaw`:
+Access the live Volt dashboard at `/laraclaw/live`:
 
 | Route | Description |
 |-------|-------------|
-| `/laraclaw` | Main dashboard with stats and health |
-| `/laraclaw/conversations` | List all conversations |
-| `/laraclaw/conversations/{id}` | View single conversation |
-| `/laraclaw/memories` | Browse memory fragments |
-| `/laraclaw/metrics` | Performance metrics |
-| `/laraclaw/chat` | Interactive web chat |
+| `/laraclaw/live` | Tabbed dashboard with stats, health, analytics, infrastructure, and management panels |
+| `/laraclaw/live/chat` | Interactive web chat with streaming, voice I/O, file attachments, and settings |
+| `/laraclaw/live/conversations` | Browse/manage conversations with bulk actions, search, and export |
+| `/laraclaw/live/memories` | View stored memory fragments with category filtering |
+| `/laraclaw/live/documents` | Upload and index documents into vector storage |
+| `/laraclaw/live/app-builder` | Create and manage Laravel MVC app modules |
 | `/laraclaw/voice/transcribe` | Voice input (STT) |
 | `/laraclaw/voice/speak/{id}` | Voice output (TTS) |
+
+### Dashboard Features
+
+- **Tabbed Layout** — Overview, Analytics, Infrastructure, and Management tabs
+- **Real-Time Polling** — Dashboard stats auto-refresh every 30 seconds via `wire:poll`
+- **Skill Marketplace** — Toggle switches for enabling/disabling skills with descriptions
+- **Bulk Actions** — Select multiple conversations for batch deletion
+- **Empty Conversation Cleanup** — Prune conversations with zero messages older than 1 hour
+- **Auto-Titled Conversations** — Smart title generation from first user message (strips attachment prefixes, 60-char limit with word-boundary truncation)
+- **Improved Empty States** — Guidance text and CTAs on empty Conversations, Memories, and Chat pages
 
 ---
 
@@ -578,8 +589,22 @@ Create `storage/laraclaw/aieos.json`:
 php artisan test --compact
 
 # Run with filter
-php artisan test --filter=Laraclaw
+php artisan test --compact --filter=testName
+
+# Run specific file
+php artisan test --compact tests/Feature/VoltImprovementsTest.php
 ```
+
+### Test Coverage
+
+- **29 tests** for Volt dashboard improvements (tabs, bulk actions, pruning, empty states, auto-title, route accessibility)
+- **155+ tests** total across all features with Pest 4
+
+### Test Coverage
+
+- **Unit Tests** — Models, relationships, memory manager, skill execution
+- **Feature Tests** — Volt component rendering, dashboard tabs, conversation bulk actions, auto-title logic, route accessibility, skill marketplace toggles, scheduler controls
+- **Gateway Tests** — Webhook signature verification, message parsing, voice replies
 
 ---
 
@@ -625,16 +650,27 @@ app/Laraclaw/
 │   ├── EmailSkill.php
 │   ├── ExecuteSkill.php
 │   ├── FileSystemSkill.php
+│   ├── HttpRequestSkill.php
 │   ├── MemorySkill.php
+│   ├── NotificationSkill.php
 │   ├── SchedulerSkill.php
 │   ├── ShoppingListSkill.php
 │   ├── TimeSkill.php
+│   ├── WebFetchSkill.php
 │   └── WebSearchSkill.php
 └── Tunnels/
     ├── TunnelManager.php
     ├── NgrokService.php
     ├── CloudflareTunnelService.php
     └── TailscaleService.php
+
+resources/views/livewire/laraclaw/
+├── dashboard.blade.php        # Tabbed Volt dashboard
+├── chat.blade.php             # Streaming chat Volt component
+├── conversations.blade.php    # Bulk actions Volt component
+├── memories.blade.php         # Memory fragments Volt component
+├── documents.blade.php        # Document upload Volt component
+└── app-builder.blade.php      # Module builder Volt component
 
 app/Modules/
 └── {ModuleName}/
