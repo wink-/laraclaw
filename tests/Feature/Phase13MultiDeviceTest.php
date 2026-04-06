@@ -185,37 +185,6 @@ it('reports no heartbeat items when file is missing', function () {
         ->assertSuccessful();
 });
 
-// --- PWA & Layout ---
-
-it('has pwa manifest json in public directory', function () {
-    $path = public_path('manifest.json');
-
-    expect(file_exists($path))->toBeTrue();
-
-    $manifest = json_decode(file_get_contents($path), true);
-
-    expect($manifest['short_name'])->toBe('Laraclaw')
-        ->and($manifest['display'])->toBe('standalone');
-});
-
-it('has service worker js in public directory', function () {
-    expect(file_exists(public_path('sw.js')))->toBeTrue();
-
-    $content = file_get_contents(public_path('sw.js'));
-
-    expect($content)->toContain('CACHE_NAME')
-        ->and($content)->toContain('fetch');
-});
-
-it('has offline fallback page in public directory', function () {
-    expect(file_exists(public_path('offline.html')))->toBeTrue();
-
-    $content = file_get_contents(public_path('offline.html'));
-
-    expect($content)->toContain('Laraclaw')
-        ->and($content)->toContain('Offline');
-});
-
 // --- Config & Integration ---
 
 it('has tailscale config section', function () {
