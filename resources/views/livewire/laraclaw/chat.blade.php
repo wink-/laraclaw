@@ -68,63 +68,27 @@ new class extends Component
 
     public function getAvailableProviders(): array
     {
-        return [
-            ['value' => 'openai', 'label' => 'OpenAI'],
-            ['value' => 'anthropic', 'label' => 'Anthropic'],
-            ['value' => 'gemini', 'label' => 'Gemini'],
-            ['value' => 'ollama', 'label' => 'Ollama'],
-            ['value' => 'groq', 'label' => 'Groq'],
-            ['value' => 'mistral', 'label' => 'Mistral'],
-            ['value' => 'deepseek', 'label' => 'DeepSeek'],
-            ['value' => 'xai', 'label' => 'xAI'],
-            ['value' => 'openrouter', 'label' => 'OpenRouter'],
-            ['value' => 'zai', 'label' => 'ZAI (OpenAI)'],
-            ['value' => 'zai-anthropic', 'label' => 'ZAI (Anthropic)'],
-        ];
+        $catalog = app(\App\Laraclaw\AI\ModelCatalog::class);
+        $providers = $catalog->getProviders();
+
+        return collect($providers)->map(function (string $key) {
+            $special = ['xai' => 'xAI', 'zai' => 'ZAI', 'zai-anthropic' => 'ZAI (Anthropic)'];
+            $label = $special[$key] ?? str_replace('-', ' ', ucfirst($key));
+
+            return ['value' => $key, 'label' => $label];
+        })->values()->toArray();
     }
 
     public function getAvailableModels(): array
     {
-        return match ($this->aiProvider) {
-            'openai' => [
-                ['value' => 'gpt-4o-mini', 'label' => 'GPT-4o Mini'],
-                ['value' => 'gpt-4o', 'label' => 'GPT-4o'],
-                ['value' => 'o1-mini', 'label' => 'o1 Mini'],
-                ['value' => 'o3-mini', 'label' => 'o3 Mini'],
-            ],
-            'anthropic' => [
-                ['value' => 'claude-sonnet-4-20250514', 'label' => 'Claude Sonnet 4'],
-                ['value' => 'claude-3-5-haiku-20241022', 'label' => 'Claude 3.5 Haiku'],
-            ],
-            'gemini' => [
-                ['value' => 'gemini-2.0-flash', 'label' => 'Gemini 2.0 Flash'],
-                ['value' => 'gemini-1.5-pro', 'label' => 'Gemini 1.5 Pro'],
-            ],
-            'groq' => [
-                ['value' => 'llama-3.3-70b-versatile', 'label' => 'Llama 3.3 70B'],
-                ['value' => 'mixtral-8x7b-32768', 'label' => 'Mixtral 8x7B'],
-            ],
-            'mistral' => [
-                ['value' => 'mistral-large-latest', 'label' => 'Mistral Large'],
-                ['value' => 'mistral-small-latest', 'label' => 'Mistral Small'],
-            ],
-            'deepseek' => [
-                ['value' => 'deepseek-chat', 'label' => 'DeepSeek Chat'],
-                ['value' => 'deepseek-reasoner', 'label' => 'DeepSeek Reasoner'],
-            ],
-            'zai' => [
-                ['value' => 'glm-4-flash', 'label' => 'GLM-4 Flash'],
-                ['value' => 'glm-4-plus', 'label' => 'GLM-4 Plus'],
-                ['value' => 'glm-4-air', 'label' => 'GLM-4 Air'],
-            ],
-            'zai-anthropic' => [
-                ['value' => 'claude-sonnet-4-20250514', 'label' => 'Claude Sonnet 4'],
-                ['value' => 'claude-3-5-haiku-20241022', 'label' => 'Claude 3.5 Haiku'],
-            ],
-            default => [
-                ['value' => $this->aiModel, 'label' => $this->aiModel],
-            ],
-        };
+        $catalog = app(\App\Laraclaw\AI\ModelCatalog::class);
+        $options = $catalog->getOptionsForProvider($this->aiProvider);
+
+        if (empty($options)) {
+            return [['value' => $this->aiModel, 'label' => $this->aiModel]];
+        }
+
+        return collect($options)->map(fn ($label, $id) => ['value' => $id, 'label' => $label])->values()->toArray();
     }
 
     #[Computed]

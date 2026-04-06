@@ -2,6 +2,46 @@
 
 ## Session: 2026-04-06
 
+### Iteration: Model Catalog — Curated Multi-Provider Model List + Quick Test Command
+
+**Goal:** Replace single-model-per-provider `.env` switching with a curated model catalog baked into the codebase, and add a quick way to test any model from the CLI.
+
+#### Completed
+
+**1. Model Catalog Config**
+- Created `config/laraclaw-models.php` with 80+ curated models across 11 providers: openai, anthropic, gemini, groq, mistral, deepseek, xai, ollama, openrouter, zai, zai-anthropic.
+- Each model entry has `name` (human label) and `context` (token window).
+- OpenRouter section aggregates top models from OpenAI, Anthropic, Google, Meta, DeepSeek, Mistral, xAI, and Qwen through a single API key.
+
+**2. ModelCatalog Service**
+- Created `App\Laraclaw\AI\ModelCatalog` with methods: `all()`, `getModels()`, `getOptionsForProvider()`, `getProviders()`, `hasModel()`, `getModelInfo()`, `search()`.
+- Registered as singleton in `LaraclawServiceProvider`.
+
+**3. Test Model Command**
+- Created `laraclaw:test-model` artisan command with three modes:
+  - Interactive: `php artisan laraclaw:test-model` — pick provider then model via Laravel Prompts.
+  - Single: `php artisan laraclaw:test-model --provider=openai --model=gpt-4.1 --prompt="Explain recursion"`.
+  - All: `php artisan laraclaw:test-model --all` — tests every model, shows results table with pass/fail, response time, and truncated output.
+- Saves/restores CoreAgent singleton state around each test.
+
+**4. Chat Settings Integration**
+- Replaced hardcoded `getAvailableProviders()` and `getAvailableModels()` in chat Volt component with dynamic lookups from ModelCatalog.
+- Provider/model dropdowns now auto-update when models are added to the config.
+
+**5. Tests**
+- 10 new tests in `tests/Feature/ModelCatalogTest.php` covering all ModelCatalog methods.
+- Full suite: 207 tests passing.
+
+#### Files Created
+- `config/laraclaw-models.php` — Model catalog config.
+- `app/Laraclaw/AI/ModelCatalog.php` — Catalog service.
+- `app/Console/Commands/LaraclawTestModelCommand.php` — CLI test command.
+- `tests/Feature/ModelCatalogTest.php` — Test coverage.
+
+#### Files Modified
+- `app/Providers/LaraclawServiceProvider.php` — Registered ModelCatalog singleton.
+- `resources/views/livewire/laraclaw/chat.blade.php` — Dynamic provider/model dropdowns.
+
 ### Iteration: Skill Editor — Online Skill Marketplace Editing
 
 **Goal:** Add an interactive skill editor to the dashboard so users can click on any skill in the marketplace and edit its description, toggle enabled state, and reset to defaults — all without leaving the dashboard.
