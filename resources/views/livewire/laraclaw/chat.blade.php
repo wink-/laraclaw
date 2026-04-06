@@ -836,7 +836,14 @@ new class extends Component
         <div class="p-4 space-y-5">
             <!-- Provider -->
             <div>
-                <label class="block text-xs font-medium text-gray-400 uppercase mb-1.5">AI Provider</label>
+                <label class="block text-xs font-medium text-gray-400 uppercase mb-1.5">AI Provider
+                    <span class="relative inline-block" x-data="{ show: false }" @mouseenter="show = true" @mouseleave="show = false">
+                        <span class="text-gray-500 hover:text-gray-300 cursor-help text-[10px]">ⓘ</span>
+                        <div x-show="show" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" x-transition:leave="transition ease-in duration-100" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95" class="absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 w-56 p-2 text-xs text-gray-200 bg-gray-900 rounded-lg shadow-lg border border-gray-600 pointer-events-none">
+                            Select the AI service provider for generating responses. Each provider offers different models and pricing.
+                        </div>
+                    </span>
+                </label>
                 <select wire:model.live="aiProvider" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
                     @foreach($providers as $p)
                         <option value="{{ $p['value'] }}">{{ $p['label'] }}</option>
@@ -846,7 +853,14 @@ new class extends Component
 
             <!-- Model -->
             <div>
-                <label class="block text-xs font-medium text-gray-400 uppercase mb-1.5">Model</label>
+                <label class="block text-xs font-medium text-gray-400 uppercase mb-1.5">Model
+                    <span class="relative inline-block" x-data="{ show: false }" @mouseenter="show = true" @mouseleave="show = false">
+                        <span class="text-gray-500 hover:text-gray-300 cursor-help text-[10px]">ⓘ</span>
+                        <div x-show="show" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" x-transition:leave="transition ease-in duration-100" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95" class="absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 w-56 p-2 text-xs text-gray-200 bg-gray-900 rounded-lg shadow-lg border border-gray-600 pointer-events-none">
+                            Choose the specific model variant. Models vary in capability, speed, and token limits.
+                        </div>
+                    </span>
+                </label>
                 <select wire:model="aiModel" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
                     @foreach($models as $m)
                         <option value="{{ $m['value'] }}">{{ $m['label'] }}</option>
@@ -856,7 +870,14 @@ new class extends Component
 
             <!-- Temperature -->
             <div>
-                <label class="block text-xs font-medium text-gray-400 uppercase mb-1.5">Temperature: <span x-text="Number($wire.aiTemperature).toFixed(1)"></span></label>
+                <label class="block text-xs font-medium text-gray-400 uppercase mb-1.5">Temperature: <span x-text="Number($wire.aiTemperature).toFixed(1)"></span>
+                    <span class="relative inline-block" x-data="{ show: false }" @mouseenter="show = true" @mouseleave="show = false">
+                        <span class="text-gray-500 hover:text-gray-300 cursor-help text-[10px]">ⓘ</span>
+                        <div x-show="show" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" x-transition:leave="transition ease-in duration-100" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95" class="absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 w-56 p-2 text-xs text-gray-200 bg-gray-900 rounded-lg shadow-lg border border-gray-600 pointer-events-none">
+                            Controls response randomness. Lower values produce focused, deterministic outputs. Higher values increase creativity and variation.
+                        </div>
+                    </span>
+                </label>
                 <input type="range" wire:model.live="aiTemperature" min="0" max="2" step="0.1" class="w-full accent-indigo-600">
                 <div class="flex justify-between text-xs text-gray-500 mt-1">
                     <span>Precise</span>
@@ -866,7 +887,14 @@ new class extends Component
 
             <!-- Max Tokens -->
             <div>
-                <label class="block text-xs font-medium text-gray-400 uppercase mb-1.5">Max Tokens</label>
+                <label class="block text-xs font-medium text-gray-400 uppercase mb-1.5">Max Tokens
+                    <span class="relative inline-block" x-data="{ show: false }" @mouseenter="show = true" @mouseleave="show = false">
+                        <span class="text-gray-500 hover:text-gray-300 cursor-help text-[10px]">ⓘ</span>
+                        <div x-show="show" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" x-transition:leave="transition ease-in duration-100" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95" class="absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 w-56 p-2 text-xs text-gray-200 bg-gray-900 rounded-lg shadow-lg border border-gray-600 pointer-events-none">
+                            Maximum number of tokens in the AI's response. Higher values allow longer, more detailed replies but may increase cost.
+                        </div>
+                    </span>
+                </label>
                 <input type="number" wire:model="aiMaxTokens" min="256" max="128000" step="256" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
             </div>
 
@@ -876,12 +904,24 @@ new class extends Component
             <label class="flex items-center gap-2 text-sm cursor-pointer">
                 <input type="checkbox" wire:model="streaming" class="rounded bg-gray-700 border-gray-600 text-indigo-600 focus:ring-indigo-500">
                 <span>Enable streaming</span>
+                <span class="relative inline-block ml-auto" x-data="{ show: false }" @mouseenter="show = true" @mouseleave="show = false">
+                    <span class="text-gray-500 hover:text-gray-300 cursor-help text-[10px]">ⓘ</span>
+                    <div x-show="show" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" x-transition:leave="transition ease-in duration-100" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95" class="absolute z-50 bottom-full right-0 mb-2 w-56 p-2 text-xs text-gray-200 bg-gray-900 rounded-lg shadow-lg border border-gray-600 pointer-events-none">
+                        Display the AI's response in real-time as it's generated, instead of waiting for the full response.
+                    </div>
+                </span>
             </label>
 
             <!-- Multi-Agent -->
             <label class="flex items-center gap-2 text-sm cursor-pointer">
                 <input type="checkbox" wire:model="useMultiAgent" class="rounded bg-gray-700 border-gray-600 text-indigo-600 focus:ring-indigo-500">
                 <span>Use multi-agent mode</span>
+                <span class="relative inline-block ml-auto" x-data="{ show: false }" @mouseenter="show = true" @mouseleave="show = false">
+                    <span class="text-gray-500 hover:text-gray-300 cursor-help text-[10px]">ⓘ</span>
+                    <div x-show="show" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" x-transition:leave="transition ease-in duration-100" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95" class="absolute z-50 bottom-full right-0 mb-2 w-56 p-2 text-xs text-gray-200 bg-gray-900 rounded-lg shadow-lg border border-gray-600 pointer-events-none">
+                        Route the message through multiple specialized AI agents. Responses are returned as a single non-streaming result.
+                    </div>
+                </span>
             </label>
             @if($useMultiAgent)
                 <p class="text-xs text-gray-500">Multi-agent mode sends non-streaming responses for this message.</p>
