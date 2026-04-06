@@ -3,6 +3,7 @@
 namespace App\Laraclaw\Skills;
 
 use App\Models\SkillPlugin;
+use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Illuminate\Support\Facades\Schema;
 
 class PluginManager
@@ -121,6 +122,80 @@ class PluginManager
         SkillPlugin::query()
             ->where('class_name', $className)
             ->update(['enabled' => $enabled]);
+    }
+
+    /**
+     * @param  array<string, mixed>|null  $metadata
+     */
+    public function updateSkill(string $className, ?string $description = null, ?array $metadata = null): void
+    {
+        if (! Schema::hasTable('skill_plugins')) {
+            return;
+        }
+
+        $updates = array_filter([
+            'description' => $description,
+            'metadata' => $metadata,
+        ], fn (mixed $value): bool => $value !== null);
+
+        if (empty($updates)) {
+            return;
+        }
+
+        SkillPlugin::query()
+            ->where('class_name', $className)
+            ->update($updates);
+    }
+
+    public function resetSkill(string $className): void
+    {
+        if (! Schema::hasTable('skill_plugins')) {
+            return;
+        }
+
+        SkillPlugin::query()
+            ->where('class_name', $className)
+            ->update(['description' => null, 'metadata' => null]);
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    public function getSkillDetail(string $className): ?array
+    {
+        if (! Schema::hasTable('skill_plugins')) {
+            return null;
+        }
+
+        $plugin = SkillPlugin::query()
+            ->where('class_name', $className)
+            ->first();
+
+        if (! $plugin) {
+            return null;
+        }
+
+        $skillInstance = app($className);
+        $skillDescription = $skillInstance->description();
+
+        $schemaFields = [];
+        try {
+            $schema = app(JsonSchema::class);
+            $schemaFields = $skillInstance->schema($schema);
+        } catch (\Throwable) {
+            // Schema extraction may fail for some skills
+        }
+
+        return [
+            'name' => $plugin->name,
+            'class_name' => $plugin->class_name,
+            'description' => $plugin->description,
+            'default_description' => (string) $skillDescription,
+            'enabled' => (bool) $plugin->enabled,
+            'is_required' => in_array($className, $this->requiredSkillClasses(), true),
+            'metadata' => $plugin->metadata,
+            'schema_fields' => $schemaFields,
+        ];
     }
 
     /**

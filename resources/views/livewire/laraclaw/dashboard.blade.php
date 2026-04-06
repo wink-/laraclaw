@@ -10,7 +10,9 @@ use App\Models\HeartbeatRun;
 use App\Models\LaraclawNotification;
 use App\Models\MemoryFragment;
 use App\Models\Message;
+use App\Models\SkillPlugin;
 use App\Models\TokenUsage;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -29,49 +31,53 @@ new class extends Component
 
     public ?string $schedulerStatus = null;
 
-    /**
-     * @var array<string, mixed>
-     */
+    public bool $showSkillEditor = false;
+
+    public ?string $editingSkillClass = null;
+
+    public ?string $editingSkillName = null;
+
+    public ?string $editingSkillDescription = null;
+
+    public ?string $editingDefaultDescription = null;
+
+    public bool $editingSkillEnabled = false;
+
+    public bool $editingSkillRequired = false;
+
+    /** @var array<string, mixed> */
+    public array $editingSkillMetadata = [];
+
+    /** @var array<string, mixed> */
+    public array $editingSchemaFields = [];
+
+    public ?string $skillEditorStatus = null;
+
+    /** @var array<string, mixed> */
     public array $opsSignals = [];
 
-    /**
-     * @var array<string, mixed>
-     */
+    /** @var array<string, mixed> */
     public array $tokenUsageAnalytics = [];
 
-    /**
-     * @var array<int, array<string, mixed>>
-     */
+    /** @var array<int, array<string, mixed>> */
     public array $skills = [];
 
-    /**
-     * @var array<int, array<string, mixed>>
-     */
+    /** @var array<int, array<string, mixed>> */
     public array $scheduledTasks = [];
 
-    /**
-     * @var array<string, mixed>
-     */
+    /** @var array<string, mixed> */
     public array $tailscaleStatus = [];
 
-    /**
-     * @var array<int, array<string, mixed>>
-     */
+    /** @var array<int, array<string, mixed>> */
     public array $heartbeatItems = [];
 
-    /**
-     * @var array<int, array<string, mixed>>
-     */
+    /** @var array<int, array<string, mixed>> */
     public array $recentHeartbeatRuns = [];
 
-    /**
-     * @var array<int, array<string, mixed>>
-     */
+    /** @var array<int, array<string, mixed>> */
     public array $shoppingListItems = [];
 
-    /**
-     * @var array<string, int>
-     */
+    /** @var array<string, int> */
     public array $memoryCategoryCounts = [];
 
     public function mount(): void
@@ -130,7 +136,7 @@ new class extends Component
         ];
     }
 
-    public function recentConversations()
+    public function recentConversations(): EloquentCollection
     {
         return Conversation::withCount('messages')
             ->latest()
@@ -152,6 +158,99 @@ new class extends Component
         $this->marketplaceStatus = $enabled
             ? 'Skill enabled successfully.'
             : 'Skill disabled successfully.';
+    }
+
+    public function selectSkill(string $className): void
+    {
+        $detail = Laraclaw::getSkillDetail($className);
+
+        if (! $detail) {
+            $this->marketplaceStatus = 'Skill not found.';
+
+            return;
+        }
+
+        $this->editingSkillClass = $detail['class_name'];
+        $this->editingSkillName = $detail['name'];
+        $this->editingSkillDescription = $detail['description'] ?? '';
+        $this->editingDefaultDescription = $detail['default_description'] ?? '';
+        $this->editingSkillEnabled = $detail['enabled'];
+        $this->editingSkillRequired = $detail['is_required'];
+        $this->editingSkillMetadata = $detail['metadata'] ?? [];
+        $this->editingSchemaFields = $detail['schema_fields'] ?? [];
+        $this->skillEditorStatus = null;
+        $this->showSkillEditor = true;
+    }
+
+    public function closeSkillEditor(): void
+    {
+        $this->showSkillEditor = false;
+        $this->resetEditingSkillState();
+    }
+
+    protected function resetEditingSkillState(): void
+    {
+        $this->editingSkillClass = null;
+        $this->editingSkillName = null;
+        $this->editingSkillDescription = null;
+        $this->editingDefaultDescription = null;
+        $this->editingSkillEnabled = false;
+        $this->editingSkillRequired = false;
+        $this->editingSkillMetadata = [];
+        $this->editingSchemaFields = [];
+        $this->skillEditorStatus = null;
+    }
+
+    public function saveSkillDescription(): void
+    {
+        if (! $this->editingSkillClass) {
+            return;
+        }
+
+        $this->validate([
+            'editingSkillDescription' => 'nullable|string|max:500',
+        ]);
+
+        $description = $this->editingSkillDescription ?: null;
+
+        SkillPlugin::query()
+            ->where('class_name', $this->editingSkillClass)
+            ->update(['description' => $description]);
+
+        $this->loadSkills();
+        $this->skillEditorStatus = 'Description saved successfully.';
+    }
+
+    public function resetSkillToDefault(): void
+    {
+        if (! $this->editingSkillClass) {
+            return;
+        }
+
+        Laraclaw::resetSkill($this->editingSkillClass);
+
+        $this->editingSkillDescription = null;
+        $this->editingSkillMetadata = [];
+        $this->loadSkills();
+        $this->skillEditorStatus = 'Skill reset to defaults.';
+    }
+
+    public function toggleEditingSkillEnabled(): void
+    {
+        if (! $this->editingSkillClass) {
+            return;
+        }
+
+        $newState = ! $this->editingSkillEnabled;
+
+        try {
+            Laraclaw::setSkillEnabled($this->editingSkillClass, $newState);
+            $this->editingSkillEnabled = $newState;
+            $this->loadSkills();
+            $this->skillEditorStatus = $newState ? 'Skill enabled.' : 'Skill disabled.';
+        } catch (RuntimeException $e) {
+            $this->skillEditorStatus = $e->getMessage();
+        }
     }
 
     protected function loadSkills(): void
@@ -249,6 +348,16 @@ new class extends Component
             'recentHeartbeatRuns' => $this->recentHeartbeatRuns,
             'shoppingListItems' => $this->shoppingListItems,
             'memoryCategoryCounts' => $this->memoryCategoryCounts,
+            'showSkillEditor' => $this->showSkillEditor,
+            'editingSkillClass' => $this->editingSkillClass,
+            'editingSkillName' => $this->editingSkillName,
+            'editingSkillDescription' => $this->editingSkillDescription,
+            'editingDefaultDescription' => $this->editingDefaultDescription,
+            'editingSkillEnabled' => $this->editingSkillEnabled,
+            'editingSkillRequired' => $this->editingSkillRequired,
+            'editingSkillMetadata' => $this->editingSkillMetadata,
+            'editingSchemaFields' => $this->editingSchemaFields,
+            'skillEditorStatus' => $this->skillEditorStatus,
         ];
     }
 
@@ -909,7 +1018,7 @@ new class extends Component
     @endif
 
     @if($activeTab === 'management')
-        <div class="space-y-6">
+        <div class="space-y-6" x-data="{ editorOpen: false }">
             <div class="bg-gray-800 rounded-xl border border-gray-700 p-6">
                 <h2 class="text-lg font-semibold text-gray-100 mb-4">Skill Marketplace</h2>
 
@@ -925,33 +1034,31 @@ new class extends Component
                         <p class="text-sm">No skills registered yet.</p>
                     </div>
                 @else
-                    <div class="space-y-3">
+                    <div class="space-y-2">
                         @foreach($skills as $skill)
-                            <div class="flex items-center justify-between gap-4 py-3 px-4 rounded-lg bg-gray-700/40">
+                            <div
+                                class="flex items-center justify-between gap-4 py-3 px-4 rounded-lg bg-gray-700/40 cursor-pointer hover:bg-gray-700/70 transition-colors duration-150 group"
+                                wire:click="selectSkill(@js($skill['class_name']))"
+                                x-on:click="editorOpen = true"
+                            >
                                 <div class="min-w-0 flex-1">
-                                    <p class="text-gray-200 text-sm font-medium">{{ $skill['name'] }}</p>
+                                    <div class="flex items-center gap-2">
+                                        <p class="text-gray-200 text-sm font-medium">{{ $skill['name'] }}</p>
+                                        @if(($skill['is_required'] ?? false) && $skill['enabled'])
+                                            <span class="px-2 py-0.5 text-xs rounded bg-gray-600 text-gray-300">Required</span>
+                                        @elseif(!$skill['enabled'])
+                                            <span class="px-2 py-0.5 text-xs rounded bg-gray-700 text-gray-500">Disabled</span>
+                                        @else
+                                            <span class="px-2 py-0.5 text-xs rounded bg-indigo-600/20 text-indigo-400">Active</span>
+                                        @endif
+                                    </div>
                                     @if($skill['description'])
                                         <p class="text-xs text-gray-400 mt-0.5 truncate">{{ $skill['description'] }}</p>
                                     @endif
                                 </div>
-                                @if(($skill['is_required'] ?? false) && $skill['enabled'])
-                                    <span class="px-3 py-1.5 text-xs rounded-lg bg-gray-700 text-gray-300 whitespace-nowrap">
-                                        Required
-                                    </span>
-                                @else
-                                    <button
-                                        type="button"
-                                        role="switch"
-                                        aria-checked="{{ $skill['enabled'] ? 'true' : 'false' }}"
-                                        wire:click='setSkillEnabled(@js($skill["class_name"]), {{ $skill["enabled"] ? "false" : "true" }})'
-                                        class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-800 {{ $skill['enabled'] ? 'bg-indigo-600' : 'bg-gray-600' }}"
-                                    >
-                                        <span
-                                            aria-hidden="true"
-                                            class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out {{ $skill['enabled'] ? 'translate-x-5' : 'translate-x-0' }}"
-                                        ></span>
-                                    </button>
-                                @endif
+                                <svg class="w-4 h-4 text-gray-500 group-hover:text-gray-300 transition-colors shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                </svg>
                             </div>
                         @endforeach
                     </div>
@@ -1008,4 +1115,142 @@ new class extends Component
             </div>
         </div>
     @endif
+
+    <div
+        x-show="$wire.showSkillEditor"
+        x-transition:enter="transition ease-out duration-200"
+        x-transition:enter-start="translate-x-full opacity-0"
+        x-transition:enter-end="translate-x-0 opacity-100"
+        x-transition:leave="transition ease-in duration-150"
+        x-transition:leave-start="translate-x-0 opacity-100"
+        x-transition:leave-end="translate-x-full opacity-0"
+        x-cloak
+        class="fixed top-0 right-0 h-full w-96 bg-gray-800 border-l border-gray-700 shadow-2xl z-50 flex flex-col"
+    >
+        <div class="flex items-center justify-between px-5 py-4 border-b border-gray-700">
+            <h3 class="text-base font-semibold text-gray-100 truncate">{{ $editingSkillName }}</h3>
+            <button
+                wire:click="closeSkillEditor"
+                class="p-1.5 rounded-lg hover:bg-gray-700 text-gray-400 hover:text-gray-200 transition-colors"
+            >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+
+        @if($skillEditorStatus)
+            @php
+                $editorStatusColors = match (true) {
+                    str_contains($skillEditorStatus, 'success'),
+                    str_contains($skillEditorStatus, 'saved'),
+                    str_contains($skillEditorStatus, 'enabled') => 'bg-green-600/20 text-green-300',
+                    str_contains($skillEditorStatus, 'error'),
+                    str_contains($skillEditorStatus, 'cannot') => 'bg-red-600/20 text-red-300',
+                    default => 'bg-indigo-600/20 text-indigo-300',
+                };
+            @endphp
+            <div class="mx-5 mt-4 px-3 py-2 rounded-lg text-sm {{ $editorStatusColors }}">
+                {{ $skillEditorStatus }}
+            </div>
+        @endif
+
+        <div class="flex-1 overflow-y-auto px-5 py-4 space-y-5">
+            <div>
+                <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">Class</label>
+                <p class="text-xs text-gray-400 mt-1 font-mono break-all">{{ $editingSkillClass }}</p>
+            </div>
+
+            @if($editingDefaultDescription)
+                <div>
+                    <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">Default Description</label>
+                    <p class="text-sm text-gray-400 mt-1 bg-gray-700/30 px-3 py-2 rounded-lg">{{ $editingDefaultDescription }}</p>
+                </div>
+            @endif
+
+            <div>
+                <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">Custom Description</label>
+                <p class="text-xs text-gray-500 mt-0.5 mb-1.5">Overrides the default when set. Leave blank to use the default.</p>
+                <textarea
+                    wire:model="editingSkillDescription"
+                    rows="3"
+                    placeholder="Enter a custom description..."
+                    class="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-sm text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"
+                ></textarea>
+                @error('editingSkillDescription')
+                    <p class="text-xs text-red-400 mt-1">{{ $message }}</p>
+                @enderror
+                <button
+                    wire:click="saveSkillDescription"
+                    wire:loading.attr="disabled"
+                    class="mt-2 w-full px-3 py-2 text-sm font-medium rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white transition-colors disabled:opacity-50"
+                >
+                    <span wire:loading.remove wire:target="saveSkillDescription">Save Description</span>
+                    <span wire:loading wire:target="saveSkillDescription">Saving...</span>
+                </button>
+            </div>
+
+            @if(!empty($editingSchemaFields))
+                <div>
+                    <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">Parameters</label>
+                    <div class="mt-1.5 space-y-1.5">
+                        @foreach($editingSchemaFields as $paramName => $paramDef)
+                            <div class="flex items-center gap-2 text-xs bg-gray-700/30 px-3 py-1.5 rounded">
+                                <span class="font-mono text-indigo-400">{{ $paramName }}</span>
+                                @if($paramDef->type ?? null)
+                                    <span class="text-gray-500">{{ $paramDef->type }}</span>
+                                @endif
+                                @if(method_exists($paramDef, 'isRequired') && $paramDef->isRequired())
+                                    <span class="text-yellow-400 text-[10px] uppercase">required</span>
+                                @endif
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            @endif
+
+            <div>
+                <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">Status</label>
+                <div class="flex items-center justify-between mt-1.5 bg-gray-700/30 px-3 py-2.5 rounded-lg">
+                    <span class="text-sm {{ $editingSkillEnabled ? 'text-green-400' : 'text-gray-400' }}">
+                        {{ $editingSkillEnabled ? 'Enabled' : 'Disabled' }}
+                    </span>
+                    @if($editingSkillRequired && $editingSkillEnabled)
+                        <span class="px-2 py-0.5 text-xs rounded bg-gray-600 text-gray-300">Required</span>
+                    @else
+                        <button
+                            type="button"
+                            wire:click="toggleEditingSkillEnabled"
+                            class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-800 {{ $editingSkillEnabled ? 'bg-indigo-600' : 'bg-gray-600' }}"
+                        >
+                            <span class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out {{ $editingSkillEnabled ? 'translate-x-5' : 'translate-x-0' }}"></span>
+                        </button>
+                    @endif
+                </div>
+            </div>
+        </div>
+
+        <div class="px-5 py-4 border-t border-gray-700">
+            <button
+                wire:click="resetSkillToDefault"
+                wire:confirm="Reset this skill's custom description and metadata to defaults?"
+                class="w-full px-3 py-2 text-sm font-medium rounded-lg bg-gray-700 hover:bg-gray-600 text-gray-300 transition-colors"
+            >
+                Reset to Default
+            </button>
+        </div>
+    </div>
+
+    <div
+        x-show="$wire.showSkillEditor"
+        x-transition:enter="transition ease-out duration-200"
+        x-transition:enter-start="opacity-0"
+        x-transition:enter-end="opacity-100"
+        x-transition:leave="transition ease-in duration-150"
+        x-transition:leave-start="opacity-100"
+        x-transition:leave-end="opacity-0"
+        x-cloak
+        class="fixed inset-0 bg-black/50 z-40"
+        wire:click="closeSkillEditor"
+    ></div>
 </div>
