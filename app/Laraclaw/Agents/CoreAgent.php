@@ -2,6 +2,7 @@
 
 namespace App\Laraclaw\Agents;
 
+use App\Laraclaw\AI\ProviderCatalog;
 use App\Laraclaw\Skills\Contracts\SkillInterface;
 use Illuminate\Support\Collection;
 use Laravel\Ai\Attributes\MaxTokens;
@@ -61,35 +62,9 @@ class CoreAgent implements Agent, Conversational, HasTools
             }
         }
 
-        // Map config provider to Lab enum
-        // ZAI uses OpenAI/Anthropic-compatible APIs, so we map to their Lab enums
-        // and dynamically swap the config to point to ZAI's endpoints
-        $labProvider = match ($provider) {
-            'openai' => Lab::OpenAI,
-            'anthropic' => Lab::Anthropic,
-            'gemini' => Lab::Gemini,
-            'ollama' => Lab::Ollama,
-            'groq' => Lab::Groq,
-            'mistral' => Lab::Mistral,
-            'deepseek' => Lab::DeepSeek,
-            'xai' => Lab::xAI,
-            'openrouter' => Lab::OpenRouter,
-            'zai' => Lab::OpenAI,
-            'zai-anthropic' => Lab::Anthropic,
-            default => Lab::OpenAI,
-        };
-
-        // When using ZAI, override the provider config to use ZAI's key and URL
-        if (str_starts_with($provider, 'zai')) {
-            $zaiConfig = config('ai.providers.'.$provider);
-            if ($zaiConfig) {
-                $targetProvider = $provider === 'zai-anthropic' ? 'anthropic' : 'openai';
-                config(['ai.providers.'.$targetProvider => $zaiConfig]);
-            }
-        }
-
-        // Set via attributes using reflection or just store for prompt usage
-        $this->provider = $labProvider;
+        // Resolve provider to Lab enum and apply config overrides
+        $this->provider = $this->resolveProviderToLab($provider);
+        $this->applyProviderConfigSwap($provider);
         $this->model = $model;
     }
 
@@ -98,7 +73,25 @@ class CoreAgent implements Agent, Conversational, HasTools
      */
     public function applyProviderOverride(string $provider): void
     {
-        $labProvider = match ($provider) {
+        $this->provider = $this->resolveProviderToLab($provider);
+        $this->applyProviderConfigSwap($provider);
+    }
+
+    /**
+     * Apply a per-request model override (e.g. from chat settings).
+     */
+    public function applyModelOverride(string $model): void
+    {
+        $this->model = $model;
+    }
+
+    /**
+     * Resolve a provider string to its Lab enum value.
+     * Checks built-in providers first, then custom providers via ProviderCatalog.
+     */
+    private function resolveProviderToLab(string $provider): Lab
+    {
+        return match ($provider) {
             'openai' => Lab::OpenAI,
             'anthropic' => Lab::Anthropic,
             'gemini' => Lab::Gemini,
@@ -108,28 +101,36 @@ class CoreAgent implements Agent, Conversational, HasTools
             'deepseek' => Lab::DeepSeek,
             'xai' => Lab::xAI,
             'openrouter' => Lab::OpenRouter,
+            'cohere' => Lab::Cohere,
+            'azure' => Lab::Azure,
             'zai' => Lab::OpenAI,
             'zai-anthropic' => Lab::Anthropic,
-            default => Lab::OpenAI,
+            default => app(ProviderCatalog::class)->resolveLabForProvider($provider) ?? Lab::OpenAI,
         };
+    }
 
+    /**
+     * Swap the target provider's config when using a provider that
+     * proxies through another driver (ZAI, custom providers, etc.).
+     */
+    private function applyProviderConfigSwap(string $provider): void
+    {
         if (str_starts_with($provider, 'zai')) {
             $zaiConfig = config('ai.providers.'.$provider);
             if ($zaiConfig) {
                 $targetProvider = $provider === 'zai-anthropic' ? 'anthropic' : 'openai';
                 config(['ai.providers.'.$targetProvider => $zaiConfig]);
             }
+
+            return;
         }
 
-        $this->provider = $labProvider;
-    }
-
-    /**
-     * Apply a per-request model override (e.g. from chat settings).
-     */
-    public function applyModelOverride(string $model): void
-    {
-        $this->model = $model;
+        if (! in_array($provider, ProviderCatalog::BUILT_IN_PROVIDERS)) {
+            $customConfig = config('ai.providers.'.$provider);
+            if ($customConfig && isset($customConfig['driver'])) {
+                config(['ai.providers.'.$customConfig['driver'] => $customConfig]);
+            }
+        }
     }
 
     /**

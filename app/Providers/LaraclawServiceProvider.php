@@ -6,6 +6,7 @@ use App\Laraclaw\Agents\CoreAgent;
 use App\Laraclaw\Agents\IntentRouter;
 use App\Laraclaw\Agents\MultiAgentOrchestrator;
 use App\Laraclaw\AI\ModelCatalog;
+use App\Laraclaw\AI\ProviderCatalog;
 use App\Laraclaw\Channels\ChannelBindingManager;
 use App\Laraclaw\Gateways\CliGateway;
 use App\Laraclaw\Gateways\DiscordGateway;
@@ -39,7 +40,11 @@ use App\Laraclaw\Storage\VectorStoreService;
 use App\Laraclaw\Tunnels\TailscaleNetworkManager;
 use App\Laraclaw\Tunnels\TunnelManager;
 use App\Laraclaw\Voice\VoiceService;
+use App\Laraclaw\AI\ZaiPrismGateway;
+use App\Laraclaw\AI\ZaiProvider;
+use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Support\ServiceProvider;
+use Laravel\Ai\AiManager;
 
 class LaraclawServiceProvider extends ServiceProvider
 {
@@ -50,6 +55,9 @@ class LaraclawServiceProvider extends ServiceProvider
     {
         // Register ModelCatalog as singleton
         $this->app->singleton(ModelCatalog::class);
+
+        // Register ProviderCatalog as singleton
+        $this->app->singleton(ProviderCatalog::class);
 
         // Register MemoryManager as singleton
         $this->app->singleton(MemoryManager::class);
@@ -177,6 +185,16 @@ class LaraclawServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        // Register custom providers into the Laravel AI config
+        $this->app->make(ProviderCatalog::class)->registerProviders();
+
+        // Register ZAI driver with custom gateway that routes to Prism's native Z provider
+        $this->app->make(AiManager::class)->extend('zai', function ($app, $config) {
+            return new ZaiProvider(
+                new ZaiPrismGateway($app['events']),
+                $config,
+                $app->make(Dispatcher::class)
+            );
+        });
     }
 }

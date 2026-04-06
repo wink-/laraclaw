@@ -126,9 +126,9 @@ return [
         ],
 
         'zai' => [
-            'driver' => 'openai',
+            'driver' => 'zai',
             'key' => env('ZAI_API_KEY'),
-            'url' => env('ZAI_OPENAI_URL', 'https://api.z.ai/api/coding/paas/v4'),
+            'url' => env('ZAI_OPENAI_URL', 'https://api.z.ai/api/paas/v4'),
         ],
 
         'zai-anthropic' => [
