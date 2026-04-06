@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Laraclaw\Agents\CoreAgent;
 use App\Laraclaw\Agents\IntentRouter;
 use App\Laraclaw\Agents\MultiAgentOrchestrator;
+use App\Laraclaw\AI\ModelCatalog;
 use App\Laraclaw\Channels\ChannelBindingManager;
 use App\Laraclaw\Gateways\CliGateway;
 use App\Laraclaw\Gateways\DiscordGateway;
@@ -47,6 +48,9 @@ class LaraclawServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        // Register ModelCatalog as singleton
+        $this->app->singleton(ModelCatalog::class);
+
         // Register MemoryManager as singleton
         $this->app->singleton(MemoryManager::class);
 
