@@ -82,6 +82,62 @@ class ModelCatalog
         return $results;
     }
 
+    /**
+     * Add a model to the catalog (runtime + persist to config file).
+     */
+    public function addModel(string $provider, string $id, string $name, int $context): void
+    {
+        $key = "laraclaw-models.{$provider}";
+        $models = config($key, []);
+        $models[$id] = ['name' => $name, 'context' => $context];
+        config([$key => $models]);
+        $this->persist();
+    }
+
+    /**
+     * Update a model's metadata in the catalog.
+     */
+    public function updateModel(string $provider, string $id, string $name, int $context): void
+    {
+        $key = "laraclaw-models.{$provider}";
+        $models = config($key, []);
+        $models[$id] = ['name' => $name, 'context' => $context];
+        config([$key => $models]);
+        $this->persist();
+    }
+
+    /**
+     * Remove a model from the catalog.
+     */
+    public function removeModel(string $provider, string $id): void
+    {
+        $key = "laraclaw-models.{$provider}";
+        $models = config($key, []);
+        unset($models[$id]);
+        config([$key => $models]);
+        $this->persist();
+    }
+
+    private function persist(): void
+    {
+        $configPath = config_path('laraclaw-models.php');
+        $data = config('laraclaw-models', []);
+
+        $lines = ['<?php', '', 'return ['];
+        foreach ($data as $provider => $models) {
+            $lines[] = '';
+            $lines[] = "    '{$provider}' => [";
+            foreach ($models as $id => $meta) {
+                $lines[] = "        '{$id}' => ['name' => '{$meta['name']}', 'context' => {$meta['context']}],";
+            }
+            $lines[] = '    ],';
+        }
+        $lines[] = '];';
+        $lines[] = '';
+
+        file_put_contents($configPath, implode("\n", $lines));
+    }
+
     private function formatContext(int $tokens): string
     {
         if ($tokens >= 1_000_000) {

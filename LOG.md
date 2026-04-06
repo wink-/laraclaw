@@ -2,6 +2,43 @@
 
 ## Session: 2026-04-06
 
+### Iteration: Model Manager UI — Interactive Model Catalog Management Page
+
+**Goal:** Build a web UI for managing the curated model catalog so models can be added, edited, deleted, and tested without touching config files.
+
+#### Completed
+
+**1. ModelCatalog CRUD Methods**
+- Added `addModel()`, `updateModel()`, `removeModel()` to ModelCatalog.
+- All methods update runtime config and persist to `config/laraclaw-models.php`.
+
+**2. Models Page (Volt Component)**
+- Created `resources/views/livewire/laraclaw/models.blade.php` at `/laraclaw/live/models`.
+- Provider tabs with "All" view + per-provider filtering.
+- Model cards in responsive grid showing ID, name, context badge, and action buttons.
+- Slide-over panel for add/edit with form validation and loading states.
+- Inline model testing via CoreAgent with response preview and timing.
+- Search across all providers with debounced live filtering.
+- `wire:confirm` on delete actions.
+
+**3. Sidebar Navigation**
+- Added "Models" nav link with flask icon to layout sidebar.
+
+**4. Route Registration**
+- Added `Volt::route('/models', 'laraclaw.models')` in the `laraclaw/live` route group.
+
+**5. Tests**
+- 8 new tests in `tests/Feature/ModelManagementTest.php`: CRUD operations, config persistence, Volt page rendering.
+- Full suite: 215 tests passing.
+
+#### Files Created
+- `resources/views/livewire/laraclaw/models.blade.php` — Model management page.
+
+#### Files Modified
+- `app/Laraclaw/AI/ModelCatalog.php` — Added addModel/updateModel/removeModel with file persistence.
+- `resources/views/components/laraclaw/layout.blade.php` — Added Models nav link.
+- `routes/web.php` — Added models route.
+
 ### Iteration: Model Catalog — Curated Multi-Provider Model List + Quick Test Command
 
 **Goal:** Replace single-model-per-provider `.env` switching with a curated model catalog baked into the codebase, and add a quick way to test any model from the CLI.
