@@ -33,7 +33,7 @@
 - 🌐 **Web Dashboard** — Tabbed dashboard with real-time polling, skill marketplace with toggle switches, and dedicated tool pages
 - 🎨 **Modern UI Stack** — Laravel Volt single-file components with Tailwind CSS 4 conventions for dashboard and chat UI
 - 🤝 **Multi-Agent Mode** — Per-message planner/executor/reviewer orchestration for complex tasks
-- 🧩 **Skill Marketplace** — Enable/disable registered skills from the dashboard with toggle switches
+- 🧩 **Skill Marketplace** — Enable/disable registered skills from the dashboard with toggle switches, inline skill editor with custom descriptions, schema parameter display, and reset-to-default
 - 📄 **Document Ingestion** — Dedicated Documents page for uploading and indexing documents into vector storage
 - 🏗️ **App Builder** — Dedicated App Builder page for creating and managing Laravel MVC modules
 - 🔐 **Security First** — User allowlists, autonomy levels, filesystem scoping, webhook verification
@@ -46,6 +46,7 @@
 ### Recent Delivery Highlights
 
 - ✅ **Dashboard UX Overhaul** — Tabbed dashboard (Overview/Analytics/Infrastructure/Management), real-time polling via wire:poll, skill marketplace with toggle switches, extracted Documents & App Builder into dedicated pages
+- ✅ **Skill Editor** — Click-to-edit skill marketplace panel with custom descriptions, parameter schema display, enable/disable toggle, and reset-to-default (42 new tests)
 - ✅ **Conversations Management** — Bulk selection/deletion, prune empty conversations, hide-empty toggle, smart auto-titling (strips attachment prefixes, 60-char word-boundary truncation)
 - ✅ **Improved Empty States** — Contextual guidance text, icons, and CTA links on Conversations, Memories, Documents, and App Builder pages
 - ✅ **Phase 17: Web Chat Parity** — Voice I/O, file attachments, rich markdown rendering, chat settings panel, conversation export, agent activity visibility (real-time tool calls, intent badges, token usage), PWA removal

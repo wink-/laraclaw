@@ -2,6 +2,45 @@
 
 ## Session: 2026-04-06
 
+### Iteration: Skill Editor — Online Skill Marketplace Editing
+
+**Goal:** Add an interactive skill editor to the dashboard so users can click on any skill in the marketplace and edit its description, toggle enabled state, and reset to defaults — all without leaving the dashboard.
+
+#### Completed
+
+**1. PluginManager Enhancements**
+- Added `updateSkill($className, ?string $description, ?array $metadata)` — persists non-null updates to skill_plugins table.
+- Added `resetSkill($className)` — clears custom description and metadata, reverting to defaults.
+- Added `getSkillDetail($className)` — returns full skill info including default description from the skill class, schema parameter fields (via `JsonSchema`), DB state, and required status.
+
+**2. Laraclaw Facade Delegation**
+- Added `updateSkill()`, `resetSkill()`, `getSkillDetail()` methods delegating to PluginManager.
+
+**3. Dashboard Skill Marketplace UI**
+- Skill rows now clickable with status badges (Active/Disabled/Required), chevron arrows, and hover effects.
+- Slide-in editor panel (right side, 384px) with Alpine.js transitions and dark backdrop overlay.
+- Editor shows: class name, default description (read-only), custom description (editable textarea with 500-char max), parameter schema fields, enabled/disabled status with toggle switch.
+- Required skills display a badge instead of toggle — cannot be disabled.
+- "Save Description" persists custom description to DB. "Reset to Default" clears all customizations.
+- Panel accessible from any dashboard tab (moved outside tab conditional).
+- Status messages use color-coded `match` expression (green for success, red for errors, indigo for neutral).
+
+**4. Test Coverage — 42 new tests**
+- `tests/Feature/SkillEditorTest.php` — 16 tests: PluginManager unit tests (update, metadata, reset, detail, no-op), facade delegation tests, Volt editor interaction tests.
+- `tests/Feature/SkillEditorBrowserTest.php` — 26 tests: marketplace rendering (badges, chevrons, hover), editor panel markup, description editing with validation, reset, enable/disable toggle, closing state cleanup, error handling, full user journey with persistence verification.
+- All 88 tests passing (42 new + 46 existing).
+
+#### Files Modified
+- `app/Laraclaw/Laraclaw.php` — Added `updateSkill()`, `resetSkill()`, `getSkillDetail()` facade methods.
+- `app/Laraclaw/Skills/PluginManager.php` — Added `updateSkill()`, `resetSkill()`, `getSkillDetail()` with JsonSchema integration.
+- `resources/views/livewire/laraclaw/dashboard.blade.php` — Editor state properties, selectSkill/closeSkillEditor/saveSkillDescription/resetSkillToDefault/toggleEditingSkillEnabled methods, clickable skill rows, slide-in editor panel with Alpine.js.
+- `tests/Feature/SkillEditorTest.php` — New file, 16 tests.
+- `tests/Feature/SkillEditorBrowserTest.php` — New file, 26 tests.
+
+#### Outcome
+- Skills are now fully editable from the dashboard — no code changes needed to customize descriptions or toggle skills on/off.
+- Complete test coverage with 42 new tests covering unit, integration, and UI interaction scenarios.
+
 ### Iteration: PAO — Agent-Optimized Test Output
 
 **Goal:** Reduce AI agent token consumption during test runs by installing PAO (agent-optimized output for PHP testing tools).
