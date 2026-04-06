@@ -127,7 +127,7 @@ class LaraclawTestModelCommand extends Command
             $response = $agent->prompt($prompt);
             $elapsed = round((microtime(true) - $start) * 1000);
 
-            $text = $response->text();
+            $text = $response->text;
             $truncated = mb_strlen($text) > 200 ? mb_substr($text, 0, 200).'...' : $text;
 
             return [
