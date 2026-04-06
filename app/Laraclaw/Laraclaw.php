@@ -135,4 +135,22 @@ class Laraclaw
     {
         $this->plugins->setEnabled($className, $enabled);
     }
+
+    public function updateSkill(string $className, ?string $description = null, ?array $metadata = null): void
+    {
+        $this->plugins->updateSkill($className, $description, $metadata);
+    }
+
+    public function resetSkill(string $className): void
+    {
+        $this->plugins->resetSkill($className);
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    public function getSkillDetail(string $className): ?array
+    {
+        return $this->plugins->getSkillDetail($className);
+    }
 }
