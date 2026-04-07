@@ -34,14 +34,12 @@ return [
     ],
 
     'nvidia' => [
-        'meta/llama-3.3-70b-instruct' => ['name' => 'Llama 3.3 70B', 'context' => 128000],
-        'meta/llama-3.1-405b-instruct' => ['name' => 'Llama 3.1 405B', 'context' => 128000],
-        'nvidia/llama-3.1-nemotron-70b-instruct' => ['name' => 'Nemotron 70B', 'context' => 128000],
-        'nvidia/llama-3.3-nemotron-super-49b-v1' => ['name' => 'Nemotron Super 49B', 'context' => 131072],
-        'deepseek-ai/deepseek-r1' => ['name' => 'DeepSeek R1', 'context' => 128000],
-        'qwen/qwen2.5-72b-instruct' => ['name' => 'Qwen 2.5 72B', 'context' => 128000],
-        'google/gemma-2-27b-it' => ['name' => 'Gemma 2 27B', 'context' => 8192],
-        'mistralai/mixtral-8x22b-instruct' => ['name' => 'Mixtral 8x22B', 'context' => 64000],
+        'moonshotai/kimi-k2-instruct' => ['name' => 'Kimi K2 Instruct', 'context' => 131072],
+        'stepfun-ai/step-3.5-flash' => ['name' => 'Step 3.5 Flash', 'context' => 131072],
+        'nvidia/nemotron-3-super-120b-a12b' => ['name' => 'Nemotron 3 Super 120B', 'context' => 1048576],
+        'qwen/qwen3.5-122b-a10b' => ['name' => 'Qwen 3.5 122B', 'context' => 131072],
+        'google/gemma-4-31b-it' => ['name' => 'Gemma 4 31B', 'context' => 131072],
+        'mistralai/mistral-small-4-119b-2603' => ['name' => 'Mistral Small 4 119B', 'context' => 256000],
     ],
 
     'mistral' => [

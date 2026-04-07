@@ -4,7 +4,7 @@
 
 ### Added
 - NVIDIA NIM provider (`config/ai.php`, `ProviderCatalog`) using OpenAI-compatible driver at `https://integrate.api.nvidia.com/v1`
-- NVIDIA model catalog with 8 NIM models: Llama 3.3 70B, Llama 3.1 405B, Nemotron 70B, Nemotron Super 49B, DeepSeek R1, Qwen 2.5 72B, Gemma 2 27B, Mixtral 8x22B (`config/laraclaw-models.php`)
+- NVIDIA model catalog with verified current models: Kimi K2 Instruct, Step 3.5 Flash, Nemotron 3 Super 120B, Qwen 3.5 122B, Gemma 4 31B, Mistral Small 4 119B (`config/laraclaw-models.php`)
 
 ### Changed
 - Refactored provider storage from SQLite database to file-based config (`config/laraclaw-providers.php`), aligned with Laravel AI SDK's config-driven provider pattern
