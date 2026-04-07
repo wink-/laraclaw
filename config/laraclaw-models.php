@@ -33,6 +33,17 @@ return [
         'gemma2-9b-it' => ['name' => 'Gemma 2 9B', 'context' => 8192],
     ],
 
+    'nvidia' => [
+        'meta/llama-3.3-70b-instruct' => ['name' => 'Llama 3.3 70B', 'context' => 128000],
+        'meta/llama-3.1-405b-instruct' => ['name' => 'Llama 3.1 405B', 'context' => 128000],
+        'nvidia/llama-3.1-nemotron-70b-instruct' => ['name' => 'Nemotron 70B', 'context' => 128000],
+        'nvidia/llama-3.3-nemotron-super-49b-v1' => ['name' => 'Nemotron Super 49B', 'context' => 131072],
+        'deepseek-ai/deepseek-r1' => ['name' => 'DeepSeek R1', 'context' => 128000],
+        'qwen/qwen2.5-72b-instruct' => ['name' => 'Qwen 2.5 72B', 'context' => 128000],
+        'google/gemma-2-27b-it' => ['name' => 'Gemma 2 27B', 'context' => 8192],
+        'mistralai/mixtral-8x22b-instruct' => ['name' => 'Mixtral 8x22B', 'context' => 64000],
+    ],
+
     'mistral' => [
         'mistral-large-latest' => ['name' => 'Mistral Large', 'context' => 128000],
         'mistral-medium-latest' => ['name' => 'Mistral Medium', 'context' => 32000],

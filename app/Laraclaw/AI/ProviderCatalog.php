@@ -9,7 +9,7 @@ class ProviderCatalog
     public const BUILT_IN_PROVIDERS = [
         'openai', 'anthropic', 'gemini', 'ollama', 'groq', 'mistral',
         'deepseek', 'xai', 'openrouter', 'cohere', 'azure', 'jina',
-        'voyageai', 'eleven', 'zai', 'zai-anthropic',
+        'voyageai', 'eleven', 'nvidia', 'zai', 'zai-anthropic',
     ];
 
     /**
@@ -91,6 +91,7 @@ class ProviderCatalog
             'openrouter' => 'OpenRouter',
             'cohere' => 'Cohere',
             'azure' => 'Azure OpenAI',
+            'nvidia' => 'NVIDIA NIM',
         ];
     }
 
@@ -171,6 +172,7 @@ class ProviderCatalog
             'openrouter' => Lab::OpenRouter,
             'cohere' => Lab::Cohere,
             'azure' => Lab::Azure,
+            'nvidia' => Lab::OpenAI,
             'zai' => Lab::OpenAI,
             default => Lab::OpenAI,
         };
