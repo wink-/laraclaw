@@ -43,7 +43,6 @@ use App\Laraclaw\Tunnels\TailscaleNetworkManager;
 use App\Laraclaw\Tunnels\TunnelManager;
 use App\Laraclaw\Voice\VoiceService;
 use Illuminate\Contracts\Events\Dispatcher;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Ai\AiManager;
 
@@ -187,9 +186,7 @@ class LaraclawServiceProvider extends ServiceProvider
     public function boot(): void
     {
         // Register custom providers into the Laravel AI config
-        if (Schema::hasTable('laraclaw_providers')) {
-            $this->app->make(ProviderCatalog::class)->registerProviders();
-        }
+        $this->app->make(ProviderCatalog::class)->registerProviders();
 
         // Register ZAI driver with custom gateway that routes to Prism's native Z provider
         $this->app->make(AiManager::class)->extend('zai', function ($app, $config) {
