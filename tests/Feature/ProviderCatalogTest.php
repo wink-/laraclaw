@@ -6,12 +6,7 @@ use Laravel\Ai\Enums\Lab;
 use Livewire\Volt\Volt;
 
 uses()->beforeEach(function () {
-    $this->configPath = config_path('laraclaw-providers.php');
-    $this->originalConfig = file_get_contents($this->configPath);
-
     $this->actingAs(User::factory()->create());
-})->afterEach(function () {
-    file_put_contents($this->configPath, $this->originalConfig);
 });
 
 /*
@@ -21,21 +16,18 @@ uses()->beforeEach(function () {
 */
 
 test('all returns empty array when no custom providers configured', function () {
-    config(['laraclaw-providers' => []]);
     $catalog = new ProviderCatalog;
 
     expect($catalog->all())->toBe([]);
 });
 
 test('get returns null for nonexistent provider', function () {
-    config(['laraclaw-providers' => []]);
     $catalog = new ProviderCatalog;
 
     expect($catalog->get('nonexistent'))->toBeNull();
 });
 
 test('has returns false for nonexistent provider', function () {
-    config(['laraclaw-providers' => []]);
     $catalog = new ProviderCatalog;
 
     expect($catalog->has('nonexistent'))->toBeFalse();
@@ -159,16 +151,13 @@ test('getDriverForProvider returns null for nonexistent provider', function () {
 
 /*
 |--------------------------------------------------------------------------
-| Config Persistence Tests
+| Database Persistence Tests
 |--------------------------------------------------------------------------
 */
 
-test('addProvider persists to config file and is readable by fresh ProviderCatalog', function () {
+test('addProvider persists to database and is readable by fresh ProviderCatalog', function () {
     $catalog = new ProviderCatalog;
     $catalog->addProvider('persisted', 'Persisted Provider', 'openai', 'PERSISTED_KEY', 'https://persisted.com');
-
-    $reloaded = require $this->configPath;
-    app('config')->set('laraclaw-providers', $reloaded);
 
     $fresh = new ProviderCatalog;
     expect($fresh->has('persisted'))->toBeTrue();
@@ -180,13 +169,10 @@ test('addProvider persists to config file and is readable by fresh ProviderCatal
         ->and($provider['url'])->toBe('https://persisted.com');
 });
 
-test('removeProvider persists removal to config file', function () {
+test('removeProvider persists removal to database', function () {
     $catalog = new ProviderCatalog;
     $catalog->addProvider('temp-provider', 'Temp', 'openai', 'TEMP_KEY');
     $catalog->removeProvider('temp-provider');
-
-    $reloaded = require $this->configPath;
-    app('config')->set('laraclaw-providers', $reloaded);
 
     $fresh = new ProviderCatalog;
     expect($fresh->has('temp-provider'))->toBeFalse();
@@ -199,16 +185,9 @@ test('removeProvider persists removal to config file', function () {
 */
 
 test('registerProvider sets config for ai providers', function () {
-    config(['laraclaw-providers' => [
-        'reg-test' => [
-            'name' => 'Registration Test',
-            'driver' => 'openai',
-            'key_env' => 'REG_TEST_KEY',
-            'url' => 'https://reg-test.com',
-        ],
-    ]]);
-
     $catalog = new ProviderCatalog;
+    $catalog->addProvider('reg-test', 'Registration Test', 'openai', 'REG_TEST_KEY', 'https://reg-test.com');
+
     $catalog->registerProvider('reg-test');
 
     $aiConfig = config('ai.providers.reg-test');
@@ -219,12 +198,10 @@ test('registerProvider sets config for ai providers', function () {
 });
 
 test('registerProviders registers all custom providers', function () {
-    config(['laraclaw-providers' => [
-        'multi-a' => ['name' => 'A', 'driver' => 'openai', 'key_env' => 'KEY_A', 'url' => null],
-        'multi-b' => ['name' => 'B', 'driver' => 'anthropic', 'key_env' => 'KEY_B', 'url' => null],
-    ]]);
-
     $catalog = new ProviderCatalog;
+    $catalog->addProvider('multi-a', 'A', 'openai', 'KEY_A');
+    $catalog->addProvider('multi-b', 'B', 'anthropic', 'KEY_B');
+
     $catalog->registerProviders();
 
     expect(config('ai.providers.multi-a'))->toBeArray()
@@ -244,8 +221,6 @@ test('Volt providers page renders successfully', function () {
 });
 
 test('Volt providers page shows empty state when no providers configured', function () {
-    config(['laraclaw-providers' => []]);
-
     Volt::test('laraclaw.providers')
         ->assertSee('No custom providers');
 });

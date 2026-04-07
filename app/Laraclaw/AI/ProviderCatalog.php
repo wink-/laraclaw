@@ -2,6 +2,7 @@
 
 namespace App\Laraclaw\AI;
 
+use App\Models\LaraclawProvider;
 use Laravel\Ai\Enums\Lab;
 
 class ProviderCatalog
@@ -19,7 +20,9 @@ class ProviderCatalog
      */
     public function all(): array
     {
-        return config('laraclaw-providers', []);
+        return LaraclawProvider::all()->mapWithKeys(fn (LaraclawProvider $model) => [
+            $model->key => $this->toArray($model),
+        ])->all();
     }
 
     /**
@@ -29,7 +32,13 @@ class ProviderCatalog
      */
     public function get(string $key): ?array
     {
-        return config("laraclaw-providers.{$key}");
+        $model = LaraclawProvider::where('key', $key)->first();
+
+        if ($model === null) {
+            return null;
+        }
+
+        return $this->toArray($model);
     }
 
     /**
@@ -37,7 +46,7 @@ class ProviderCatalog
      */
     public function has(string $key): bool
     {
-        return array_key_exists($key, $this->all());
+        return LaraclawProvider::where('key', $key)->exists();
     }
 
     /**
@@ -47,7 +56,7 @@ class ProviderCatalog
      */
     public function getProviderKeys(): array
     {
-        return array_keys($this->all());
+        return LaraclawProvider::pluck('key')->all();
     }
 
     /**
@@ -95,11 +104,19 @@ class ProviderCatalog
     }
 
     /**
-     * Add a custom provider (runtime + persist).
+     * Add a custom provider (persist to DB).
      */
     public function addProvider(string $key, string $name, string $driver, string $keyEnv, ?string $url = null): void
     {
-        $this->setProvider($key, $name, $driver, $keyEnv, $url);
+        LaraclawProvider::create([
+            'key' => $key,
+            'name' => $name,
+            'driver' => $driver,
+            'key_env' => $keyEnv,
+            'url' => $url,
+        ]);
+
+        $this->registerProvider($key);
     }
 
     /**
@@ -107,7 +124,18 @@ class ProviderCatalog
      */
     public function updateProvider(string $key, string $name, string $driver, string $keyEnv, ?string $url = null): void
     {
-        $this->setProvider($key, $name, $driver, $keyEnv, $url);
+        $model = LaraclawProvider::where('key', $key)->first();
+
+        if ($model !== null) {
+            $model->update([
+                'name' => $name,
+                'driver' => $driver,
+                'key_env' => $keyEnv,
+                'url' => $url,
+            ]);
+        }
+
+        $this->registerProvider($key);
     }
 
     /**
@@ -115,11 +143,7 @@ class ProviderCatalog
      */
     public function removeProvider(string $key): void
     {
-        $providers = $this->all();
-        unset($providers[$key]);
-
-        config(['laraclaw-providers' => $providers]);
-        $this->persist();
+        LaraclawProvider::where('key', $key)->delete();
     }
 
     /**
@@ -172,6 +196,7 @@ class ProviderCatalog
             'openrouter' => Lab::OpenRouter,
             'cohere' => Lab::Cohere,
             'azure' => Lab::Azure,
+            'zai' => Lab::OpenAI,
             default => Lab::OpenAI,
         };
     }
@@ -192,26 +217,18 @@ class ProviderCatalog
         return $value !== false && $value !== '';
     }
 
-    private function setProvider(string $key, string $name, string $driver, string $keyEnv, ?string $url): void
+    /**
+     * Convert a LaraclawProvider model to its array representation.
+     *
+     * @return array{name: string, driver: string, key_env: string, url: ?string}
+     */
+    private function toArray(LaraclawProvider $model): array
     {
-        $providers = $this->all();
-        $providers[$key] = [
-            'name' => $name,
-            'driver' => $driver,
-            'key_env' => $keyEnv,
-            'url' => $url,
+        return [
+            'name' => $model->name,
+            'driver' => $model->driver,
+            'key_env' => $model->key_env,
+            'url' => $model->url,
         ];
-
-        config(['laraclaw-providers' => $providers]);
-        $this->persist();
-        $this->registerProvider($key);
-    }
-
-    private function persist(): void
-    {
-        $configPath = config_path('laraclaw-providers.php');
-        $data = config('laraclaw-providers', []);
-
-        file_put_contents($configPath, "<?php\n\nreturn ".var_export($data, true).";\n");
     }
 }
