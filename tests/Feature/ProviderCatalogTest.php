@@ -7,6 +7,11 @@ use Livewire\Volt\Volt;
 
 uses()->beforeEach(function () {
     $this->actingAs(User::factory()->create());
+
+    config(['laraclaw-providers' => []]);
+})->afterEach(function () {
+    config(['laraclaw-providers' => []]);
+    file_put_contents(config_path('laraclaw-providers.php'), "<?php\n\nreturn [\n\n];\n");
 });
 
 /*
@@ -155,7 +160,7 @@ test('getDriverForProvider returns null for nonexistent provider', function () {
 |--------------------------------------------------------------------------
 */
 
-test('addProvider persists to database and is readable by fresh ProviderCatalog', function () {
+test('addProvider persists to config file and is readable by fresh ProviderCatalog', function () {
     $catalog = new ProviderCatalog;
     $catalog->addProvider('persisted', 'Persisted Provider', 'openai', 'PERSISTED_KEY', 'https://persisted.com');
 
@@ -169,7 +174,7 @@ test('addProvider persists to database and is readable by fresh ProviderCatalog'
         ->and($provider['url'])->toBe('https://persisted.com');
 });
 
-test('removeProvider persists removal to database', function () {
+test('removeProvider persists removal to config file', function () {
     $catalog = new ProviderCatalog;
     $catalog->addProvider('temp-provider', 'Temp', 'openai', 'TEMP_KEY');
     $catalog->removeProvider('temp-provider');
