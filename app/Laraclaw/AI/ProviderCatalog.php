@@ -99,17 +99,7 @@ class ProviderCatalog
      */
     public function addProvider(string $key, string $name, string $driver, string $keyEnv, ?string $url = null): void
     {
-        $providers = config('laraclaw-providers', []);
-        $providers[$key] = [
-            'name' => $name,
-            'driver' => $driver,
-            'key_env' => $keyEnv,
-            'url' => $url,
-        ];
-        config(['laraclaw-providers' => $providers]);
-        $this->persist();
-
-        $this->registerProvider($key);
+        $this->putProvider($key, $name, $driver, $keyEnv, $url);
     }
 
     /**
@@ -117,17 +107,7 @@ class ProviderCatalog
      */
     public function updateProvider(string $key, string $name, string $driver, string $keyEnv, ?string $url = null): void
     {
-        $providers = config('laraclaw-providers', []);
-        $providers[$key] = [
-            'name' => $name,
-            'driver' => $driver,
-            'key_env' => $keyEnv,
-            'url' => $url,
-        ];
-        config(['laraclaw-providers' => $providers]);
-        $this->persist();
-
-        $this->registerProvider($key);
+        $this->putProvider($key, $name, $driver, $keyEnv, $url);
     }
 
     /**
@@ -210,6 +190,22 @@ class ProviderCatalog
         $value = getenv($provider['key_env']);
 
         return $value !== false && $value !== '';
+    }
+
+    /**
+     * Write a provider entry and persist to disk.
+     */
+    private function putProvider(string $key, string $name, string $driver, string $keyEnv, ?string $url): void
+    {
+        $providers = config('laraclaw-providers', []);
+        $providers[$key] = [
+            'name' => $name,
+            'driver' => $driver,
+            'key_env' => $keyEnv,
+            'url' => $url,
+        ];
+        config(['laraclaw-providers' => $providers]);
+        $this->persist();
     }
 
     /**
