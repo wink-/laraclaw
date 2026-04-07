@@ -20,7 +20,7 @@ class ZaiProvider extends Provider implements TextProvider
 
     public function cheapestTextModel(): string
     {
-        return $this->config['models']['text']['cheapest'] ?? 'glm-5-turbo';
+        return $this->config['models']['text']['cheapest'] ?? 'glm-4.5-air';
     }
 
     public function smartestTextModel(): string

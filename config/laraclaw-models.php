@@ -85,9 +85,12 @@ return [
     ],
 
     'zai' => [
-        'glm-5.1' => ['name' => 'GLM-5.1', 'context' => 128000],
-        'glm-5-turbo' => ['name' => 'GLM-5-Turbo', 'context' => 128000],
-        'glm-5v-turbo' => ['name' => 'GLM-5V-Turbo (Vision)', 'context' => 200000],
+        'glm-5.1' => ['name' => 'GLM-5.1', 'context' => 204800],
+        'glm-5' => ['name' => 'GLM-5', 'context' => 204800],
+        'glm-4.7' => ['name' => 'GLM-4.7', 'context' => 204800],
+        'glm-4.6' => ['name' => 'GLM-4.6', 'context' => 128000],
+        'glm-4.6v' => ['name' => 'GLM-4.6V (Vision)', 'context' => 128000],
+        'glm-4.5-air' => ['name' => 'GLM-4.5 Air', 'context' => 128000],
     ],
 
     'zai-anthropic' => [
