@@ -100,7 +100,7 @@ return [
         ],
 
         'nvidia' => [
-            'driver' => 'openai',
+            'driver' => 'groq',
             'key' => env('NVIDIA_API_KEY'),
             'url' => 'https://integrate.api.nvidia.com/v1',
         ],
