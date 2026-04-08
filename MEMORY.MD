@@ -61,7 +61,7 @@ Instead of relying on third-party SaaS "second brains," we will build a sovereig
 ## 5. Technical Architecture (Laravel Specifics)
 
 ### Stack Components
-*   **Backend:** Laravel 12 (existing Laraclaw application)
+*   **Backend:** Laravel 13 (existing Laraclaw application)
 *   **Database:** Supabase (Remote PostgreSQL) with `pgvector` extension enabled. Already configured as `supabase` / `supabase_direct` connections.
 *   **Queue Driver:** Redis or Database (for processing embeddings asynchronously).
 *   **AI Integration:** `laravel/ai` (Prism) — already used for embeddings and LLM calls across the application.

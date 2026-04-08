@@ -290,7 +290,11 @@ class DashboardController extends Controller
 
         $agent->setConversationHistory($history);
 
-        $memories = $memoryManager->getRelevantMemories($message, $conversation->user_id);
+        $memories = $memoryManager->getRelevantMemories(
+            $message,
+            $conversation->user_id,
+            conversationId: $conversation->id,
+        );
         $memoryContext = $memoryManager->formatMemoriesForPrompt($memories);
         $agent->setMemoryContext($memoryContext !== '' ? $memoryContext : null);
 

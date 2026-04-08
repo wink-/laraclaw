@@ -65,6 +65,7 @@ Route::middleware('auth')->group(function () {
         Volt::route('/documents', 'laraclaw.documents')->name('documents.live');
         Volt::route('/app-builder', 'laraclaw.app-builder')->name('app-builder.live');
         Volt::route('/models', 'laraclaw.models')->name('models.live');
+        Volt::route('/benchmarks', 'laraclaw.benchmarks')->name('benchmarks.live');
         Volt::route('/providers', 'laraclaw.providers')->name('providers.live');
     });
 });

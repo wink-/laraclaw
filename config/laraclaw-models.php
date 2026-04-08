@@ -34,12 +34,10 @@ return [
     ],
 
     'nvidia' => [
-        'moonshotai/kimi-k2-instruct' => ['name' => 'Kimi K2 Instruct', 'context' => 131072],
-        'stepfun-ai/step-3.5-flash' => ['name' => 'Step 3.5 Flash', 'context' => 131072],
         'nvidia/nemotron-3-super-120b-a12b' => ['name' => 'Nemotron 3 Super 120B', 'context' => 1048576],
-        'qwen/qwen3.5-122b-a10b' => ['name' => 'Qwen 3.5 122B', 'context' => 131072],
-        'google/gemma-4-31b-it' => ['name' => 'Gemma 4 31B', 'context' => 131072],
-        'mistralai/mistral-small-4-119b-2603' => ['name' => 'Mistral Small 4 119B', 'context' => 256000],
+        'z-ai/glm5' => ['name' => 'GLM 5', 'context' => 102400],
+        'minimaxai/minimax-m2.5' => ['name' => 'Minimax M2.5', 'context' => 256000],
+        'moonshotai/kimi-k2.5' => ['name' => 'Kimi K2.5', 'context' => 256000],
     ],
 
     'mistral' => [
@@ -76,14 +74,9 @@ return [
         'openai/gpt-4.1' => ['name' => 'GPT-4.1', 'context' => 1047576],
         'openai/o3-mini' => ['name' => 'o3 Mini', 'context' => 200000],
         'openai/o4-mini' => ['name' => 'o4 Mini', 'context' => 200000],
-        'anthropic/claude-sonnet-4-20250514' => ['name' => 'Claude Sonnet 4', 'context' => 200000],
-        'anthropic/claude-opus-4-20250514' => ['name' => 'Claude Opus 4', 'context' => 200000],
         'anthropic/claude-3.5-haiku' => ['name' => 'Claude 3.5 Haiku', 'context' => 200000],
         'google/gemini-2.5-flash-preview' => ['name' => 'Gemini 2.5 Flash', 'context' => 1048576],
         'google/gemini-2.5-pro-preview' => ['name' => 'Gemini 2.5 Pro', 'context' => 1048576],
-        'meta-llama/llama-3.3-70b-instruct' => ['name' => 'Llama 3.3 70B', 'context' => 128000],
-        'meta-llama/llama-4-maverick' => ['name' => 'Llama 4 Maverick', 'context' => 1048576],
-        'meta-llama/llama-4-scout' => ['name' => 'Llama 4 Scout', 'context' => 10485760],
         'deepseek/deepseek-chat' => ['name' => 'DeepSeek V3', 'context' => 128000],
         'deepseek/deepseek-r1' => ['name' => 'DeepSeek R1', 'context' => 128000],
         'mistralai/mistral-large' => ['name' => 'Mistral Large', 'context' => 128000],
@@ -91,6 +84,8 @@ return [
         'x-ai/grok-3-mini' => ['name' => 'Grok 3 Mini', 'context' => 131072],
         'qwen/qwen3-235b-a22b' => ['name' => 'Qwen3 235B', 'context' => 131072],
         'qwen/qwen3-32b' => ['name' => 'Qwen3 32B', 'context' => 131072],
+        'google/gemma-4-26b-a4b-it:free' => ['name' => 'Gemma 4 26B', 'context' => 262144],
+        'google/gemma-4-31b-it' => ['name' => 'Gemma 4 31B', 'context' => 262144],
     ],
 
     'zai' => [

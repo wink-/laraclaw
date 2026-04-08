@@ -218,12 +218,31 @@ class TelegramGateway extends BaseGateway
      */
     public function setWebhook(string $url): bool
     {
-        $response = Http::post("{$this->apiBaseUrl}/setWebhook", [
+        $payload = [
             'url' => $url,
             'allowed_updates' => ['message', 'edited_message'],
-        ]);
+        ];
+
+        $secretToken = config('services.telegram.secret_token', env('TELEGRAM_SECRET_TOKEN'));
+
+        if (filled($secretToken)) {
+            $payload['secret_token'] = $secretToken;
+        }
+
+        $response = Http::post("{$this->apiBaseUrl}/setWebhook", $payload);
 
         return $response->successful();
+    }
+
+    public function getWebhookInfo(): ?array
+    {
+        $response = Http::get("{$this->apiBaseUrl}/getWebhookInfo");
+
+        if ($response->successful()) {
+            return $response->json('result');
+        }
+
+        return null;
     }
 
     /**

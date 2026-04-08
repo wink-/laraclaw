@@ -15,7 +15,7 @@
     <a href="#configuration">Configuration</a>
 </p>
 
-<p align="center"><sub>Last updated: 2026-04-06</sub></p>
+<p align="center"><sub>Last updated: 2026-04-08</sub></p>
 
 ---
 
@@ -27,7 +27,8 @@
 
 - 🧠 **Open Brain Memory** — Supabase-ready memory store with pgvector semantic search and fallback lexical search
 - 🔄 **Streaming-Aware Memory Context** — Streaming chat now uses token-budgeted history, relevant memory retrieval, and intent routing
-- 📝 **Automatic Memory Extraction** — Reminder/preference/watch-intent messages can be auto-saved into memory fragments after replies
+- 📝 **Automatic Memory Extraction** — Reminder, preference, watch-intent, and explicit fact-style messages can be auto-saved into memory fragments after replies
+- ⚡ **Model Benchmarks** — Persist model test latency, rank providers/models, and review recent failures from the dashboard
 - 🔧 **14 Built-in Skills** — Time, Calculator, Web Search, HTTP Request, Web Fetch, App Builder, Memory, Shopping List, File System, Execute, Email, Calendar, Scheduler, Notifications
 - 💬 **Multi-Platform Gateways** — CLI, Telegram, Discord, WhatsApp, and Slack support
 - 🌐 **Web Dashboard** — Tabbed dashboard with real-time polling, skill marketplace with toggle switches, and dedicated tool pages
@@ -51,6 +52,9 @@
 - ✅ **Improved Empty States** — Contextual guidance text, icons, and CTA links on Conversations, Memories, Documents, and App Builder pages
 - ✅ **Phase 17: Web Chat Parity** — Voice I/O, file attachments, rich markdown rendering, chat settings panel, conversation export, agent activity visibility (real-time tool calls, intent badges, token usage), PWA removal
 - ✅ **Laravel 13 Upgrade** — Framework upgraded to Laravel 13
+- ✅ **Model Benchmarks** — Stored model-card response times with a new benchmarks leaderboard page
+- ✅ **Telegram Reliability** — CSRF-safe webhook handling, secret-token sync, and persistent Cloudflare quick-tunnel lifecycle
+- ✅ **Memory Recall Fixes** — Anonymous gateway chats now scope memories by conversation, explicit fact requests are extracted, and Telegram memories are visible in the Memories page
 - ✅ **Dashboard UX Overhaul** — Tabbed dashboard (Overview/analytics/infrastructure/management) with wire:poll auto-refresh, real-time stats
  skill marketplace with toggle switches, and dedicated Documents/app-builder pages
 - ✅ **Improved Empty states** — Better empty states with guidance text and CTAs on Conversations, memories, and chat pages
@@ -141,6 +145,9 @@ LARACLAW_MARKETPLACE_ENABLED=true
 # Memory extraction (auto-save reminders/preferences)
 LARACLAW_MEMORY_AUTO_EXTRACT=true
 
+# Local queue mode (recommended for solo/local use)
+QUEUE_CONNECTION=sync
+
 # Web tools network policy (set true for private VPS/Tailscale-only deployments)
 LARACLAW_ALLOW_PRIVATE_NETWORK_URLS=false
 LARACLAW_ALLOW_LOOPBACK_URLS=false
@@ -167,6 +174,18 @@ APP_TIMEZONE=America/New_York
 # DB_SUPABASE_URL=
 # DB_SUPABASE_DIRECT_URL=
 ```
+
+### Local Queue Mode
+
+For local development and solo usage, Laraclaw now defaults to `QUEUE_CONNECTION=sync` in `.env.example` so memory extraction and similar lightweight jobs run immediately in the same request.
+
+If you want to exercise the queued architecture instead, switch back to `QUEUE_CONNECTION=database` and run a worker:
+
+```bash
+php artisan queue:work
+```
+
+With `sync`, explicit memory requests such as `Remember that my cat's name is Wilma` are stored immediately after the reply is generated.
 
 ### Per-Agent AI Overrides (Optional)
 
@@ -370,13 +389,27 @@ Options:
 ### Telegram Gateway
 
 1. Create a bot via [@BotFather](https://t.me/botfather)
-2. Set your webhook:
+2. Start a public tunnel for your local app:
 
 ```bash
-php artisan laraclaw:webhook:telegram
+php artisan laraclaw:tunnel start --provider=cloudflare
+```
+
+3. Sync the Telegram webhook to the current public URL:
+
+```bash
+php artisan laraclaw:telegram:webhook-sync
+```
+
+If you already have a public URL, pass it explicitly:
+
+```bash
+php artisan laraclaw:telegram:webhook-sync --url=https://example.trycloudflare.com
 ```
 
 The webhook endpoint is: `POST /laraclaw/webhooks/telegram`
+
+Telegram memories are stored immediately when `QUEUE_CONNECTION=sync`. Anonymous Telegram conversations are surfaced in the dashboard Memories page with a `telegram` badge.
 
 ### Discord Gateway
 
@@ -410,6 +443,7 @@ Access the live Volt dashboard at `/laraclaw/live`:
 | `/laraclaw/live/chat` | Interactive web chat with streaming, voice I/O, file attachments, and settings |
 | `/laraclaw/live/conversations` | Browse/manage conversations with bulk actions, search, and export |
 | `/laraclaw/live/memories` | View stored memory fragments with category filtering |
+| `/laraclaw/live/benchmarks` | Review ranked model/provider latency results and recent failures |
 | `/laraclaw/live/documents` | Upload and index documents into vector storage |
 | `/laraclaw/live/app-builder` | Create and manage Laravel MVC app modules |
 | `/laraclaw/voice/transcribe` | Voice input (STT) |

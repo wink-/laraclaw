@@ -25,7 +25,7 @@ Laraclaw will mirror the four core pillars of the OpenClaw architecture, adapted
     *   Future enhancement: Vector database integration for semantic search and RAG (Retrieval-Augmented Generation).
 
 ## 3. Tech Stack
-*   **Framework:** Laravel 12.x
+*   **Framework:** Laravel 13.x
 *   **AI Integration:** `laravel/ai` (Prism)
 *   **Database:** SQLite (default for easy local setup) / PostgreSQL / MySQL
 *   **Background Processing:** Laravel Queues (Redis/Horizon recommended for production) to handle long-running agent reasoning without blocking webhooks.

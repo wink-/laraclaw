@@ -51,7 +51,11 @@ class ExtractMemoriesJob implements ShouldQueue
             }
 
             $alreadyStored = MemoryFragment::query()
-                ->where('user_id', $conversation->user_id)
+                ->when(
+                    $conversation->user_id,
+                    fn ($query) => $query->where('user_id', $conversation->user_id),
+                    fn ($query) => $query->where('conversation_id', $conversation->id)
+                )
                 ->where('content', $content)
                 ->exists();
 
@@ -90,6 +94,18 @@ class ExtractMemoriesJob implements ShouldQueue
                     'content' => "The user wants to {$task}.",
                     'key' => 'reminder_'.Str::slug(Str::limit($task, 40, '')),
                     'category' => $this->detectCategory($task),
+                ];
+            }
+        }
+
+        if (preg_match('/(?:remember that|remember)\s+(.+)/iu', $message, $matches) === 1) {
+            $fact = $this->cleanMemoryValue($matches[1]);
+
+            if ($fact !== '' && ! preg_match('/^(?:to|me\s+to)\b/iu', $fact)) {
+                $candidates[] = [
+                    'content' => $this->formatExplicitFactMemory($fact),
+                    'key' => $this->detectFactKey($fact),
+                    'category' => $this->detectCategory($fact),
                 ];
             }
         }
@@ -134,6 +150,9 @@ class ExtractMemoriesJob implements ShouldQueue
         $candidate = mb_strtolower($value);
 
         return match (true) {
+            str_contains($candidate, 'cat'),
+            str_contains($candidate, 'dog'),
+            str_contains($candidate, 'pet') => 'personal',
             str_contains($candidate, 'watch'),
             str_contains($candidate, 'movie'),
             str_contains($candidate, 'series'),
@@ -145,6 +164,35 @@ class ExtractMemoriesJob implements ShouldQueue
             str_contains($candidate, 'appointment'),
             str_contains($candidate, 'tomorrow') => 'scheduling',
             default => 'personal',
+        };
+    }
+
+    protected function formatExplicitFactMemory(string $fact): string
+    {
+        if (preg_match('/^my\s+(.+)/iu', $fact, $matches) === 1) {
+            return "The user's {$matches[1]}.";
+        }
+
+        if (preg_match('/^i\s+am\s+(.+)/iu', $fact, $matches) === 1) {
+            return "The user is {$matches[1]}.";
+        }
+
+        if (preg_match('/^i\s+have\s+(.+)/iu', $fact, $matches) === 1) {
+            return "The user has {$matches[1]}.";
+        }
+
+        return 'Remember this about the user: '.$fact.'.';
+    }
+
+    protected function detectFactKey(string $fact): ?string
+    {
+        $normalized = mb_strtolower($fact);
+
+        return match (true) {
+            str_contains($normalized, 'cat') && str_contains($normalized, 'name') => 'pet_cat_name',
+            str_contains($normalized, 'dog') && str_contains($normalized, 'name') => 'pet_dog_name',
+            str_contains($normalized, 'pet') && str_contains($normalized, 'name') => 'pet_name',
+            default => null,
         };
     }
 }

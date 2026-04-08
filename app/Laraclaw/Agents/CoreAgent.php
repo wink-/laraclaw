@@ -103,6 +103,7 @@ class CoreAgent implements Agent, Conversational, HasTools
             'openrouter' => Lab::OpenRouter,
             'cohere' => Lab::Cohere,
             'azure' => Lab::Azure,
+            'nvidia' => Lab::Groq,
             'zai' => Lab::OpenAI,
             'zai-anthropic' => Lab::Anthropic,
             default => app(ProviderCatalog::class)->resolveLabForProvider($provider) ?? Lab::OpenAI,
@@ -115,6 +116,15 @@ class CoreAgent implements Agent, Conversational, HasTools
      */
     private function applyProviderConfigSwap(string $provider): void
     {
+        if ($provider === 'nvidia') {
+            $nvidiaConfig = config('ai.providers.nvidia');
+            if ($nvidiaConfig) {
+                config(['ai.providers.groq' => $nvidiaConfig]);
+            }
+
+            return;
+        }
+
         if (str_starts_with($provider, 'zai')) {
             $zaiConfig = config('ai.providers.'.$provider);
             if ($zaiConfig) {

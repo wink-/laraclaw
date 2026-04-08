@@ -189,7 +189,7 @@ class LaraclawTunnelCommand extends Command
     {
         $this->line('Usage:');
         $this->line("  - Share your local app: {$url}");
-        $this->line("  - Webhook URL: {$url}/webhook");
+        $this->line("  - Telegram webhook URL: {$url}/laraclaw/webhooks/telegram");
         $this->line("  - API endpoint: {$url}/api");
 
         $this->newLine();

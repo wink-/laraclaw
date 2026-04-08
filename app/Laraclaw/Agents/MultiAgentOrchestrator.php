@@ -16,7 +16,11 @@ class MultiAgentOrchestrator
     public function collaborate(Conversation $conversation, string $message): string
     {
         $history = $this->memory->getConversationHistory($conversation);
-        $memories = $this->memory->getRelevantMemories($message, $conversation->user_id);
+        $memories = $this->memory->getRelevantMemories(
+            $message,
+            $conversation->user_id,
+            conversationId: $conversation->id,
+        );
         $memoryContext = $this->memory->formatMemoriesForPrompt($memories);
 
         $plannerOutput = $this->agent->promptWithContext(

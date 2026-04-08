@@ -77,7 +77,11 @@ class Laraclaw
         } else {
             // Get conversation history and user memories
             $history = $this->memory->getConversationContextWithBudget($conversation);
-            $memories = $this->memory->getRelevantMemories($message, $conversation->user_id);
+            $memories = $this->memory->getRelevantMemories(
+                $message,
+                $conversation->user_id,
+                conversationId: $conversation->id,
+            );
             $memoryContext = $this->memory->formatMemoriesForPrompt($memories);
 
             // Prompt the agent with context

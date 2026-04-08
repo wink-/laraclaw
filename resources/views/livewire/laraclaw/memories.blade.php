@@ -2,6 +2,7 @@
 
 use App\Models\MemoryFragment;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\View\View;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Url;
@@ -31,8 +32,8 @@ new class extends Component
     #[Computed]
     public function memories()
     {
-        return MemoryFragment::query()
-            ->where('user_id', Auth::id())
+        return $this->memoryQuery()
+            ->with('conversation')
             ->when($this->category !== '', fn ($q) => $q->where('category', $this->category))
             ->when($this->search, fn ($q) => $q->where('content', 'like', "%{$this->search}%"))
             ->latest()
@@ -42,8 +43,7 @@ new class extends Component
     #[Computed]
     public function categories()
     {
-        return MemoryFragment::query()
-            ->where('user_id', Auth::id())
+        return $this->memoryQuery()
             ->whereNotNull('category')
             ->distinct()
             ->orderBy('category')
@@ -52,10 +52,26 @@ new class extends Component
 
     public function delete(int $id): void
     {
-        MemoryFragment::query()
+        $this->memoryQuery()
             ->where('id', $id)
-            ->where('user_id', Auth::id())
             ->delete();
+    }
+
+    protected function memoryQuery(): Builder
+    {
+        $userId = Auth::id();
+
+        return MemoryFragment::query()
+            ->where(function (Builder $query) use ($userId): void {
+                if ($userId) {
+                    $query->where('user_id', $userId)
+                        ->orWhereNull('user_id');
+
+                    return;
+                }
+
+                $query->whereNull('user_id');
+            });
     }
 
     public function rendering(View $view): void
@@ -107,6 +123,11 @@ new class extends Component
                             @if($memory->category)
                                 <span class="px-2 py-1 text-xs rounded-full bg-gray-700 text-gray-300">
                                     {{ $memory->category }}
+                                </span>
+                            @endif
+                            @if($memory->conversation?->gateway)
+                                <span class="px-2 py-1 text-xs rounded-full bg-emerald-600/20 text-emerald-300">
+                                    {{ $memory->conversation->gateway }}
                                 </span>
                             @endif
                         </div>

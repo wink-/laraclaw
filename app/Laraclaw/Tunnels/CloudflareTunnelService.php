@@ -4,11 +4,14 @@ namespace App\Laraclaw\Tunnels;
 
 use App\Laraclaw\Tunnels\Contracts\TunnelServiceInterface;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Sleep;
 
 class CloudflareTunnelService implements TunnelServiceInterface
 {
+    protected const CACHE_PREFIX = 'laraclaw.tunnel.cloudflare';
+
     protected ?string $url = null;
 
     public function __construct(
@@ -34,36 +37,52 @@ class CloudflareTunnelService implements TunnelServiceInterface
             return false;
         }
 
-        // Build the cloudflared command for quick tunnel
+        $this->ensureLogDirectoryExists();
+
+        File::put($this->getLogPath(), '');
+
         $command = sprintf(
-            '%s tunnel --url http://localhost:%d 2>&1',
-            escapeshellcmd($this->cloudflaredPath),
-            $port
+            "sh -c 'nohup %s tunnel --url http://127.0.0.1:%d > %s 2>&1 & echo $!'",
+            escapeshellarg($this->cloudflaredPath),
+            $port,
+            escapeshellarg($this->getLogPath())
         );
 
-        // Start cloudflared in background and capture output
-        $process = Process::start($command);
+        $result = Process::run($command);
 
-        // Wait for cloudflared to start and output the URL
+        if (! $result->successful()) {
+            return false;
+        }
+
+        $pid = trim($result->output());
+
+        if ($pid === '') {
+            return false;
+        }
+
+        Cache::put(self::CACHE_PREFIX.'.pid', $pid, now()->addHours(24));
+
         $output = '';
         $maxAttempts = 30;
 
         for ($i = 0; $i < $maxAttempts; $i++) {
             Sleep::for(500)->milliseconds();
 
-            $output .= $process->latestOutput();
+            if (File::exists($this->getLogPath())) {
+                $output = File::get($this->getLogPath());
+            }
 
-            // Parse the output to find the tunnel URL
             if (preg_match('#https://[a-zA-Z0-9-]+\.trycloudflare\.com#', $output, $matches)) {
                 $this->url = $matches[0];
 
-                // Store URL in cache for status checks
-                Cache::put('laraclaw.tunnel.cloudflare.url', $this->url, now()->addHours(24));
-                Cache::put('laraclaw.tunnel.cloudflare.active', true, now()->addHours(24));
+                Cache::put(self::CACHE_PREFIX.'.url', $this->url, now()->addHours(24));
+                Cache::put(self::CACHE_PREFIX.'.active', true, now()->addHours(24));
 
                 return true;
             }
         }
+
+        $this->stop();
 
         return false;
     }
@@ -73,12 +92,18 @@ class CloudflareTunnelService implements TunnelServiceInterface
      */
     public function stop(): bool
     {
-        // Kill cloudflared processes
-        Process::run('pkill -f cloudflared 2>/dev/null || true');
+        $pid = Cache::get(self::CACHE_PREFIX.'.pid');
+
+        if ($pid) {
+            Process::run(sprintf("sh -c 'kill %s >/dev/null 2>&1 || true'", escapeshellarg((string) $pid)));
+        } else {
+            Process::run("sh -c 'pkill -f cloudflared >/dev/null 2>&1 || true'");
+        }
 
         $this->url = null;
-        Cache::forget('laraclaw.tunnel.cloudflare.url');
-        Cache::forget('laraclaw.tunnel.cloudflare.active');
+        Cache::forget(self::CACHE_PREFIX.'.url');
+        Cache::forget(self::CACHE_PREFIX.'.active');
+        Cache::forget(self::CACHE_PREFIX.'.pid');
 
         return true;
     }
@@ -88,19 +113,21 @@ class CloudflareTunnelService implements TunnelServiceInterface
      */
     public function isActive(): bool
     {
-        // Check if we have a cached URL and the process is running
-        $cachedUrl = Cache::get('laraclaw.tunnel.cloudflare.url');
+        $cachedUrl = Cache::get(self::CACHE_PREFIX.'.url');
+        $cachedPid = Cache::get(self::CACHE_PREFIX.'.pid');
 
         if (! $cachedUrl) {
             return false;
         }
 
-        // Check if cloudflared process is running
-        $result = Process::run('pgrep -f cloudflared 2>/dev/null');
+        $result = $cachedPid
+            ? Process::run(sprintf("sh -c 'kill -0 %s >/dev/null 2>&1'", escapeshellarg((string) $cachedPid)))
+            : Process::run("sh -c 'pgrep -f cloudflared >/dev/null 2>&1'");
 
-        if (! $result->successful() || empty(trim($result->output()))) {
-            Cache::forget('laraclaw.tunnel.cloudflare.url');
-            Cache::forget('laraclaw.tunnel.cloudflare.active');
+        if (! $result->successful()) {
+            Cache::forget(self::CACHE_PREFIX.'.url');
+            Cache::forget(self::CACHE_PREFIX.'.active');
+            Cache::forget(self::CACHE_PREFIX.'.pid');
 
             return false;
         }
@@ -119,7 +146,7 @@ class CloudflareTunnelService implements TunnelServiceInterface
             return $this->url;
         }
 
-        return Cache::get('laraclaw.tunnel.cloudflare.url');
+        return Cache::get(self::CACHE_PREFIX.'.url');
     }
 
     /**
@@ -138,5 +165,15 @@ class CloudflareTunnelService implements TunnelServiceInterface
         $result = Process::run(sprintf('%s --version 2>/dev/null', escapeshellcmd($this->cloudflaredPath)));
 
         return $result->successful();
+    }
+
+    protected function getLogPath(): string
+    {
+        return storage_path('logs/cloudflared.log');
+    }
+
+    protected function ensureLogDirectoryExists(): void
+    {
+        File::ensureDirectoryExists(dirname($this->getLogPath()));
     }
 }

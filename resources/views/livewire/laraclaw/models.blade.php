@@ -1,6 +1,7 @@
 <?php
 
 use App\Laraclaw\Agents\CoreAgent;
+use App\Laraclaw\AI\ModelBenchmarkRepository;
 use App\Laraclaw\AI\ModelCatalog;
 use Illuminate\View\View;
 use Livewire\Volt\Component;
@@ -24,8 +25,6 @@ new class extends Component
     public int $formContext = 128000;
 
     public ?string $status = null;
-
-    public array $testResults = [];
 
     public function mount(): void
     {
@@ -107,8 +106,10 @@ new class extends Component
 
     public function testModel(string $provider, string $modelId): void
     {
-        $key = "{$provider}|{$modelId}";
+        $catalog = $this->getCatalog();
         $agent = app(CoreAgent::class);
+        $modelInfo = $catalog->getModelInfo($provider, $modelId);
+        $modelName = $modelInfo['name'] ?? $modelId;
 
         $originalProvider = $agent->provider()->value;
         $originalModel = $agent->model();
@@ -127,19 +128,29 @@ new class extends Component
                 $text = mb_substr($text, 0, 300).'...';
             }
 
-            $this->testResults[$key] = [
-                'text' => $text,
-                'time' => $elapsed,
-                'status' => 'pass',
-            ];
+            $this->getBenchmarkRepository()->recordResult(
+                provider: $provider,
+                modelId: $modelId,
+                modelName: $modelName,
+                responseTimeMs: $elapsed,
+                status: 'pass',
+                responseExcerpt: $text,
+            );
+
+            $this->status = "Benchmark recorded for {$modelName} ({$elapsed}ms).";
         } catch (Throwable $e) {
             $elapsed = round((microtime(true) - $start) * 1000);
 
-            $this->testResults[$key] = [
-                'text' => $e->getMessage(),
-                'time' => $elapsed,
-                'status' => 'fail',
-            ];
+            $this->getBenchmarkRepository()->recordResult(
+                provider: $provider,
+                modelId: $modelId,
+                modelName: $modelName,
+                responseTimeMs: $elapsed,
+                status: 'fail',
+                errorMessage: $e->getMessage(),
+            );
+
+            $this->status = "Benchmark failed for {$modelName}.";
         } finally {
             $agent->applyProviderOverride($originalProvider);
             $agent->applyModelOverride($originalModel);
@@ -163,6 +174,7 @@ new class extends Component
         return [
             'providers' => $providers,
             'models' => $models,
+            'benchmarks' => $this->getBenchmarkRepository()->getIndexedStats(),
             'catalog' => $catalog,
         ];
     }
@@ -176,6 +188,11 @@ new class extends Component
     {
         return app(ModelCatalog::class);
     }
+
+    protected function getBenchmarkRepository(): ModelBenchmarkRepository
+    {
+        return app(ModelBenchmarkRepository::class);
+    }
 }; ?>
 
 <div class="space-y-6">
@@ -185,6 +202,12 @@ new class extends Component
             <p class="text-gray-400">Manage AI models across providers</p>
         </div>
         <div class="flex items-center gap-3">
+            <a
+                href="{{ route('laraclaw.benchmarks.live') }}"
+                class="rounded-lg border border-gray-600 px-4 py-2 text-sm font-medium text-gray-200 transition hover:border-indigo-500 hover:text-white whitespace-nowrap"
+            >
+                View Benchmarks
+            </a>
             <input
                 type="text"
                 wire:model.live.debounce.300ms="search"
@@ -249,6 +272,7 @@ new class extends Component
                 @foreach($providerModels as $modelId => $meta)
                     @php
                         $testKey = "{$provider}|{$modelId}";
+                        $benchmark = $benchmarks[$testKey] ?? null;
                         $contextFormatted = $meta['context'] >= 1000000
                             ? round($meta['context'] / 1000000, 1) . 'M'
                             : round($meta['context'] / 1000) . 'K';
@@ -266,17 +290,34 @@ new class extends Component
                             @if($activeTab === 'all' || $search !== '')
                                 <span class="px-2 py-0.5 text-xs rounded bg-gray-700/40 text-gray-400">{{ $provider }}</span>
                             @endif
+                            @if($benchmark && $benchmark['last_response_time_ms'] !== null)
+                                <span class="px-2 py-0.5 text-xs rounded {{ $benchmark['last_status'] === 'pass' ? 'bg-green-500/10 text-green-300' : 'bg-red-500/10 text-red-300' }}">
+                                    Last {{ $benchmark['last_response_time_ms'] }}ms
+                                </span>
+                            @endif
                         </div>
 
-                        @if(isset($testResults[$testKey]))
-                            <div class="mb-3 bg-gray-700/40 rounded-lg p-3 text-xs space-y-1">
-                                <div class="flex items-center justify-between">
-                                    <span class="font-medium {{ $testResults[$testKey]['status'] === 'pass' ? 'text-green-400' : 'text-red-400' }}">
-                                        {{ strtoupper($testResults[$testKey]['status']) }}
-                                    </span>
-                                    <span class="text-gray-500">{{ $testResults[$testKey]['time'] }}ms</span>
+                        @if($benchmark)
+                            <div class="mb-3 rounded-xl border border-gray-700 bg-gray-700/30 p-3 text-xs space-y-2">
+                                <div class="flex items-center justify-between gap-3">
+                                    <div>
+                                        <p class="text-[11px] font-semibold uppercase tracking-[0.2em] text-gray-500">Last benchmark</p>
+                                        <span class="font-medium {{ $benchmark['last_status'] === 'pass' ? 'text-green-400' : 'text-red-400' }}">
+                                            {{ strtoupper($benchmark['last_status']) }}
+                                        </span>
+                                    </div>
+                                    <span class="text-gray-400">{{ $benchmark['last_response_time_ms'] !== null ? $benchmark['last_response_time_ms'].'ms' : 'n/a' }}</span>
                                 </div>
-                                <p class="text-gray-400 break-words">{{ $testResults[$testKey]['text'] }}</p>
+                                <div class="flex items-center justify-between text-[11px] text-gray-500">
+                                    <span>Avg {{ $benchmark['average_response_time_ms'] !== null ? $benchmark['average_response_time_ms'].'ms' : 'n/a' }}</span>
+                                    <span>Best {{ $benchmark['fastest_response_time_ms'] !== null ? $benchmark['fastest_response_time_ms'].'ms' : 'n/a' }}</span>
+                                </div>
+                                <p class="wrap-break-word text-gray-400">{{ $benchmark['last_response_excerpt'] ?? $benchmark['last_error_message'] }}</p>
+                                <p class="text-[11px] text-gray-500">{{ $benchmark['successful_runs'] }}/{{ $benchmark['total_runs'] }} successful{{ $benchmark['last_tested_at_human'] ? ' • '.$benchmark['last_tested_at_human'] : '' }}</p>
+                            </div>
+                        @else
+                            <div class="mb-3 rounded-xl border border-dashed border-gray-700 bg-gray-900/20 p-3 text-xs text-gray-500">
+                                No benchmark stored yet.
                             </div>
                         @endif
 

@@ -46,6 +46,33 @@ it('can get relevant memories', function () {
     expect($memories)->toHaveCount(3);
 });
 
+it('scopes relevant memories to the active conversation when no user is bound', function () {
+    $conversation = Conversation::factory()->create(['user_id' => null]);
+    $otherConversation = Conversation::factory()->create(['user_id' => null]);
+
+    $matchingMemory = MemoryFragment::factory()->create([
+        'user_id' => null,
+        'conversation_id' => $conversation->id,
+        'content' => 'remember this telegram preference',
+    ]);
+
+    MemoryFragment::factory()->create([
+        'user_id' => null,
+        'conversation_id' => $otherConversation->id,
+        'content' => 'remember this telegram preference',
+    ]);
+
+    $memories = $this->memoryManager->getRelevantMemories(
+        'telegram preference',
+        null,
+        conversationId: $conversation->id,
+    );
+
+    expect($memories)
+        ->toHaveCount(1)
+        ->and($memories[0]->is($matchingMemory))->toBeTrue();
+});
+
 it('can store a memory fragment', function () {
     $user = User::factory()->create();
 

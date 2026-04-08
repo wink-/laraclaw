@@ -82,18 +82,23 @@ class MemoryManager
      *
      * @return array<int, MemoryFragment>
      */
-    public function getRelevantMemories(string $query, ?int $userId = null, int $limit = 10, ?string $category = null): array
-    {
+    public function getRelevantMemories(
+        string $query,
+        ?int $userId = null,
+        int $limit = 10,
+        ?string $category = null,
+        ?int $conversationId = null,
+    ): array {
         $driver = DB::connection()->getDriverName();
 
         // Use FTS5 for SQLite, fallback to LIKE for other databases
         if ($driver === 'sqlite' && $this->ftsTableExists()) {
-            $results = $this->searchWithFts($query, $userId, $limit * 2, $category);
+            $results = $this->searchWithFts($query, $userId, $limit * 2, $category, $conversationId);
 
             return $this->rerankMemories($results, $query, $limit);
         }
 
-        $results = $this->searchWithLike($query, $userId, $limit * 2, $category);
+        $results = $this->searchWithLike($query, $userId, $limit * 2, $category, $conversationId);
 
         return $this->rerankMemories($results, $query, $limit);
     }
@@ -157,8 +162,13 @@ class MemoryManager
      *
      * @return array<int, MemoryFragment>
      */
-    protected function searchWithFts(string $query, ?int $userId, int $limit, ?string $category = null): array
-    {
+    protected function searchWithFts(
+        string $query,
+        ?int $userId,
+        int $limit,
+        ?string $category = null,
+        ?int $conversationId = null,
+    ): array {
         // Prepare query for FTS5 - escape special characters and add prefix matching
         $ftsQuery = $this->prepareFtsQuery($query);
 
@@ -175,9 +185,24 @@ class MemoryManager
 
         $bindings = [$ftsQuery];
 
-        if ($userId) {
-            $sql .= ' AND mf.user_id = ?';
-            $bindings[] = $userId;
+        if ($userId || $conversationId) {
+            $sql .= ' AND (';
+
+            if ($userId) {
+                $sql .= 'mf.user_id = ?';
+                $bindings[] = $userId;
+            }
+
+            if ($userId && $conversationId) {
+                $sql .= ' OR ';
+            }
+
+            if ($conversationId) {
+                $sql .= 'mf.conversation_id = ?';
+                $bindings[] = $conversationId;
+            }
+
+            $sql .= ')';
         }
 
         if ($category) {
@@ -203,15 +228,29 @@ class MemoryManager
      *
      * @return array<int, MemoryFragment>
      */
-    protected function searchWithLike(string $query, ?int $userId, int $limit, ?string $category = null): array
-    {
+    protected function searchWithLike(
+        string $query,
+        ?int $userId,
+        int $limit,
+        ?string $category = null,
+        ?int $conversationId = null,
+    ): array {
         $queryBuilder = MemoryFragment::query()
             ->where('content', 'LIKE', '%'.$query.'%')
             ->orderBy('created_at', 'desc')
             ->limit($limit);
 
-        if ($userId) {
-            $queryBuilder->where('user_id', $userId);
+        if ($userId || $conversationId) {
+            $queryBuilder->where(function ($query) use ($userId, $conversationId) {
+                if ($userId) {
+                    $query->where('user_id', $userId);
+                }
+
+                if ($conversationId) {
+                    $method = $userId ? 'orWhere' : 'where';
+                    $query->{$method}('conversation_id', $conversationId);
+                }
+            });
         }
 
         if ($category) {
